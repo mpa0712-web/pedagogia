@@ -129,11 +129,11 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--sand);co
 .aic:hover{box-shadow:var(--sh-md);border-color:var(--sage-l);transform:translateY(-2px)}
 .aic.sel{border-color:var(--purple);background:var(--purple-p);box-shadow:0 0 0 2px rgba(91,46,156,.15)}
 .aic-ic{font-size:21px;margin-bottom:7px}.aic-ttl{font-size:12px;font-weight:700;margin-bottom:2px}.aic-desc{font-size:10.5px;color:var(--ink-60);line-height:1.5}
-.ai-area{background:var(--white);border:1px solid var(--ink-10);border-radius:var(--r);padding:18px}
+.ai-area{background:var(--white);border:1px solid var(--ink-10);border-radius:var(--r);padding:22px}
 .dsrc{background:var(--sand);border:1px solid var(--ink-10);border-radius:8px;padding:11px 14px;font-size:11.5px;color:var(--ink-60);line-height:1.7;margin-bottom:12px}
-.dout{background:var(--purple-p);border:1px solid rgba(91,46,156,.15);border-radius:8px;padding:11px 14px;display:none}
+.dout{background:var(--purple-p);border:1px solid rgba(91,46,156,.15);border-radius:8px;padding:16px 18px;display:none;max-height:none;}
 .dout.show{display:block;animation:fi .3s ease}
-.dout-lbl{font-size:9px;font-weight:700;color:var(--purple);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
+.dout-lbl{font-size:9px;font-weight:700;color:var(--purple);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px}
 .gen-btn{display:flex;align-items:center;justify-content:center;gap:7px;background:linear-gradient(135deg,var(--purple),var(--sage-l));color:#fff;border:none;border-radius:8px;padding:9px 16px;font-size:12px;font-weight:700;cursor:pointer;transition:all .15s;margin-bottom:12px;width:100%;font-family:'DM Sans',sans-serif}
 .gen-btn:hover{opacity:.9;transform:translateY(-1px)}
 .gen-btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
@@ -304,12 +304,12 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--sand);co
         <div style="font-size:13px;font-weight:600;margin-bottom:12px">Zone de génération — <span id="ai-mode-lbl" style="color:var(--purple);font-size:12px">Sélectionnez un outil ci-dessus</span></div>
         <div style="margin-bottom:10px">
           <label class="fl">Votre contenu / texte de cours</label>
-          <textarea class="fta" id="ai-source" rows="5" placeholder="Collez ici votre texte de cours, vos notes, ou le contenu que vous voulez transformer…"></textarea>
+          <textarea class="fta" id="ai-source" rows="7" placeholder="Collez ici votre texte de cours, vos notes, ou le contenu que vous voulez transformer…" style="font-size:13px;line-height:1.7"></textarea>
         </div>
         <button class="gen-btn" id="gen-btn" onclick="runAI()" disabled>✦ Générer le contenu</button>
         <div class="dout" id="dout">
           <div class="dout-lbl" id="dout-lbl">Résultat IA</div>
-          <pre id="dout-txt" style="font-family:inherit;font-size:11.5px;white-space:pre-wrap;line-height:1.7;color:var(--ink-60)"></pre>
+          <pre id="dout-txt" style="font-family:inherit;font-size:13px;white-space:pre-wrap;line-height:1.8;color:var(--ink);max-height:none;overflow:visible;background:transparent;border:none;padding:0"></pre>
           <div style="display:flex;gap:7px;margin-top:12px;flex-wrap:wrap">
             <button class="btn btn-p btn-sm" onclick="saveAI()">💾 Sauvegarder</button>
             <button class="btn btn-g btn-sm" onclick="runAI()">↻ Régénérer</button>
@@ -337,6 +337,25 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--sand);co
           <button class="btn btn-p" style="width:100%;margin-top:12px;justify-content:center" onclick="openModal('new-event')">+ Ajouter un événement</button>
         </div>
       </div>
+    </div>
+
+    <!-- ═══ CLASSES ═══ -->
+    <div class="screen" id="screen-classes">
+
+      <!-- Créer une classe -->
+      <div class="card" style="padding:20px;margin-bottom:16px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+          <div>
+            <div style="font-size:15px;font-weight:700;font-family:'Lora',serif">Mes classes</div>
+            <div style="font-size:11.5px;color:var(--ink-30);margin-top:2px">Crée une classe et partage le code avec tes élèves</div>
+          </div>
+          <button class="btn btn-p" onclick="openModal('new-class')">+ Créer une classe</button>
+        </div>
+        <div id="classes-list">
+          <div class="empty"><div class="empty-ic">👥</div><div class="empty-txt">Aucune classe encore.<br>Crée ta première classe !</div></div>
+        </div>
+      </div>
+
     </div>
 
   </div><!-- /content -->
@@ -370,7 +389,7 @@ const firebaseConfig = {
 // ──────────────────────────────────────────────────────────
 
 // ─── GOOGLE GEMINI API KEY ──────────────────────────────────
-const GEMINI_KEY = "AIzaSyDHHydfGMzro6QhtgEVYXaZcbR2ciY42m4";
+const GEMINI_KEY = "AIzaSyB5WHwnUCVMxm0D4a9JZLhjQxqHnF8nGkY";
 // ──────────────────────────────────────────────────────────
 
 const app = initializeApp(firebaseConfig);
@@ -402,6 +421,7 @@ onAuthStateChanged(auth, async (user) => {
   loadAssignments();
   loadCalendar();
   loadEvents();
+  loadClasses();
   const now = new Date();
   const days = ['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'];
   const months = ['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
@@ -411,7 +431,7 @@ onAuthStateChanged(auth, async (user) => {
 window.logout = async () => { await signOut(auth); window.location.href='index.html'; };
 
 // ── NAVIGATION ────────────────────────────────────────────
-const TITLES = {dashboard:'Tableau de bord',resources:'Ressources',assignments:'Devoirs',ai:'Assistant IA',calendar:'Calendrier'};
+const TITLES = {dashboard:'Tableau de bord',resources:'Ressources',assignments:'Devoirs',ai:'Assistant IA',calendar:'Calendrier',classes:'Mes classes'};
 function nav(id) {
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
   document.getElementById('screen-'+id).classList.add('active');
@@ -696,7 +716,7 @@ window.runAI = async function() {
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify({
         contents:[{role:'user',parts:[{text:aiPrompts[aiMode](text.slice(0,8000))}]}],
-        generationConfig:{maxOutputTokens:1500,temperature:0.7}
+        generationConfig:{maxOutputTokens:8192,temperature:0.7}
       })
     });
     const data = await res.json();
@@ -829,6 +849,32 @@ const modals = {
       loadDashboard();
     }
   },
+  'new-class':{
+    title:'Nouvelle classe',sub:'Crée une classe et partage le code avec tes élèves',
+    body:`<div class="fg2"><label class="fl">Nom de la classe</label><input class="fi" id="m-classname" placeholder="Ex: Terminale Pro MCV 2025-2026"/></div>
+<div class="fg2"><label class="fl">Niveau</label><input class="fi" id="m-level" placeholder="Ex: Terminale, Seconde, Première…"/></div>
+<div class="fg2"><label class="fl">Matière</label><input class="fi" id="m-subject" placeholder="Ex: Commerce, Communication…"/></div>
+<div class="fg2"><label class="fl">Description (optionnel)</label><textarea class="fta" id="m-classdesc" placeholder="Infos supplémentaires…"></textarea></div>`,
+    action: async () => {
+      const name = document.getElementById('m-classname').value.trim();
+      const level = document.getElementById('m-level').value.trim();
+      const subject = document.getElementById('m-subject').value.trim();
+      const description = document.getElementById('m-classdesc').value.trim();
+      if(!name){toast('Donne un nom à la classe.','error');return;}
+      // Générer un code unique 6 caractères
+      const code = Math.random().toString(36).substring(2,8).toUpperCase();
+      await addDoc(collection(db,'classes'),{
+        uid:currentUser.uid,
+        name, level, subject, description,
+        code,
+        students:[],
+        createdAt:serverTimestamp()
+      });
+      toast('Classe créée ! Code : '+code,'success');
+      closeModal();
+      loadClasses();
+    }
+  },
   'new-event':{
     title:'Nouvel événement',sub:'Ajoutez au calendrier',
     body:`<div class="fg2"><label class="fl">Titre</label><input class="fi" id="m-title" placeholder="Ex: Évaluation Relation client"/></div>
@@ -877,6 +923,92 @@ window.closeModal = function(e){
 window.selColor = function(el){
   document.querySelectorAll('.cdot2').forEach(d=>d.classList.remove('sel'));
   el.classList.add('sel');
+};
+
+// ── CLASSES ──────────────────────────────────────────────
+async function loadClasses() {
+  const uid = currentUser.uid;
+  const snap = await getDocs(query(collection(db,'classes'),where('uid','==',uid),orderBy('createdAt','desc')));
+  const el = document.getElementById('classes-list');
+  if(!el) return;
+
+  if(snap.empty){
+    el.innerHTML='<div class="empty"><div class="empty-ic">👥</div><div class="empty-txt">Aucune classe encore.<br>Crée ta première classe !</div></div>';
+    return;
+  }
+
+  el.innerHTML = snap.docs.map(d=>{
+    const fd=d.data();
+    return `<div class="card" style="padding:18px;margin-bottom:12px;border:1px solid var(--ink-10)">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+        <div>
+          <div style="font-size:14px;font-weight:700">${fd.name}</div>
+          <div style="font-size:11px;color:var(--ink-30);margin-top:2px">${fd.level||''} ${fd.subject?'· '+fd.subject:''}</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:10px;color:var(--ink-30);margin-bottom:4px">Code d'accès élève</div>
+          <div style="font-size:22px;font-weight:700;font-family:'Lora',serif;color:var(--sage);letter-spacing:3px;background:var(--sage-p);padding:6px 14px;border-radius:8px">${fd.code}</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
+        <button class="btn btn-g btn-sm" onclick="copyCode('${fd.code}')">📋 Copier le code</button>
+        <button class="btn btn-g btn-sm" onclick="loadStudents('${d.id}','${fd.name?.replace(/'/g,"\'")||''}')">👥 Voir les élèves</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteClass('${d.id}')">🗑 Supprimer</button>
+      </div>
+      <div id="students-${d.id}" style="display:none"></div>
+    </div>`;
+  }).join('');
+}
+
+window.copyCode = function(code){
+  navigator.clipboard.writeText(code).then(()=>toast('Code copié : '+code,'success'));
+};
+
+window.loadStudents = async function(classId, className){
+  const el = document.getElementById('students-'+classId);
+  if(el.style.display==='block'){el.style.display='none';return;}
+
+  el.innerHTML = '<div style="font-size:12px;color:var(--ink-30);padding:8px 0">Chargement…</div>';
+  el.style.display = 'block';
+
+  const snap = await getDocs(query(collection(db,'classMembers'),where('classId','==',classId)));
+
+  if(snap.empty){
+    el.innerHTML = `<div style="background:var(--sand);border-radius:8px;padding:14px 16px;font-size:12px;color:var(--ink-60)">
+      <div style="font-weight:600;margin-bottom:6px">👥 Aucun élève encore</div>
+      <div>Partage le code de la classe avec tes élèves. Ils pourront rejoindre depuis leur espace élève.</div>
+    </div>`;
+    return;
+  }
+
+  // Récupérer les profils des élèves
+  const studentRows = await Promise.all(snap.docs.map(async d=>{
+    const fd=d.data();
+    const userSnap = await getDoc(doc(db,'users',fd.studentId));
+    const user = userSnap.exists() ? userSnap.data() : {name:'Élève inconnu',email:''};
+    return `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--ink-10)">
+      <div style="width:30px;height:30px;border-radius:50%;background:var(--blue-p);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--blue);flex-shrink:0">
+        ${user.name.split(' ').map(n=>n[0]).join('').toUpperCase().slice(0,2)}
+      </div>
+      <div style="flex:1">
+        <div style="font-size:12.5px;font-weight:600">${user.name}</div>
+        <div style="font-size:10.5px;color:var(--ink-30)">${user.email}</div>
+      </div>
+      <span class="badge bg">Élève</span>
+    </div>`;
+  }));
+
+  el.innerHTML = `<div style="background:var(--sand);border-radius:8px;padding:14px 16px">
+    <div style="font-size:11px;font-weight:700;color:var(--ink-60);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">${snap.size} élève(s) inscrit(s)</div>
+    ${studentRows.join('')}
+  </div>`;
+};
+
+window.deleteClass = async function(id){
+  if(!confirm('Supprimer cette classe ? Les élèves inscrits seront retirés.')) return;
+  await deleteDoc(doc(db,'classes',id));
+  toast('Classe supprimée','success');
+  loadClasses();
 };
 
 // ── SEARCH ───────────────────────────────────────────────
