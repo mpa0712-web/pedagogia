@@ -688,6 +688,7 @@ window.runAI = async function() {
   const btn = document.getElementById('gen-btn');
   btn.disabled = true;
   btn.innerHTML = '<span class="spin"></span>Génération en cours…';
+  await new Promise(r => setTimeout(r, 1000));
 
   try {
     const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_KEY}`,{
@@ -699,7 +700,10 @@ window.runAI = async function() {
       })
     });
     const data = await res.json();
+    if(res.status === 429) throw new Error('Limite atteinte. Attends 30 secondes et réessaie.');
+    if(res.status === 403) throw new Error('Clé API invalide ou non autorisée.');
     if(data.error) throw new Error(data.error.message);
+    if(!data.candidates || !data.candidates[0]) throw new Error('Réponse vide de Gemini. Réessaie.');
     const result = data.candidates[0].content.parts[0].text;
     document.getElementById('dout-lbl').textContent = '✦ Résultat IA — '+aiMode;
     document.getElementById('dout-txt').textContent = result;
