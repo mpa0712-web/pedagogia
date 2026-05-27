@@ -369,9 +369,8 @@ const firebaseConfig = {
 };
 // ──────────────────────────────────────────────────────────
 
-// ─── OPENAI KEY — REMPLACE ICI ─────────────────────────────
-// ⚠ Pour la production, utilise une Netlify Function pour cacher cette clé
-const OPENAI_KEY = "REMPLACE_PAR_TON_OPENAI_KEY";
+// ─── GOOGLE GEMINI API KEY ──────────────────────────────────
+const GEMINI_KEY = "AIzaSyDHHydfGMzro6QhtgEVYXaZcbR2ciY42m4";
 // ──────────────────────────────────────────────────────────
 
 const app = initializeApp(firebaseConfig);
@@ -684,25 +683,24 @@ window.runAI = async function() {
   if(!aiMode) return;
   const text = document.getElementById('ai-source').value.trim();
   if(!text) { toast('Colle ton texte de cours dans la zone de texte.','error'); return; }
-  if(OPENAI_KEY === 'REMPLACE_PAR_TON_OPENAI_KEY') { toast('Configure ta clé OpenAI dans le fichier dashboard.html','error'); return; }
+  if(!GEMINI_KEY) { toast('Clé Gemini manquante.','error'); return; }
 
   const btn = document.getElementById('gen-btn');
   btn.disabled = true;
   btn.innerHTML = '<span class="spin"></span>Génération en cours…';
 
   try {
-    const res = await fetch('https://api.openai.com/v1/chat/completions',{
+    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_KEY}`,{
       method:'POST',
-      headers:{'Content-Type':'application/json','Authorization':`Bearer ${OPENAI_KEY}`},
+      headers:{'Content-Type':'application/json'},
       body:JSON.stringify({
-        model:'gpt-4o-mini',
-        messages:[{role:'user',content:aiPrompts[aiMode](text.slice(0,8000))}],
-        max_tokens:1500,temperature:0.7
+        contents:[{parts:[{text:aiPrompts[aiMode](text.slice(0,8000))}]}],
+        generationConfig:{maxOutputTokens:1500,temperature:0.7}
       })
     });
     const data = await res.json();
     if(data.error) throw new Error(data.error.message);
-    const result = data.choices[0].message.content;
+    const result = data.candidates[0].content.parts[0].text;
     document.getElementById('dout-lbl').textContent = '✦ Résultat IA — '+aiMode;
     document.getElementById('dout-txt').textContent = result;
     document.getElementById('dout').classList.add('show');
