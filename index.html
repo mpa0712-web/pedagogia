@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pédagogia — Connexion</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;0,700;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --sage: #3D6B4F;
+  --sage-l: #5A8C6A;
+  --sage-p: #EAF2ED;
+  --terra: #B8623A;
+  --terra-p: #FBF0EA;
+  --ink: #1A1714;
+  --ink-60: #5C574F;
+  --ink-30: #A09990;
+  --ink-10: #F0EBE3;
+  --sand: #FAF6F0;
+  --white: #FFFFFF;
+  --amber: #9C6B1E;
+  --amber-p: #FDF5E6;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;font-family:'DM Sans',sans-serif}
+body{background:var(--ink);display:flex;align-items:center;justify-content:center;min-height:100vh;position:relative;overflow:hidden}
+body::before{
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse 80% 60% at 20% 80%, rgba(61,107,79,.35) 0%, transparent 60%),
+             radial-gradient(ellipse 60% 50% at 80% 20%, rgba(184,98,58,.2) 0%, transparent 55%);
+}
+.bg-grid{position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.03) 1px,transparent 1px);background-size:48px 48px;pointer-events:none}
+.auth-card{
+  background:rgba(255,255,255,.04);
+  backdrop-filter:blur(20px);
+  border:1px solid rgba(255,255,255,.1);
+  border-radius:24px;
+  padding:48px 44px;
+  width:420px;
+  position:relative;
+  z-index:1;
+}
+.brand{text-align:center;margin-bottom:36px}
+.brand-name{font-family:'Lora',serif;font-size:28px;font-weight:700;color:#fff;letter-spacing:-.5px}
+.brand-tag{font-size:11px;color:rgba(255,255,255,.35);letter-spacing:2px;text-transform:uppercase;margin-top:3px}
+.tabs{display:flex;gap:0;background:rgba(255,255,255,.06);border-radius:10px;padding:3px;margin-bottom:28px}
+.tab{flex:1;padding:8px;text-align:center;font-size:12px;font-weight:500;border-radius:8px;cursor:pointer;color:rgba(255,255,255,.45);transition:all .2s}
+.tab.active{background:rgba(255,255,255,.12);color:#fff}
+.form-group{margin-bottom:16px}
+.form-label{display:block;font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
+.form-input{
+  width:100%;padding:11px 14px;
+  background:rgba(255,255,255,.07);
+  border:1px solid rgba(255,255,255,.12);
+  border-radius:10px;
+  font-size:13.5px;color:#fff;font-family:'DM Sans',sans-serif;
+  outline:none;transition:border .15s;
+}
+.form-input::placeholder{color:rgba(255,255,255,.25)}
+.form-input:focus{border-color:rgba(90,140,106,.7);background:rgba(255,255,255,.1)}
+.form-select{
+  width:100%;padding:11px 14px;
+  background:rgba(255,255,255,.07);
+  border:1px solid rgba(255,255,255,.12);
+  border-radius:10px;
+  font-size:13.5px;color:#fff;font-family:'DM Sans',sans-serif;
+  outline:none;cursor:pointer;
+  -webkit-appearance:none;
+}
+.form-select option{background:#1A1714;color:#fff}
+.btn-main{
+  width:100%;padding:12px;
+  background:var(--sage-l);
+  border:none;border-radius:10px;
+  font-size:14px;font-weight:600;color:#fff;
+  cursor:pointer;transition:all .15s;font-family:'DM Sans',sans-serif;
+  margin-top:4px;
+}
+.btn-main:hover{background:var(--sage)}
+.btn-main:active{transform:scale(.98)}
+.auth-error{background:rgba(184,98,58,.15);border:1px solid rgba(184,98,58,.3);border-radius:8px;padding:10px 12px;font-size:12px;color:#E8956D;margin-bottom:14px;display:none}
+.forgot{text-align:center;margin-top:14px}
+.forgot a{font-size:12px;color:rgba(255,255,255,.35);text-decoration:none;cursor:pointer}
+.forgot a:hover{color:rgba(255,255,255,.6)}
+.loading-spinner{width:18px;height:18px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;display:inline-block;margin-right:8px;vertical-align:middle}
+@keyframes spin{to{transform:rotate(360deg)}}
+.panel{display:none}
+.panel.active{display:block}
+</style>
+</head>
+<body>
+<div class="bg-grid"></div>
+<div class="auth-card">
+  <div class="brand">
+    <div class="brand-name">Pédagogia</div>
+    <div class="brand-tag">Plateforme pédagogique</div>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab('login')">Connexion</div>
+    <div class="tab" onclick="switchTab('register')">Inscription</div>
+  </div>
+
+  <div id="auth-error" class="auth-error"></div>
+
+  <!-- LOGIN -->
+  <div id="panel-login" class="panel active">
+    <div class="form-group">
+      <label class="form-label">Adresse e-mail</label>
+      <input type="email" id="login-email" class="form-input" placeholder="vous@etablissement.fr">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Mot de passe</label>
+      <input type="password" id="login-pwd" class="form-input" placeholder="••••••••">
+    </div>
+    <button class="btn-main" onclick="login()" id="btn-login">Se connecter</button>
+    <div class="forgot"><a onclick="resetPwd()">Mot de passe oublié ?</a></div>
+  </div>
+
+  <!-- REGISTER -->
+  <div id="panel-register" class="panel">
+    <div class="form-group">
+      <label class="form-label">Prénom et nom</label>
+      <input type="text" id="reg-name" class="form-input" placeholder="Marie Laurent">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Adresse e-mail</label>
+      <input type="email" id="reg-email" class="form-input" placeholder="vous@etablissement.fr">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Mot de passe</label>
+      <input type="password" id="reg-pwd" class="form-input" placeholder="Minimum 6 caractères">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Je suis</label>
+      <select id="reg-role" class="form-select">
+        <option value="teacher">Enseignant(e)</option>
+        <option value="student">Élève</option>
+      </select>
+    </div>
+    <button class="btn-main" onclick="register()" id="btn-register">Créer mon compte</button>
+  </div>
+</div>
+
+<!-- Firebase SDK -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getFirestore, doc, setDoc, getDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+// ─── REMPLACE AVEC TA CONFIG FIREBASE ─────────────────────
+const firebaseConfig = {
+  apiKey: "AIzaSyBYOQopUVm5vcjUur74ErhvehWC-UNiaz0",
+  authDomain: "pedagogia-18dda.firebaseapp.com",
+  projectId: "pedagogia-18dda",
+  storageBucket: "pedagogia-18dda.firebasestorage.app",
+  messagingSenderId: "465869483173",
+  appId: "1:465869483173:web:5874b245342c020127b14c"
+};
+// ──────────────────────────────────────────────────────────
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+// Si déjà connecté → rediriger
+onAuthStateChanged(auth, async (user) => {
+  if (user) {
+    const snap = await getDoc(doc(db, 'users', user.uid));
+    if (snap.exists()) {
+      const role = snap.data().role;
+      window.location.href = role === 'student' ? 'eleve.html' : 'dashboard.html';
+    }
+  }
+});
+
+function showError(msg) {
+  const el = document.getElementById('auth-error');
+  el.textContent = msg; el.style.display = 'block';
+}
+function hideError() { document.getElementById('auth-error').style.display = 'none'; }
+function setLoading(btnId, loading) {
+  const btn = document.getElementById(btnId);
+  btn.innerHTML = loading ? '<span class="loading-spinner"></span>Chargement…' : btn.dataset.label;
+}
+
+window.switchTab = function(tab) {
+  document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', (i===0&&tab==='login')||(i===1&&tab==='register')));
+  document.getElementById('panel-login').classList.toggle('active', tab==='login');
+  document.getElementById('panel-register').classList.toggle('active', tab==='register');
+  hideError();
+};
+
+document.getElementById('btn-login').dataset.label = 'Se connecter';
+document.getElementById('btn-register').dataset.label = 'Créer mon compte';
+
+window.login = async function() {
+  hideError();
+  const email = document.getElementById('login-email').value.trim();
+  const pwd = document.getElementById('login-pwd').value;
+  if (!email || !pwd) return showError('Remplis tous les champs.');
+  setLoading('btn-login', true);
+  try {
+    const cred = await signInWithEmailAndPassword(auth, email, pwd);
+    const snap = await getDoc(doc(db, 'users', cred.user.uid));
+    const role = snap.exists() ? snap.data().role : 'teacher';
+    window.location.href = role === 'student' ? 'eleve.html' : 'dashboard.html';
+  } catch(e) {
+    showError('E-mail ou mot de passe incorrect.');
+    setLoading('btn-login', false);
+  }
+};
+
+window.register = async function() {
+  hideError();
+  const name = document.getElementById('reg-name').value.trim();
+  const email = document.getElementById('reg-email').value.trim();
+  const pwd = document.getElementById('reg-pwd').value;
+  const role = document.getElementById('reg-role').value;
+  if (!name||!email||!pwd) return showError('Remplis tous les champs.');
+  if (pwd.length < 6) return showError('Le mot de passe doit faire au moins 6 caractères.');
+  setLoading('btn-register', true);
+  try {
+    const cred = await createUserWithEmailAndPassword(auth, email, pwd);
+    await setDoc(doc(db, 'users', cred.user.uid), {
+      uid: cred.user.uid, name, email, role,
+      createdAt: serverTimestamp()
+    });
+    window.location.href = role === 'student' ? 'eleve.html' : 'dashboard.html';
+  } catch(e) {
+    showError('Erreur : ' + (e.code === 'auth/email-already-in-use' ? 'Cet e-mail est déjà utilisé.' : e.message));
+    setLoading('btn-register', false);
+  }
+};
+
+window.resetPwd = async function() {
+  const email = document.getElementById('login-email').value.trim();
+  if (!email) return showError('Entre ton e-mail pour réinitialiser ton mot de passe.');
+  try {
+    await sendPasswordResetEmail(auth, email);
+    document.getElementById('auth-error').style.background = 'rgba(61,107,79,.15)';
+    document.getElementById('auth-error').style.borderColor = 'rgba(61,107,79,.3)';
+    document.getElementById('auth-error').style.color = '#5A8C6A';
+    showError('E-mail de réinitialisation envoyé !');
+  } catch(e) { showError('E-mail introuvable.'); }
+};
+
+document.getElementById('login-pwd').addEventListener('keydown', e => { if(e.key==='Enter') window.login(); });
+</script>
+</body>
+</html>

@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pédagogia — Initialisation Firebase</title>
+<link href="https://fonts.googleapis.com/css2?family=Lora:wght@600;700&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --sage:#3D6B4F;--sage-l:#5A8C6A;--sage-p:#EAF2ED;
+  --terra:#B8623A;--terra-p:#FBF0EA;
+  --ink:#1A1714;--ink-60:#5C574F;--ink-30:#A09990;--ink-10:#F0EBE3;
+  --sand:#FAF6F0;--white:#fff;
+  --amber:#9C6B1E;--amber-p:#FDF5E6;
+  --blue:#1A4F9C;--blue-p:#EBF2FF;
+  --purple:#5B2E9C;--purple-p:#F3EEFF;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;background:var(--ink);min-height:100vh;display:flex;align-items:flex-start;justify-content:center;padding:40px 20px;position:relative;overflow-x:hidden}
+body::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 70% 50% at 20% 80%,rgba(61,107,79,.3) 0%,transparent 60%),radial-gradient(ellipse 50% 40% at 80% 20%,rgba(184,98,58,.15) 0%,transparent 55%);pointer-events:none}
+.bg-grid{position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.025) 1px,transparent 1px);background-size:48px 48px;pointer-events:none}
+.wrap{width:100%;max-width:640px;position:relative;z-index:1}
+.header{text-align:center;margin-bottom:32px}
+.logo{font-family:'Lora',serif;font-size:26px;font-weight:700;color:#fff;margin-bottom:6px}
+.logo-sub{font-size:11px;color:rgba(255,255,255,.3);text-transform:uppercase;letter-spacing:2px}
+.header-desc{font-size:13px;color:rgba(255,255,255,.5);margin-top:10px;line-height:1.6}
+
+/* CONFIG CARD */
+.config-card{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:28px;margin-bottom:16px;backdrop-filter:blur(10px)}
+.config-title{font-size:14px;font-weight:600;color:#fff;margin-bottom:4px}
+.config-sub{font-size:12px;color:rgba(255,255,255,.4);margin-bottom:20px;line-height:1.5}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+.form-row.full{grid-template-columns:1fr}
+.fg{display:flex;flex-direction:column;gap:4px}
+.fl{font-size:10px;font-weight:600;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.5px}
+.fi{padding:9px 12px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);border-radius:8px;font-size:12.5px;color:#fff;font-family:'DM Sans',sans-serif;outline:none;transition:border .15s;width:100%}
+.fi::placeholder{color:rgba(255,255,255,.2)}
+.fi:focus{border-color:rgba(90,140,106,.6)}
+
+/* PROGRESS */
+.progress-card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:24px;margin-bottom:16px;display:none}
+.progress-card.show{display:block}
+.prog-title{font-size:13px;font-weight:600;color:#fff;margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.prog-bar-wrap{height:6px;background:rgba(255,255,255,.08);border-radius:3px;overflow:hidden;margin-bottom:18px}
+.prog-bar{height:100%;background:linear-gradient(90deg,var(--sage-l),var(--blue));border-radius:3px;width:0%;transition:width .4s ease}
+.steps-list{display:flex;flex-direction:column;gap:8px}
+.step-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);transition:all .3s}
+.step-item.running{background:rgba(90,140,106,.1);border-color:rgba(90,140,106,.3)}
+.step-item.done{background:rgba(61,107,79,.12);border-color:rgba(61,107,79,.3)}
+.step-item.error{background:rgba(184,98,58,.1);border-color:rgba(184,98,58,.3)}
+.step-ic{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;background:rgba(255,255,255,.06)}
+.step-item.done .step-ic{background:var(--sage);color:#fff}
+.step-item.error .step-ic{background:var(--terra);color:#fff}
+.step-item.running .step-ic{background:rgba(90,140,106,.3)}
+.step-name{font-size:12px;color:rgba(255,255,255,.6);flex:1}
+.step-item.done .step-name{color:rgba(255,255,255,.85)}
+.step-item.running .step-name{color:#fff}
+.step-detail{font-size:10.5px;color:rgba(255,255,255,.3);margin-top:2px}
+.spin{width:14px;height:14px;border:2px solid rgba(90,140,106,.3);border-top-color:var(--sage-l);border-radius:50%;animation:rot .6s linear infinite;flex-shrink:0}
+@keyframes rot{to{transform:rotate(360deg)}}
+
+/* RESULT CARD */
+.result-card{background:rgba(61,107,79,.12);border:1px solid rgba(61,107,79,.3);border-radius:16px;padding:24px;margin-bottom:16px;display:none;text-align:center}
+.result-card.show{display:block;animation:pop .4s ease}
+.result-card.error-card{background:rgba(184,98,58,.1);border-color:rgba(184,98,58,.3)}
+@keyframes pop{from{opacity:0;transform:scale(.95)}to{opacity:1;transform:scale(1)}}
+.result-ic{font-size:40px;margin-bottom:12px}
+.result-title{font-family:'Lora',serif;font-size:20px;color:#fff;font-weight:700;margin-bottom:6px}
+.result-sub{font-size:12.5px;color:rgba(255,255,255,.5);line-height:1.6;margin-bottom:18px}
+.creds-box{background:rgba(0,0,0,.2);border-radius:10px;padding:14px 16px;text-align:left;margin-bottom:16px}
+.creds-title{font-size:10px;color:rgba(255,255,255,.3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;font-weight:600}
+.cred-row{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.06)}
+.cred-row:last-child{border:none}
+.cred-label{font-size:11.5px;color:rgba(255,255,255,.4)}
+.cred-value{font-size:12px;color:#fff;font-weight:500;font-family:monospace}
+
+/* BUTTONS */
+.btn-main{width:100%;padding:13px;background:var(--sage-l);border:none;border-radius:10px;font-size:14px;font-weight:600;color:#fff;cursor:pointer;transition:all .15s;font-family:'DM Sans',sans-serif;display:flex;align-items:center;justify-content:center;gap:8px}
+.btn-main:hover{background:var(--sage)}
+.btn-main:disabled{opacity:.4;cursor:not-allowed}
+.btn-secondary{width:100%;padding:11px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);border-radius:10px;font-size:13px;font-weight:500;color:rgba(255,255,255,.7);cursor:pointer;transition:all .15s;font-family:'DM Sans',sans-serif;margin-top:8px}
+.btn-secondary:hover{background:rgba(255,255,255,.12)}
+
+/* LOG */
+.log-box{background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.06);border-radius:10px;padding:12px 14px;max-height:160px;overflow-y:auto;font-family:monospace;font-size:11px;color:rgba(255,255,255,.4);margin-top:14px;display:none}
+.log-box.show{display:block}
+.log-line{padding:1px 0;line-height:1.6}
+.log-line.ok{color:rgba(90,140,106,.8)}
+.log-line.err{color:rgba(184,98,58,.8)}
+.log-line.info{color:rgba(255,255,255,.35)}
+
+/* WARNING */
+.warn-box{background:rgba(156,107,30,.1);border:1px solid rgba(156,107,30,.25);border-radius:10px;padding:12px 14px;margin-bottom:16px;font-size:12px;color:rgba(255,255,255,.5);line-height:1.6}
+.warn-box strong{color:rgba(255,205,100,.8)}
+</style>
+</head>
+<body>
+<div class="bg-grid"></div>
+<div class="wrap">
+
+  <div class="header">
+    <div class="logo">Pédagogia</div>
+    <div class="logo-sub">Script d'initialisation Firebase</div>
+    <div class="header-desc">Colle ta configuration Firebase ci-dessous.<br>Le script crée automatiquement toutes les collections, les données de démonstration, et un compte enseignant + élève.</div>
+  </div>
+
+  <div class="warn-box">
+    <strong>⚠ À utiliser une seule fois</strong> — Ce script crée les données initiales dans ta base. Si tu le relances, il ajoutera des doublons. Supprime-le de ton dossier après utilisation.
+  </div>
+
+  <!-- CONFIG -->
+  <div class="config-card" id="config-card">
+    <div class="config-title">1 — Ta configuration Firebase</div>
+    <div class="config-sub">Copie ces valeurs depuis Firebase Console → ⚙ Paramètres du projet → Vos applications → Config</div>
+
+    <div class="form-row full">
+      <div class="fg">
+        <label class="fl">API Key</label>
+        <input class="fi" id="c-apiKey" placeholder="AIzaSy..." value="AIzaSyBYOQopUVm5vcjUur74ErhvehWC-UNiaz0">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="fg">
+        <label class="fl">Auth Domain</label>
+        <input class="fi" id="c-authDomain" placeholder="mon-projet.firebaseapp.com" value="pedagogia-18dda.firebaseapp.com">
+      </div>
+      <div class="fg">
+        <label class="fl">Project ID</label>
+        <input class="fi" id="c-projectId" placeholder="mon-projet" value="pedagogia-18dda">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="fg">
+        <label class="fl">Storage Bucket</label>
+        <input class="fi" id="c-storageBucket" placeholder="mon-projet.appspot.com" value="pedagogia-18dda.firebasestorage.app">
+      </div>
+      <div class="fg">
+        <label class="fl">Messaging Sender ID</label>
+        <input class="fi" id="c-messagingSenderId" placeholder="123456789" value="465869483173">
+      </div>
+    </div>
+    <div class="form-row full">
+      <div class="fg">
+        <label class="fl">App ID</label>
+        <input class="fi" id="c-appId" placeholder="1:123456789:web:abcdef123456" value="1:465869483173:web:5874b245342c020127b14c">
+      </div>
+    </div>
+
+    <div style="height:16px"></div>
+    <div class="config-title">2 — Comptes de démonstration à créer</div>
+    <div class="config-sub" style="margin-bottom:14px">Ces comptes seront créés automatiquement dans Firebase Auth</div>
+
+    <div class="form-row">
+      <div class="fg">
+        <label class="fl">E-mail Enseignant</label>
+        <input class="fi" id="c-teacherEmail" placeholder="prof@pedagogia.fr" value="prof@pedagogia.fr">
+      </div>
+      <div class="fg">
+        <label class="fl">Mot de passe Enseignant</label>
+        <input class="fi" id="c-teacherPwd" placeholder="motdepasse123" value="motdepasse123">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="fg">
+        <label class="fl">E-mail Élève</label>
+        <input class="fi" id="c-studentEmail" placeholder="eleve@pedagogia.fr" value="eleve@pedagogia.fr">
+      </div>
+      <div class="fg">
+        <label class="fl">Mot de passe Élève</label>
+        <input class="fi" id="c-studentPwd" placeholder="motdepasse123" value="motdepasse123">
+      </div>
+    </div>
+
+    <div style="height:18px"></div>
+    <button class="btn-main" onclick="startInit()" id="btn-start">
+      🚀 Lancer l'initialisation
+    </button>
+  </div>
+
+  <!-- PROGRESS -->
+  <div class="progress-card" id="progress-card">
+    <div class="prog-title">
+      <span id="prog-title-txt">Initialisation en cours…</span>
+    </div>
+    <div class="prog-bar-wrap"><div class="prog-bar" id="prog-bar"></div></div>
+    <div class="steps-list" id="steps-list"></div>
+    <div class="log-box" id="log-box"></div>
+  </div>
+
+  <!-- RESULT -->
+  <div class="result-card" id="result-card">
+    <div class="result-ic">🎉</div>
+    <div class="result-title">Firebase initialisé !</div>
+    <div class="result-sub">Toutes les collections ont été créées avec des données de démonstration.<br>Tu peux maintenant ouvrir <strong style="color:rgba(255,255,255,.8)">index.html</strong> et te connecter.</div>
+    <div class="creds-box">
+      <div class="creds-title">Comptes créés</div>
+      <div class="cred-row"><span class="cred-label">👩‍🏫 Enseignant</span><span class="cred-value" id="res-teacher-email"></span></div>
+      <div class="cred-row"><span class="cred-label">🔑 Mot de passe</span><span class="cred-value" id="res-teacher-pwd"></span></div>
+      <div class="cred-row" style="margin-top:8px"><span class="cred-label">🎓 Élève</span><span class="cred-value" id="res-student-email"></span></div>
+      <div class="cred-row"><span class="cred-label">🔑 Mot de passe</span><span class="cred-value" id="res-student-pwd"></span></div>
+    </div>
+    <div style="background:rgba(255,255,255,.05);border-radius:10px;padding:12px 14px;text-align:left;margin-bottom:16px">
+      <div style="font-size:10px;color:rgba(255,255,255,.3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;font-weight:600">Collections créées dans Firestore</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px">
+        <div style="font-size:12px;color:rgba(255,255,255,.5)">✓ users</div>
+        <div style="font-size:12px;color:rgba(255,255,255,.5)">✓ folders</div>
+        <div style="font-size:12px;color:rgba(255,255,255,.5)">✓ files</div>
+        <div style="font-size:12px;color:rgba(255,255,255,.5)">✓ assignments</div>
+        <div style="font-size:12px;color:rgba(255,255,255,.5)">✓ submissions</div>
+        <div style="font-size:12px;color:rgba(255,255,255,.5)">✓ aiContent</div>
+        <div style="font-size:12px;color:rgba(255,255,255,.5)">✓ events</div>
+        <div style="font-size:12px;color:rgba(255,255,255,.5)">✓ notifications</div>
+      </div>
+    </div>
+    <button class="btn-secondary" onclick="window.open('index.html')">→ Ouvrir index.html</button>
+    <button class="btn-secondary" onclick="copyConfig()" id="btn-copy-config" style="margin-top:6px">📋 Copier la config à coller dans les fichiers HTML</button>
+    <div id="copy-box" style="display:none;margin-top:10px;background:rgba(0,0,0,.3);border-radius:8px;padding:12px;font-family:monospace;font-size:11px;color:rgba(255,255,255,.6);text-align:left;white-space:pre;overflow-x:auto"></div>
+  </div>
+
+  <div class="result-card error-card" id="error-card">
+    <div class="result-ic">❌</div>
+    <div class="result-title">Une erreur est survenue</div>
+    <div class="result-sub" id="error-msg">Vérifie ta configuration Firebase et réessaie.</div>
+    <button class="btn-secondary" onclick="reset()">↩ Recommencer</button>
+  </div>
+
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import {
+  getAuth,
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import {
+  getFirestore,
+  doc, setDoc, addDoc,
+  collection, serverTimestamp, Timestamp
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+// ── ÉTAPES ────────────────────────────────────────────────
+const STEPS = [
+  { id: 'firebase',   label: 'Connexion à Firebase',               icon: '🔥' },
+  { id: 'teacher',    label: 'Création du compte enseignant',       icon: '👩‍🏫' },
+  { id: 'student',    label: 'Création du compte élève',            icon: '🎓' },
+  { id: 'folders',    label: 'Création des dossiers de cours',      icon: '📁' },
+  { id: 'files',      label: 'Création des fichiers de démonstration', icon: '📄' },
+  { id: 'assignments',label: 'Création des devoirs',                icon: '📋' },
+  { id: 'events',     label: 'Création des événements calendrier',  icon: '📅' },
+  { id: 'aiContent',  label: 'Création de contenus IA exemples',    icon: '✦'  },
+  { id: 'notif',      label: 'Création des notifications',          icon: '🔔' },
+  { id: 'done',       label: 'Finalisation',                        icon: '✅' },
+];
+
+let firebaseConfig = {};
+let db, auth, teacherUid, studentUid;
+let totalSteps = STEPS.length;
+let doneSteps = 0;
+
+// ── HELPERS UI ────────────────────────────────────────────
+function log(msg, type='info') {
+  const box = document.getElementById('log-box');
+  box.classList.add('show');
+  const line = document.createElement('div');
+  line.className = 'log-line ' + type;
+  line.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+  box.appendChild(line);
+  box.scrollTop = box.scrollHeight;
+}
+
+function setStep(id, state, detail='') {
+  const el = document.getElementById('step-'+id);
+  if (!el) return;
+  el.className = 'step-item ' + state;
+  const ic = el.querySelector('.step-ic');
+  const nm = el.querySelector('.step-name');
+  const dt = el.querySelector('.step-detail');
+  if (state === 'running') ic.innerHTML = '<div class="spin"></div>';
+  else if (state === 'done') ic.textContent = '✓';
+  else if (state === 'error') ic.textContent = '✗';
+  else ic.textContent = el.dataset.icon;
+  if (detail) dt.textContent = detail;
+  if (state === 'done' || state === 'error') {
+    doneSteps++;
+    const pct = Math.round((doneSteps / totalSteps) * 100);
+    document.getElementById('prog-bar').style.width = pct + '%';
+  }
+}
+
+function renderSteps() {
+  document.getElementById('steps-list').innerHTML = STEPS.map(s =>
+    `<div class="step-item" id="step-${s.id}" data-icon="${s.icon}">
+      <div class="step-ic">${s.icon}</div>
+      <div style="flex:1">
+        <div class="step-name">${s.label}</div>
+        <div class="step-detail"></div>
+      </div>
+    </div>`
+  ).join('');
+}
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+// ── INIT ──────────────────────────────────────────────────
+window.startInit = async function() {
+  // Lecture des champs
+  const fields = ['apiKey','authDomain','projectId','storageBucket','messagingSenderId','appId'];
+  for (const f of fields) {
+    const val = document.getElementById('c-'+f).value.trim();
+    if (!val) { alert(`Le champ "${f}" est vide. Remplis tous les champs.`); return; }
+    firebaseConfig[f] = val;
+  }
+  const teacherEmail = document.getElementById('c-teacherEmail').value.trim();
+  const teacherPwd   = document.getElementById('c-teacherPwd').value.trim();
+  const studentEmail = document.getElementById('c-studentEmail').value.trim();
+  const studentPwd   = document.getElementById('c-studentPwd').value.trim();
+  if (!teacherEmail||!teacherPwd||!studentEmail||!studentPwd) {
+    alert('Remplis tous les champs des comptes.'); return;
+  }
+
+  document.getElementById('config-card').style.display = 'none';
+  document.getElementById('progress-card').classList.add('show');
+  renderSteps();
+
+  try {
+    // 1. FIREBASE
+    setStep('firebase','running');
+    await sleep(400);
+    const app = initializeApp(firebaseConfig);
+    auth = getAuth(app);
+    db   = getFirestore(app);
+    setStep('firebase','done','Connexion établie');
+    log('Firebase initialisé avec succès','ok');
+
+    // 2. COMPTE ENSEIGNANT
+    setStep('teacher','running');
+    await sleep(300);
+    try {
+      const cred = await createUserWithEmailAndPassword(auth, teacherEmail, teacherPwd);
+      teacherUid = cred.user.uid;
+      await setDoc(doc(db,'users',teacherUid),{
+        uid: teacherUid,
+        name: 'Marie Laurent',
+        email: teacherEmail,
+        role: 'teacher',
+        school: 'Lycée Pro Jean Moulin',
+        subjects: ['Commerce','Relation client','Gestion'],
+        createdAt: serverTimestamp()
+      });
+      setStep('teacher','done', teacherEmail);
+      log('Compte enseignant créé : '+teacherEmail,'ok');
+    } catch(e) {
+      if (e.code === 'auth/email-already-in-use') {
+        const cred = await signInWithEmailAndPassword(auth, teacherEmail, teacherPwd);
+        teacherUid = cred.user.uid;
+        setStep('teacher','done','Compte existant récupéré');
+        log('Compte enseignant existant récupéré','info');
+      } else throw e;
+    }
+
+    // 3. COMPTE ÉLÈVE
+    setStep('student','running');
+    await sleep(300);
+    try {
+      const cred = await createUserWithEmailAndPassword(auth, studentEmail, studentPwd);
+      studentUid = cred.user.uid;
+      await setDoc(doc(db,'users',studentUid),{
+        uid: studentUid,
+        name: 'Lucas Martin',
+        email: studentEmail,
+        role: 'student',
+        class: 'Terminale Pro MCV',
+        createdAt: serverTimestamp()
+      });
+      setStep('student','done', studentEmail);
+      log('Compte élève créé : '+studentEmail,'ok');
+    } catch(e) {
+      if (e.code === 'auth/email-already-in-use') {
+        const cred = await signInWithEmailAndPassword(auth, studentEmail, studentPwd);
+        studentUid = cred.user.uid;
+        setStep('student','done','Compte existant récupéré');
+        log('Compte élève existant récupéré','info');
+      } else throw e;
+    }
+
+    // 4. DOSSIERS
+    setStep('folders','running');
+    await sleep(300);
+    const folderData = [
+      { name:'Relation client',    color:'sage',   visibility:'public',  parentId:null, fileCount:3 },
+      { name:'Gestion commerciale',color:'terra',  visibility:'public',  parentId:null, fileCount:2 },
+      { name:'Communication pro',  color:'blue',   visibility:'public',  parentId:null, fileCount:4 },
+      { name:'Évaluations',        color:'amber',  visibility:'privé',   parentId:null, fileCount:2 },
+      { name:'Ressources IA',      color:'purple', visibility:'public',  parentId:null, fileCount:5 },
+      { name:'Archives P1-P2',     color:'pink',   visibility:'privé',   parentId:null, fileCount:8 },
+    ];
+    const folderIds = [];
+    for (const f of folderData) {
+      const ref = await addDoc(collection(db,'folders'),{
+        uid: teacherUid, ...f,
+        type: 'folder',
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      });
+      folderIds.push(ref.id);
+      log('Dossier créé : '+f.name,'ok');
+    }
+    setStep('folders','done', folderData.length+' dossiers créés');
+
+    // 5. FICHIERS (métadonnées sans vrai fichier binaire)
+    setStep('files','running');
+    await sleep(300);
+    const filesData = [
+      { name:'Cours_Relation_Client_Chap1.pdf', mime:'application/pdf', size:2400000, folderId:folderIds[0], visibility:'public', url:'#' },
+      { name:'Cours_Relation_Client_Chap2.pdf', mime:'application/pdf', size:1800000, folderId:folderIds[0], visibility:'public', url:'#' },
+      { name:'Exercices_RC_P1.docx', mime:'application/vnd.openxmlformats-officedocument.wordprocessingml.document', size:840000, folderId:folderIds[0], visibility:'public', url:'#' },
+      { name:'Gestion_Commerciale_Intro.pdf',   mime:'application/pdf', size:3100000, folderId:folderIds[1], visibility:'public', url:'#' },
+      { name:'Présentation_Communication.pptx', mime:'application/vnd.openxmlformats-officedocument.presentationml.presentation', size:5100000, folderId:folderIds[2], visibility:'public', url:'#' },
+      { name:'Fiche_Vocabulaire_Pro.pdf',        mime:'application/pdf', size:900000,  folderId:folderIds[2], visibility:'public', url:'#' },
+      { name:'Évaluation_RC_P3.pdf',             mime:'application/pdf', size:1200000, folderId:folderIds[3], visibility:'privé', url:'#' },
+      { name:'Flashcards_IA_Vocabulaire.pdf',    mime:'application/pdf', size:700000,  folderId:folderIds[4], visibility:'public', url:'#' },
+      { name:'Quiz_Auto_Communication.pdf',      mime:'application/pdf', size:500000,  folderId:folderIds[4], visibility:'public', url:'#' },
+    ];
+    for (const f of filesData) {
+      await addDoc(collection(db,'files'),{
+        uid: teacherUid, ...f,
+        type: 'file',
+        storagePath: null,
+        createdAt: serverTimestamp()
+      });
+      log('Fichier créé : '+f.name,'ok');
+    }
+    setStep('files','done', filesData.length+' fichiers référencés');
+
+    // 6. DEVOIRS
+    setStep('assignments','running');
+    await sleep(300);
+    const now = new Date();
+    const future1 = new Date(now); future1.setDate(now.getDate()+7);
+    const future2 = new Date(now); future2.setDate(now.getDate()+14);
+    const past1   = new Date(now); past1.setDate(now.getDate()-5);
+
+    const assignmentsData = [
+      {
+        title: 'Analyse d\'un document commercial',
+        description: 'À partir du document fourni en cours, identifiez le type de communication utilisé et rédigez une analyse en 15 lignes minimum.',
+        classe: 'Terminale Pro MCV',
+        dueDate: Timestamp.fromDate(future1),
+        maxScore: 20,
+        isPublished: true,
+      },
+      {
+        title: 'Fiche de révision — Communication professionnelle',
+        description: 'Réalisez une fiche de révision synthétique (une page recto-verso) sur les notions de communication vues en cours.',
+        classe: 'Seconde Générale',
+        dueDate: Timestamp.fromDate(future2),
+        maxScore: 20,
+        isPublished: true,
+      },
+      {
+        title: 'Plan de vente commenté',
+        description: 'Rédigez un plan de vente complet pour le produit de votre choix. Justifiez chaque étape.',
+        classe: 'Première Pro',
+        dueDate: Timestamp.fromDate(past1),
+        maxScore: 20,
+        isPublished: true,
+      },
+      {
+        title: 'Quiz — Vocabulaire professionnel',
+        description: 'Complétez le quiz en ligne sur le vocabulaire professionnel vu en période 2.',
+        classe: 'Terminale Pro MCV',
+        dueDate: Timestamp.fromDate(future1),
+        maxScore: 10,
+        isPublished: true,
+      },
+    ];
+    const assignIds = [];
+    for (const a of assignmentsData) {
+      const ref = await addDoc(collection(db,'assignments'),{
+        uid: teacherUid, ...a,
+        type: 'assignment',
+        createdAt: serverTimestamp()
+      });
+      assignIds.push(ref.id);
+      log('Devoir créé : '+a.title,'ok');
+    }
+
+    // Rendu élève sur le 1er devoir
+    await addDoc(collection(db,'submissions'),{
+      uid: studentUid,
+      assignmentId: assignIds[0],
+      textResponse: 'Dans ce document commercial, la communication utilisée est de type externe. L\'entreprise s\'adresse à ses clients potentiels en utilisant un ton professionnel et persuasif. On identifie plusieurs techniques de communication : l\'argumentation bénéfices-preuves, la personnalisation du message et l\'appel à l\'action final.',
+      fileUrl: null,
+      status: 'graded',
+      score: 14,
+      maxScore: 20,
+      teacherComment: 'Bon travail de structure. La définition de l\'écoute active est incorrecte — voir le cours. Développe l\'importance du feedback.',
+      submittedAt: serverTimestamp(),
+      createdAt: serverTimestamp()
+    });
+    log('Rendu élève créé avec note','ok');
+    setStep('assignments','done', assignmentsData.length+' devoirs + 1 rendu corrigé');
+
+    // 7. ÉVÉNEMENTS
+    setStep('events','running');
+    await sleep(300);
+    const d1 = new Date(now); d1.setDate(now.getDate()+2); d1.setHours(8,0,0);
+    const d2 = new Date(now); d2.setDate(now.getDate()+5); d2.setHours(23,59,0);
+    const d3 = new Date(now); d3.setDate(now.getDate()+9); d3.setHours(10,0,0);
+    const d4 = new Date(now); d4.setDate(now.getDate()+15);d4.setHours(14,0,0);
+    const eventsData = [
+      { title:'Évaluation Relation client',    type:'evaluation', classe:'Term. Pro MCV', date:Timestamp.fromDate(d1) },
+      { title:'Rendu — Plan de vente',         type:'devoir',     classe:'Première Pro',  date:Timestamp.fromDate(d2) },
+      { title:'Séance — Communication pro',    type:'cours',      classe:'Seconde',        date:Timestamp.fromDate(d3) },
+      { title:'Conseil de classe',             type:'reunion',    classe:'Term. Pro MCV',  date:Timestamp.fromDate(d4) },
+    ];
+    for (const e of eventsData) {
+      await addDoc(collection(db,'events'),{
+        uid: teacherUid, ...e,
+        createdAt: serverTimestamp()
+      });
+      log('Événement créé : '+e.title,'ok');
+    }
+    setStep('events','done', eventsData.length+' événements créés');
+
+    // 8. CONTENUS IA
+    setStep('aiContent','running');
+    await sleep(300);
+    const aiExamples = [
+      {
+        type: 'résumé',
+        sourceText: 'La communication professionnelle…',
+        result: `📋 RÉSUMÉ INTELLIGENT\n\n▸ Définition : échanges professionnels verbaux/non verbaux\n▸ 2 types : interne (collaborateurs) et externe (clients)\n▸ 4 piliers d'efficacité :\n   1. Clarté du message\n   2. Adaptation au destinataire\n   3. Choix du bon canal\n   4. Écoute active\n\n🎯 Notion clé : La communication est un processus bidirectionnel.`
+      },
+      {
+        type: 'quiz',
+        sourceText: 'La communication professionnelle comprend…',
+        result: `🎯 QUIZ AUTO-GÉNÉRÉ\n\nQ1. QCM — Qu'est-ce que la communication externe ?\n● Avec clients/partenaires\n\nQ2. VRAI/FAUX — L'écoute active est passive.\n● FAUX — Elle implique reformulation et questionnement.\n\nQ3. Citez les 4 piliers d'une communication efficace.\nRéponse : clarté, adaptation, canal, écoute active`
+      },
+      {
+        type: 'flashcards',
+        sourceText: 'Vocabulaire professionnel…',
+        result: `🃏 FLASHCARDS (6 cartes)\n\n┌ Communication interne\n└ Échanges au sein de l'entreprise\n\n┌ Communication externe\n└ Échanges avec clients et partenaires\n\n┌ Écoute active\n└ Technique : reformulation, questionnement, empathie`
+      },
+    ];
+    for (const ai of aiExamples) {
+      await addDoc(collection(db,'aiContent'),{
+        uid: teacherUid, ...ai,
+        type2: 'aiContent',
+        createdAt: serverTimestamp()
+      });
+      log('Contenu IA créé : '+ai.type,'ok');
+    }
+    setStep('aiContent','done', aiExamples.length+' contenus IA créés');
+
+    // 9. NOTIFICATIONS
+    setStep('notif','running');
+    await sleep(300);
+    const notifsData = [
+      { userId:teacherUid, title:'Lucas M. a rendu son devoir',  body:'Séquence Communication — Terminale Pro MCV', type:'submission', isRead:false },
+      { userId:teacherUid, title:'Quiz IA généré avec succès',   body:'Vocabulaire professionnel — 5 questions',   type:'ai',         isRead:false },
+      { userId:teacherUid, title:'Rappel : Évaluation demain',   body:'Terminale Pro MCV — 8h00',                  type:'reminder',   isRead:true  },
+      { userId:studentUid, title:'Devoir corrigé disponible',    body:'Note : 14/20 — Analyse document commercial', type:'grade',      isRead:false },
+      { userId:studentUid, title:'Nouveau devoir publié',        body:'Quiz Vocabulaire — Terminale Pro MCV',       type:'assignment', isRead:false },
+    ];
+    for (const n of notifsData) {
+      await addDoc(collection(db,'notifications'),{
+        ...n,
+        actionUrl: '/',
+        createdAt: serverTimestamp()
+      });
+    }
+    setStep('notif','done', notifsData.length+' notifications créées');
+
+    // 10. DONE
+    setStep('done','running');
+    await sleep(500);
+    setStep('done','done','Tout est prêt !');
+    document.getElementById('prog-bar').style.width = '100%';
+    document.getElementById('prog-title-txt').textContent = '✅ Initialisation terminée !';
+
+    await sleep(600);
+
+    // Affiche le résultat
+    document.getElementById('res-teacher-email').textContent = teacherEmail;
+    document.getElementById('res-teacher-pwd').textContent   = teacherPwd;
+    document.getElementById('res-student-email').textContent = studentEmail;
+    document.getElementById('res-student-pwd').textContent   = studentPwd;
+    document.getElementById('result-card').classList.add('show');
+
+    // Stocke la config pour copier
+    window._finalConfig = firebaseConfig;
+
+  } catch(err) {
+    log('ERREUR : '+err.message,'err');
+    document.getElementById('error-msg').textContent = err.message;
+    document.getElementById('error-card').classList.add('show');
+    console.error(err);
+  }
+};
+
+window.reset = function() {
+  location.reload();
+};
+
+window.copyConfig = function() {
+  const c = window._finalConfig;
+  const txt = `// ─── COLLE CECI dans index.html, dashboard.html ET eleve.html ───
+const firebaseConfig = {
+  apiKey: "${c.apiKey}",
+  authDomain: "${c.authDomain}",
+  projectId: "${c.projectId}",
+  storageBucket: "${c.storageBucket}",
+  messagingSenderId: "${c.messagingSenderId}",
+  appId: "${c.appId}"
+};`;
+  navigator.clipboard.writeText(txt).catch(()=>{});
+  const box = document.getElementById('copy-box');
+  box.textContent = txt;
+  box.style.display = 'block';
+  document.getElementById('btn-copy-config').textContent = '✓ Copié !';
+};
+</script>
+</body>
+</html>

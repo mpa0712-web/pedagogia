@@ -1,0 +1,889 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pédagogia — Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;0,700;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --sage:#3D6B4F;--sage-l:#5A8C6A;--sage-p:#EAF2ED;
+  --terra:#B8623A;--terra-p:#FBF0EA;
+  --ink:#1A1714;--ink-60:#5C574F;--ink-30:#A09990;--ink-10:#F0EBE3;
+  --sand:#FAF6F0;--white:#fff;
+  --amber:#9C6B1E;--amber-p:#FDF5E6;
+  --blue:#1A4F9C;--blue-p:#EBF2FF;
+  --purple:#5B2E9C;--purple-p:#F3EEFF;
+  --r:12px;--r-sm:8px;
+  --sh:0 1px 3px rgba(26,23,20,.07),0 1px 2px rgba(26,23,20,.04);
+  --sh-md:0 4px 16px rgba(26,23,20,.10);
+  --sh-lg:0 8px 32px rgba(26,23,20,.13);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--sand);color:var(--ink);overflow:hidden}
+/* ── LAYOUT ── */
+.app{display:flex;height:100vh}
+.sidebar{width:224px;flex-shrink:0;background:var(--ink);display:flex;flex-direction:column;overflow:hidden}
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.topbar{height:54px;flex-shrink:0;background:var(--white);border-bottom:1px solid var(--ink-10);display:flex;align-items:center;padding:0 20px;gap:10px}
+.content{flex:1;overflow-y:auto;padding:22px}
+/* ── SIDEBAR ── */
+.s-logo{padding:18px 18px 14px;border-bottom:1px solid rgba(255,255,255,.07)}
+.s-logo .wm{font-family:'Lora',serif;font-size:18px;font-weight:700;color:#fff;letter-spacing:-.3px}
+.s-logo .tg{font-size:9px;color:rgba(255,255,255,.3);letter-spacing:1.5px;text-transform:uppercase;margin-top:2px}
+.s-user{padding:10px 14px;display:flex;align-items:center;gap:9px;border-bottom:1px solid rgba(255,255,255,.05)}
+.av{width:30px;height:30px;border-radius:50%;background:var(--sage-l);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;flex-shrink:0}
+.u-nm{font-size:11.5px;font-weight:500;color:#fff}.u-rl{font-size:9.5px;color:rgba(255,255,255,.3);margin-top:1px}
+.s-nav{flex:1;overflow-y:auto;padding:10px 0}
+.nav-lbl{font-size:8.5px;color:rgba(255,255,255,.2);text-transform:uppercase;letter-spacing:1.5px;padding:8px 18px 4px}
+.nav-item{display:flex;align-items:center;gap:9px;padding:7px 16px;font-size:11.5px;color:rgba(255,255,255,.5);cursor:pointer;transition:all .12s;margin:1px 8px;border-radius:8px}
+.nav-item:hover{background:rgba(255,255,255,.06);color:rgba(255,255,255,.85)}
+.nav-item.active{background:var(--sage-l);color:#fff}
+.nav-ic{font-size:14px;width:16px;text-align:center}
+.nav-badge{margin-left:auto;background:var(--terra);color:#fff;font-size:8px;padding:1px 5px;border-radius:7px;font-weight:700}
+/* ── TOPBAR ── */
+.pt{font-size:15px;font-weight:600}
+.srch{flex:1;max-width:280px;padding:6px 12px 6px 32px;border-radius:16px;border:none;background:var(--ink-10);font-size:12px;color:var(--ink);outline:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='13' height='13' fill='none' viewBox='0 0 24 24'%3E%3Ccircle cx='11' cy='11' r='8' stroke='%23A09990' stroke-width='2'/%3E%3Cpath d='m21 21-4.35-4.35' stroke='%23A09990' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:10px center}
+.tb-r{margin-left:auto;display:flex;align-items:center;gap:7px}
+.btn{display:inline-flex;align-items:center;gap:5px;padding:6px 13px;border-radius:7px;font-size:11.5px;font-weight:600;cursor:pointer;border:none;transition:all .12s;font-family:'DM Sans',sans-serif;white-space:nowrap}
+.btn-p{background:var(--sage-l);color:#fff}.btn-p:hover{background:var(--sage)}
+.btn-g{background:transparent;color:var(--ink-60);border:1px solid var(--ink-10)}.btn-g:hover{background:var(--ink-10)}
+.btn-ai{background:linear-gradient(135deg,#5B2E9C,#3D6B4F);color:#fff}.btn-ai:hover{opacity:.9}
+.btn-sm{padding:4px 10px;font-size:10.5px}
+.btn-danger{background:transparent;color:var(--terra);border:1px solid rgba(184,98,58,.3)}.btn-danger:hover{background:var(--terra-p)}
+/* ── SCREENS ── */
+.screen{display:none;animation:fi .2s ease}
+.screen.active{display:block}
+@keyframes fi{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+/* ── GENERIC ── */
+.card{background:var(--white);border-radius:var(--r);box-shadow:var(--sh);border:1px solid var(--ink-10);overflow:hidden}
+.card-hd{padding:14px 18px 11px;border-bottom:1px solid var(--ink-10);display:flex;align-items:center;justify-content:space-between}
+.card-title{font-size:13.5px;font-weight:600}
+.badge{display:inline-flex;align-items:center;padding:2px 7px;border-radius:8px;font-size:9.5px;font-weight:700}
+.bg{background:var(--sage-p);color:var(--sage)}.bt{background:var(--terra-p);color:var(--terra)}.ba{background:var(--amber-p);color:var(--amber)}.bb{background:var(--blue-p);color:var(--blue)}.bp{background:var(--purple-p);color:var(--purple)}
+.tag{background:var(--ink-10);color:var(--ink-60);font-size:9.5px;padding:2px 7px;border-radius:7px}
+.ibt{width:27px;height:27px;border-radius:6px;border:none;background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:13px;color:var(--ink-30);transition:all .12s}
+.ibt:hover{background:var(--ink-10);color:var(--ink)}
+/* ── DASHBOARD ── */
+.welcome{background:linear-gradient(135deg,var(--ink) 0%,#26180A 60%,#0A1C10 100%);border-radius:16px;padding:22px 26px;margin-bottom:18px;position:relative;overflow:hidden}
+.welcome::before{content:'';position:absolute;right:-20px;top:-20px;width:180px;height:180px;background:radial-gradient(circle,rgba(61,107,79,.3) 0%,transparent 70%);pointer-events:none}
+.wg{font-family:'Lora',serif;font-size:20px;color:#fff;font-weight:700;margin-bottom:3px}
+.ws{font-size:11.5px;color:rgba(255,255,255,.4)}
+.wchips{display:flex;gap:7px;flex-wrap:wrap;margin-top:13px}
+.chip{background:rgba(255,255,255,.08);color:rgba(255,255,255,.75);border:1px solid rgba(255,255,255,.12);padding:5px 11px;border-radius:14px;font-size:10.5px;cursor:pointer;transition:all .12s}
+.chip:hover{background:rgba(255,255,255,.15)}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:18px}
+.stat{background:var(--white);border-radius:var(--r);padding:14px 16px;box-shadow:var(--sh);border:1px solid var(--ink-10)}
+.sl{font-size:9.5px;color:var(--ink-30);text-transform:uppercase;letter-spacing:.5px}
+.sv{font-size:25px;font-weight:700;line-height:1;margin:4px 0 2px;font-family:'Lora',serif}
+.sd{font-size:10.5px}.dup{color:var(--sage)}.ddn{color:var(--terra)}
+.two-col{display:grid;grid-template-columns:1fr 290px;gap:14px}
+.crow{display:flex;align-items:center;gap:11px;padding:9px 16px;cursor:pointer;transition:background .1s}
+.crow:hover{background:var(--sand)}
+.cth{width:38px;height:38px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0}
+.cnm{font-size:12.5px;font-weight:600}.cmt{font-size:10.5px;color:var(--ink-30);margin-top:1px}
+.arow{display:flex;gap:9px;padding:8px 16px;align-items:flex-start}
+.adot{width:7px;height:7px;border-radius:50%;flex-shrink:0;margin-top:5px}
+.atxt{font-size:11.5px;color:var(--ink-60);line-height:1.5}.atm{font-size:10px;color:var(--ink-30)}
+/* ── RESOURCES ── */
+.bc{display:flex;align-items:center;gap:5px;font-size:11.5px;color:var(--ink-30);margin-bottom:16px}
+.bc span{cursor:pointer}.bc span:hover{color:var(--sage)}.bc .bc-sep{color:var(--ink-10)}.bc .bc-cur{color:var(--ink);font-weight:600}
+.fgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(148px,1fr));gap:9px;margin-bottom:18px}
+.fc{background:var(--white);border:1px solid var(--ink-10);border-radius:var(--r);padding:14px;cursor:pointer;transition:all .15s;position:relative;overflow:hidden}
+.fc:hover{box-shadow:var(--sh-md);transform:translateY(-2px)}
+.fc::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;border-radius:12px 12px 0 0}
+.fg::before{background:var(--sage-l)}.ft::before{background:var(--terra)}.fa::before{background:#D97706}.fb::before{background:var(--blue)}.fp::before{background:var(--purple)}.fk::before{background:#BE185D}
+.fi2{font-size:25px;margin-bottom:7px}.fn{font-size:12px;font-weight:600}.fc2{font-size:9.5px;color:var(--ink-30);margin-top:2px}
+.flist{display:flex;flex-direction:column;gap:7px}
+.frow{background:var(--white);border:1px solid var(--ink-10);border-radius:var(--r-sm);padding:10px 13px;display:flex;align-items:center;gap:11px;cursor:pointer;transition:box-shadow .12s}
+.frow:hover{box-shadow:var(--sh)}
+.fic{width:33px;height:33px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+.fpdf{background:#FEE2E2}.fdoc{background:#DBEAFE}.fppt{background:#FEF3C7}.fimg{background:#F0FDF4}.fai{background:var(--purple-p)}
+.ffn{font-size:12px;font-weight:600}.ffm{font-size:10px;color:var(--ink-30);margin-top:1px}
+.ftags{display:flex;gap:4px;margin-left:auto;flex-wrap:wrap}
+.fact{display:flex;gap:3px;flex-shrink:0}
+/* ── DEVOIRS ── */
+.frow2{display:flex;gap:7px;margin-bottom:16px;flex-wrap:wrap}
+.fchip{padding:5px 12px;border-radius:14px;font-size:10.5px;font-weight:600;cursor:pointer;border:1px solid var(--ink-10);background:var(--white);color:var(--ink-60);transition:all .12s}
+.fchip.active{background:var(--ink);color:#fff;border-color:var(--ink)}
+.atbl{width:100%;border-collapse:collapse}
+.atbl th{text-align:left;font-size:9.5px;color:var(--ink-30);text-transform:uppercase;letter-spacing:.5px;padding:8px 12px;border-bottom:1px solid var(--ink-10)}
+.atbl td{padding:10px 12px;border-bottom:1px solid rgba(26,23,20,.04);font-size:12px;vertical-align:middle}
+.atbl tr:hover td{background:var(--sand)}
+.att{font-weight:600}.atsub{font-size:10px;color:var(--ink-30);margin-top:1px}
+.prog{display:flex;align-items:center;gap:7px}
+.pb{flex:1;height:3px;background:var(--ink-10);border-radius:2px;overflow:hidden}
+.pf{height:100%;border-radius:2px;background:var(--sage-l)}
+.pt2{font-size:10px;color:var(--ink-30);white-space:nowrap}
+.pill{display:inline-flex;align-items:center;gap:3px;padding:2px 7px;border-radius:8px;font-size:9.5px;font-weight:700}
+.pill .dot{width:5px;height:5px;border-radius:50%}
+.pok{background:var(--sage-p);color:var(--sage)}.ppd{background:var(--amber-p);color:var(--amber)}.pla{background:var(--terra-p);color:var(--terra)}
+/* ── AI ── */
+.ai-hero{background:linear-gradient(135deg,#14092A 0%,#0A1C10 100%);border-radius:16px;padding:22px 26px;margin-bottom:18px;display:flex;align-items:center;justify-content:space-between}
+.ai-ttl{font-family:'Lora',serif;font-size:20px;color:#fff;font-weight:700;margin-bottom:5px}
+.ai-sub{font-size:11.5px;color:rgba(255,255,255,.4);max-width:340px;line-height:1.6}
+.ai-orb{width:68px;height:68px;border-radius:50%;background:conic-gradient(from 0deg,#9F7AEA,#3D6B4F,#B8623A,#9F7AEA);display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0;box-shadow:0 0 30px rgba(159,122,234,.3)}
+.aigrid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-bottom:18px}
+.aic{background:var(--white);border:1px solid var(--ink-10);border-radius:var(--r);padding:15px;cursor:pointer;transition:all .15s}
+.aic:hover{box-shadow:var(--sh-md);border-color:var(--sage-l);transform:translateY(-2px)}
+.aic.sel{border-color:var(--purple);background:var(--purple-p);box-shadow:0 0 0 2px rgba(91,46,156,.15)}
+.aic-ic{font-size:21px;margin-bottom:7px}.aic-ttl{font-size:12px;font-weight:700;margin-bottom:2px}.aic-desc{font-size:10.5px;color:var(--ink-60);line-height:1.5}
+.ai-area{background:var(--white);border:1px solid var(--ink-10);border-radius:var(--r);padding:18px}
+.dsrc{background:var(--sand);border:1px solid var(--ink-10);border-radius:8px;padding:11px 14px;font-size:11.5px;color:var(--ink-60);line-height:1.7;margin-bottom:12px}
+.dout{background:var(--purple-p);border:1px solid rgba(91,46,156,.15);border-radius:8px;padding:11px 14px;display:none}
+.dout.show{display:block;animation:fi .3s ease}
+.dout-lbl{font-size:9px;font-weight:700;color:var(--purple);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
+.gen-btn{display:flex;align-items:center;justify-content:center;gap:7px;background:linear-gradient(135deg,var(--purple),var(--sage-l));color:#fff;border:none;border-radius:8px;padding:9px 16px;font-size:12px;font-weight:700;cursor:pointer;transition:all .15s;margin-bottom:12px;width:100%;font-family:'DM Sans',sans-serif}
+.gen-btn:hover{opacity:.9;transform:translateY(-1px)}
+.gen-btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
+/* ── CALENDAR ── */
+.cal-layout{display:grid;grid-template-columns:1fr 255px;gap:14px}
+.cal-card{background:var(--white);border-radius:var(--r);box-shadow:var(--sh);border:1px solid var(--ink-10);overflow:hidden}
+.cal-nav{padding:13px 16px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--ink-10)}
+.cnb{background:none;border:1px solid var(--ink-10);border-radius:6px;width:26px;height:26px;cursor:pointer;font-size:14px;color:var(--ink-60);display:flex;align-items:center;justify-content:center}
+.cal-dnames{display:grid;grid-template-columns:repeat(7,1fr)}
+.cdn{text-align:center;padding:7px 0;font-size:9px;text-transform:uppercase;letter-spacing:.5px;color:var(--ink-30)}
+.cal-days{display:grid;grid-template-columns:repeat(7,1fr);padding:3px 6px 7px}
+.cday{aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:7px;font-size:11.5px;cursor:pointer;position:relative;margin:2px;transition:background .1s;color:var(--ink-60)}
+.cday:hover{background:var(--sand)}
+.cday.today{background:var(--sage-l);color:#fff;font-weight:700}
+.cday.hev::after{content:'';width:4px;height:4px;border-radius:50%;background:var(--terra);position:absolute;bottom:3px}
+.cday.today.hev::after{background:#fff}
+.cday.other{color:var(--ink-10)}
+.ecard{background:var(--white);border:1px solid var(--ink-10);border-radius:var(--r-sm);padding:9px 11px;display:flex;gap:9px;box-shadow:var(--sh);margin-bottom:8px;cursor:pointer;transition:box-shadow .12s}
+.ecard:hover{box-shadow:var(--sh-md)}
+.edate{display:flex;flex-direction:column;align-items:center;justify-content:center;width:34px;flex-shrink:0}
+.emon{font-size:8px;text-transform:uppercase;color:var(--ink-30)}.eday{font-size:18px;font-weight:700;line-height:1;font-family:'Lora',serif}
+.ettl{font-size:12px;font-weight:600}.ecls{font-size:10px;color:var(--ink-30);margin-top:2px}
+.etype{padding:2px 6px;border-radius:5px;font-size:9px;font-weight:700;margin-top:4px;display:inline-block}
+/* ── MODAL ── */
+.ov{display:none;position:fixed;inset:0;background:rgba(26,23,20,.5);z-index:200;align-items:center;justify-content:center;backdrop-filter:blur(3px)}
+.ov.open{display:flex}
+.modal{background:var(--white);border-radius:16px;width:460px;max-height:85vh;overflow-y:auto;padding:22px;box-shadow:var(--sh-lg)}
+.modal-title{font-family:'Lora',serif;font-size:17px;font-weight:700}.modal-sub{font-size:11.5px;color:var(--ink-60);margin-top:3px;margin-bottom:18px}
+.mc{float:right;background:none;border:none;font-size:20px;cursor:pointer;color:var(--ink-30);line-height:1}
+.fg2{margin-bottom:12px}
+.fl{font-size:10.5px;font-weight:700;color:var(--ink-60);margin-bottom:4px;display:block;text-transform:uppercase;letter-spacing:.3px}
+.fi,.fs,.fta{width:100%;padding:8px 11px;border-radius:7px;border:1px solid var(--ink-10);font-size:12.5px;color:var(--ink);background:var(--sand);outline:none;font-family:'DM Sans',sans-serif;transition:border .12s}
+.fi:focus,.fs:focus,.fta:focus{border-color:var(--sage-l)}
+.fta{min-height:70px;resize:vertical}
+.cdots{display:flex;gap:8px;flex-wrap:wrap}
+.cdot2{width:22px;height:22px;border-radius:50%;cursor:pointer;transition:transform .12s;flex-shrink:0}
+.cdot2:hover{transform:scale(1.2)}
+.cdot2.sel{outline:3px solid var(--ink);outline-offset:2px}
+.mf{display:flex;justify-content:flex-end;gap:7px;margin-top:18px;padding-top:14px;border-top:1px solid var(--ink-10)}
+/* ── TOAST ── */
+.toast{position:fixed;bottom:24px;right:24px;background:var(--ink);color:#fff;padding:12px 18px;border-radius:10px;font-size:12.5px;font-weight:500;z-index:999;transform:translateY(80px);opacity:0;transition:all .3s;pointer-events:none;max-width:320px}
+.toast.show{transform:translateY(0);opacity:1}
+.toast.success{background:var(--sage)}
+.toast.error{background:var(--terra)}
+/* ── SPINNER ── */
+.spin{width:18px;height:18px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:rot .7s linear infinite;display:inline-block;vertical-align:middle;margin-right:6px}
+@keyframes rot{to{transform:rotate(360deg)}}
+/* empty state */
+.empty{padding:36px 24px;text-align:center;color:var(--ink-30)}
+.empty-ic{font-size:36px;margin-bottom:10px}
+.empty-txt{font-size:13px}
+</style>
+</head>
+<body>
+<div class="app">
+<!-- ══ SIDEBAR ══ -->
+<nav class="sidebar">
+  <div class="s-logo"><div class="wm">Pédagogia</div><div class="tg">Espace Enseignant</div></div>
+  <div class="s-user">
+    <div class="av" id="s-av">ML</div>
+    <div><div class="u-nm" id="s-nm">Chargement…</div><div class="u-rl">Enseignant(e)</div></div>
+  </div>
+  <div class="s-nav">
+    <div class="nav-lbl">Principal</div>
+    <div class="nav-item active" data-screen="dashboard"><span class="nav-ic">⌂</span> Tableau de bord</div>
+    <div class="nav-item" data-screen="resources"><span class="nav-ic">📁</span> Ressources</div>
+    <div class="nav-item" data-screen="assignments"><span class="nav-ic">📋</span> Devoirs <span class="nav-badge" id="badge-assign">0</span></div>
+    <div class="nav-item" data-screen="calendar"><span class="nav-ic">📅</span> Calendrier</div>
+    <div class="nav-lbl" style="margin-top:8px">Outils IA</div>
+    <div class="nav-item" data-screen="ai"><span class="nav-ic">✦</span> Assistant IA</div>
+    <div class="nav-lbl" style="margin-top:8px">Compte</div>
+    <div class="nav-item" onclick="logout()"><span class="nav-ic">↩</span> Déconnexion</div>
+  </div>
+</nav>
+
+<!-- ══ MAIN ══ -->
+<div class="main">
+  <div class="topbar">
+    <div class="pt" id="pt">Tableau de bord</div>
+    <input class="srch" type="text" placeholder="Rechercher…" id="srch-input">
+    <div class="tb-r">
+      <button class="btn btn-g btn-sm" onclick="openModal('new-folder')">📁 Dossier</button>
+      <button class="btn btn-g btn-sm" onclick="openModal('new-assign')">📋 Devoir</button>
+      <button class="btn btn-ai btn-sm" onclick="nav('ai')">✦ IA</button>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- ═══ DASHBOARD ═══ -->
+    <div class="screen active" id="screen-dashboard">
+      <div class="welcome">
+        <div class="wg" id="w-greeting">Bonjour 👋</div>
+        <div class="ws" id="w-date"></div>
+        <div class="wchips">
+          <div class="chip" onclick="nav('assignments')">📋 Devoirs en attente</div>
+          <div class="chip" onclick="nav('resources')">📁 Mes ressources</div>
+          <div class="chip" onclick="nav('ai')">✦ Générer avec l'IA</div>
+          <div class="chip" onclick="openModal('new-assign')">📌 Créer un devoir</div>
+        </div>
+      </div>
+      <div class="stats">
+        <div class="stat"><div class="sl">Dossiers créés</div><div class="sv" id="stat-folders">—</div><div class="sd dup">↑ Ressources</div></div>
+        <div class="stat"><div class="sl">Fichiers uploadés</div><div class="sv" id="stat-files">—</div><div class="sd dup">↑ Documents</div></div>
+        <div class="stat"><div class="sl">Devoirs actifs</div><div class="sv" id="stat-assigns">—</div><div class="sd" style="color:var(--amber)">En cours</div></div>
+        <div class="stat"><div class="sl">Contenus IA</div><div class="sv" id="stat-ai">—</div><div class="sd dup">↑ Générés</div></div>
+      </div>
+      <div class="two-col">
+        <div class="card">
+          <div class="card-hd"><span class="card-title">Dossiers récents</span><span style="font-size:10.5px;color:var(--sage);cursor:pointer" onclick="nav('resources')">Voir tous →</span></div>
+          <div id="recent-folders-list"></div>
+        </div>
+        <div class="card">
+          <div class="card-hd"><span class="card-title">Activité récente</span></div>
+          <div id="activity-list"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ RESOURCES ═══ -->
+    <div class="screen" id="screen-resources">
+      <div class="bc" id="breadcrumb">
+        <span onclick="loadFolders(null)" class="bc-cur">Mes ressources</span>
+      </div>
+      <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">
+        <button class="btn btn-p btn-sm" onclick="openModal('new-folder')">📁 Nouveau dossier</button>
+        <button class="btn btn-g btn-sm" onclick="document.getElementById('file-input').click()">⬆ Importer fichier</button>
+        <input type="file" id="file-input" style="display:none" multiple accept=".pdf,.docx,.pptx,.jpg,.jpeg,.png,.mp3,.mp4" onchange="uploadFiles(event)">
+        <button class="btn btn-ai btn-sm" onclick="nav('ai')">✦ Générer avec IA</button>
+      </div>
+      <div id="folder-grid" class="fgrid"></div>
+      <div id="file-section" style="display:none">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+          <span style="font-size:13px;font-weight:600">Fichiers</span>
+        </div>
+        <div class="flist" id="file-list"></div>
+      </div>
+    </div>
+
+    <!-- ═══ ASSIGNMENTS ═══ -->
+    <div class="screen" id="screen-assignments">
+      <div class="frow2">
+        <div class="fchip active" onclick="filterA(this,'all')">Tous</div>
+        <div class="fchip" onclick="filterA(this,'active')">Actifs</div>
+        <div class="fchip" onclick="filterA(this,'past')">Passés</div>
+      </div>
+      <div class="card">
+        <div class="card-hd"><span class="card-title">Mes devoirs</span><button class="btn btn-p btn-sm" onclick="openModal('new-assign')">+ Nouveau</button></div>
+        <div id="assign-list" style="padding:0"></div>
+      </div>
+    </div>
+
+    <!-- ═══ AI ═══ -->
+    <div class="screen" id="screen-ai">
+      <div class="ai-hero">
+        <div><div class="ai-ttl">✦ Assistant IA Pédagogique</div><div class="ai-sub">Transformez vos documents en quiz, fiches, flashcards, exercices et évaluations en quelques secondes.</div></div>
+        <div class="ai-orb">✦</div>
+      </div>
+      <div class="aigrid">
+        <div class="aic" onclick="selAI('résumé',this)"><div class="aic-ic">📋</div><div class="aic-ttl">Résumé intelligent</div><div class="aic-desc">Fiche synthèse avec points clés</div></div>
+        <div class="aic" onclick="selAI('quiz',this)"><div class="aic-ic">🎯</div><div class="aic-ttl">Quiz automatique</div><div class="aic-desc">QCM + vrai/faux générés</div></div>
+        <div class="aic" onclick="selAI('flashcards',this)"><div class="aic-ic">🃏</div><div class="aic-ttl">Flashcards</div><div class="aic-desc">Cartes recto-verso pour réviser</div></div>
+        <div class="aic" onclick="selAI('exercices',this)"><div class="aic-ic">✏️</div><div class="aic-ttl">Exercices adaptés</div><div class="aic-desc">Niveaux 1, 2, 3 différenciés</div></div>
+        <div class="aic" onclick="selAI('evaluation',this)"><div class="aic-ic">📊</div><div class="aic-ttl">Évaluation type</div><div class="aic-desc">Devoir avec barème et corrigé</div></div>
+        <div class="aic" onclick="selAI('simplifié',this)"><div class="aic-ic">🌱</div><div class="aic-ttl">Version simplifiée</div><div class="aic-desc">Adapté DYS / élèves en difficulté</div></div>
+      </div>
+      <div class="ai-area card">
+        <div style="font-size:13px;font-weight:600;margin-bottom:12px">Zone de génération — <span id="ai-mode-lbl" style="color:var(--purple);font-size:12px">Sélectionnez un outil ci-dessus</span></div>
+        <div style="margin-bottom:10px">
+          <label class="fl">Votre contenu / texte de cours</label>
+          <textarea class="fta" id="ai-source" rows="5" placeholder="Collez ici votre texte de cours, vos notes, ou le contenu que vous voulez transformer…"></textarea>
+        </div>
+        <button class="gen-btn" id="gen-btn" onclick="runAI()" disabled>✦ Générer le contenu</button>
+        <div class="dout" id="dout">
+          <div class="dout-lbl" id="dout-lbl">Résultat IA</div>
+          <pre id="dout-txt" style="font-family:inherit;font-size:11.5px;white-space:pre-wrap;line-height:1.7;color:var(--ink-60)"></pre>
+          <div style="display:flex;gap:7px;margin-top:12px;flex-wrap:wrap">
+            <button class="btn btn-p btn-sm" onclick="saveAI()">💾 Sauvegarder</button>
+            <button class="btn btn-g btn-sm" onclick="runAI()">↻ Régénérer</button>
+            <button class="btn btn-g btn-sm" onclick="copyAI()">📋 Copier</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ CALENDAR ═══ -->
+    <div class="screen" id="screen-calendar">
+      <div class="cal-layout">
+        <div class="cal-card">
+          <div class="cal-nav">
+            <button class="cnb" onclick="calNav(-1)">‹</button>
+            <span style="font-size:13.5px;font-weight:600" id="cal-title">Mai 2026</span>
+            <button class="cnb" onclick="calNav(1)">›</button>
+          </div>
+          <div class="cal-dnames"><div class="cdn">L</div><div class="cdn">M</div><div class="cdn">M</div><div class="cdn">J</div><div class="cdn">V</div><div class="cdn">S</div><div class="cdn">D</div></div>
+          <div class="cal-days" id="cal-grid"></div>
+        </div>
+        <div>
+          <div style="font-size:13px;font-weight:600;margin-bottom:12px">Événements à venir</div>
+          <div id="events-list"></div>
+          <button class="btn btn-p" style="width:100%;margin-top:12px;justify-content:center" onclick="openModal('new-event')">+ Ajouter un événement</button>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /main -->
+</div><!-- /app -->
+
+<!-- MODALS -->
+<div class="ov" id="ov" onclick="closeModal(event)">
+  <div class="modal" id="modal-body"></div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- Firebase SDK -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getAuth, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getFirestore, collection, addDoc, getDocs, doc, getDoc, deleteDoc, query, where, orderBy, limit, serverTimestamp, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
+
+// ─── CONFIG FIREBASE — REMPLACE ICI ───────────────────────
+const firebaseConfig = {
+  apiKey: "AIzaSyBYOQopUVm5vcjUur74ErhvehWC-UNiaz0",
+  authDomain: "pedagogia-18dda.firebaseapp.com",
+  projectId: "pedagogia-18dda",
+  storageBucket: "pedagogia-18dda.firebasestorage.app",
+  messagingSenderId: "465869483173",
+  appId: "1:465869483173:web:5874b245342c020127b14c"
+};
+// ──────────────────────────────────────────────────────────
+
+// ─── OPENAI KEY — REMPLACE ICI ─────────────────────────────
+// ⚠ Pour la production, utilise une Netlify Function pour cacher cette clé
+const OPENAI_KEY = "REMPLACE_PAR_TON_OPENAI_KEY";
+// ──────────────────────────────────────────────────────────
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+const storage = getStorage(app);
+
+let currentUser = null;
+let currentFolderId = null;
+let aiMode = null;
+let calDate = new Date();
+let assignFilter = 'all';
+
+// ── AUTH ─────────────────────────────────────────────────
+onAuthStateChanged(auth, async (user) => {
+  if (!user) { window.location.href='index.html'; return; }
+  currentUser = user;
+  const snap = await getDoc(doc(db,'users',user.uid));
+  if (snap.exists()) {
+    const d = snap.data();
+    if (d.role === 'student') { window.location.href='eleve.html'; return; }
+    const initials = d.name.split(' ').map(n=>n[0]).join('').toUpperCase().slice(0,2);
+    document.getElementById('s-av').textContent = initials;
+    document.getElementById('s-nm').textContent = d.name;
+    document.getElementById('w-greeting').textContent = `Bonjour, ${d.name.split(' ')[0]} 👋`;
+  }
+  loadDashboard();
+  loadFolders(null);
+  loadAssignments();
+  loadCalendar();
+  loadEvents();
+  const now = new Date();
+  const days = ['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'];
+  const months = ['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
+  document.getElementById('w-date').textContent = `${days[now.getDay()]} ${now.getDate()} ${months[now.getMonth()]} ${now.getFullYear()}`;
+});
+
+window.logout = async () => { await signOut(auth); window.location.href='index.html'; };
+
+// ── NAVIGATION ────────────────────────────────────────────
+const TITLES = {dashboard:'Tableau de bord',resources:'Ressources',assignments:'Devoirs',ai:'Assistant IA',calendar:'Calendrier'};
+function nav(id) {
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('screen-'+id).classList.add('active');
+  document.getElementById('pt').textContent = TITLES[id]||id;
+  document.querySelectorAll('.nav-item[data-screen]').forEach(n=>n.classList.toggle('active',n.dataset.screen===id));
+}
+document.querySelectorAll('.nav-item[data-screen]').forEach(n=>n.addEventListener('click',()=>nav(n.dataset.screen)));
+window.nav = nav;
+
+// ── TOAST ─────────────────────────────────────────────────
+function toast(msg,type=''){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.className='toast '+(type);
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),3200);
+}
+window.showToast = toast;
+
+// ── DASHBOARD ────────────────────────────────────────────
+async function loadDashboard() {
+  const uid = currentUser.uid;
+  const [fSnap, fileSnap, aSnap, aiSnap] = await Promise.all([
+    getDocs(query(collection(db,'folders'),where('uid','==',uid))),
+    getDocs(query(collection(db,'files'),where('uid','==',uid))),
+    getDocs(query(collection(db,'assignments'),where('uid','==',uid))),
+    getDocs(query(collection(db,'aiContent'),where('uid','==',uid))),
+  ]);
+  document.getElementById('stat-folders').textContent = fSnap.size;
+  document.getElementById('stat-files').textContent = fileSnap.size;
+  document.getElementById('stat-assigns').textContent = aSnap.size;
+  document.getElementById('stat-ai').textContent = aiSnap.size;
+  document.getElementById('badge-assign').textContent = aSnap.size;
+
+  // Recent folders
+  const fList = document.getElementById('recent-folders-list');
+  if (fSnap.empty) {
+    fList.innerHTML = '<div class="empty"><div class="empty-ic">📁</div><div class="empty-txt">Aucun dossier encore.<br>Crée ton premier dossier !</div></div>';
+  } else {
+    const icons = {sage:'📗',terra:'📙',amber:'📓',blue:'📘',purple:'📒',pink:'📕'};
+    fList.innerHTML = fSnap.docs.slice(0,5).map(d=>{
+      const fd=d.data();
+      return `<div class="crow" onclick="nav('resources')">
+        <div class="cth" style="background:${getColorBg(fd.color)}">${icons[fd.color]||'📁'}</div>
+        <div><div class="cnm">${fd.name}</div><div class="cmt">${fd.fileCount||0} fichiers</div></div>
+        <span class="badge bg" style="margin-left:auto">Actif</span>
+      </div>`;
+    }).join('');
+  }
+
+  // Activity
+  const aList = document.getElementById('activity-list');
+  const allDocs = [...fSnap.docs,...fileSnap.docs,...aSnap.docs].sort((a,b)=>{
+    const ta = a.data().createdAt?.toMillis()||0;
+    const tb = b.data().createdAt?.toMillis()||0;
+    return tb-ta;
+  }).slice(0,6);
+  if (!allDocs.length) {
+    aList.innerHTML = '<div class="empty"><div class="empty-txt">Aucune activité encore.</div></div>';
+  } else {
+    aList.innerHTML = allDocs.map(d=>{
+      const fd=d.data();
+      const col = fd.type==='folder'?'var(--sage)':fd.type==='file'?'var(--blue)':'var(--amber)';
+      const nm = fd.name||fd.title||'Sans titre';
+      const time = fd.createdAt?timeAgo(fd.createdAt.toDate()):'Récemment';
+      return `<div class="arow"><div class="adot" style="background:${col}"></div><div><div class="atxt">${nm}</div><div class="atm">${time}</div></div></div>`;
+    }).join('');
+  }
+}
+
+function timeAgo(date) {
+  const diff = (Date.now()-date.getTime())/1000;
+  if(diff<60) return 'À l\'instant';
+  if(diff<3600) return `Il y a ${Math.floor(diff/60)} min`;
+  if(diff<86400) return `Il y a ${Math.floor(diff/3600)}h`;
+  return `Il y a ${Math.floor(diff/86400)}j`;
+}
+function getColorBg(c){return{sage:'#EAF2ED',terra:'#FBF0EA',amber:'#FDF5E6',blue:'#EBF2FF',purple:'#F3EEFF',pink:'#FDE8F0'}[c]||'#F0EBE3'}
+
+// ── RESOURCES ────────────────────────────────────────────
+async function loadFolders(parentId) {
+  currentFolderId = parentId;
+  const uid = currentUser.uid;
+  const q = parentId
+    ? query(collection(db,'folders'),where('uid','==',uid),where('parentId','==',parentId))
+    : query(collection(db,'folders'),where('uid','==',uid),where('parentId','==',null));
+  const snap = await getDocs(q);
+
+  // Breadcrumb
+  const bc = document.getElementById('breadcrumb');
+  if (!parentId) {
+    bc.innerHTML = '<span class="bc-cur" onclick="loadFolders(null)">Mes ressources</span>';
+  } else {
+    const fd = await getDoc(doc(db,'folders',parentId));
+    bc.innerHTML = `<span onclick="loadFolders(null)">Mes ressources</span><span class="bc-sep">/</span><span class="bc-cur">${fd.data()?.name||'Dossier'}</span>`;
+  }
+
+  const colorClass = {sage:'fg',terra:'ft',amber:'fa',blue:'fb',purple:'fp',pink:'fk'};
+  const grid = document.getElementById('folder-grid');
+  if (snap.empty) {
+    grid.innerHTML = '<div class="empty" style="grid-column:1/-1"><div class="empty-ic">📁</div><div class="empty-txt">Aucun dossier. Crée le premier !</div></div>';
+  } else {
+    grid.innerHTML = snap.docs.map(d=>{
+      const fd=d.data();
+      const cc=colorClass[fd.color]||'fg';
+      return `<div class="fc ${cc}" onclick="loadFolders('${d.id}')">
+        <div class="fi2">📁</div>
+        <div class="fn">${fd.name}</div>
+        <div class="fc2">${fd.fileCount||0} fichiers</div>
+        <div style="display:flex;gap:4px;margin-top:8px">
+          <button class="ibt" title="Supprimer" onclick="event.stopPropagation();deleteFolder('${d.id}','${fd.storagePath||''}')">🗑</button>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  // Files for this folder
+  const fsect = document.getElementById('file-section');
+  const flist = document.getElementById('file-list');
+  const fq = query(collection(db,'files'),where('uid','==',uid),where('folderId','==',parentId||null));
+  const fsnap = await getDocs(fq);
+  if (!fsnap.empty) {
+    fsect.style.display='block';
+    flist.innerHTML = fsnap.docs.map(d=>{
+      const fd=d.data();
+      const typeMap={'application/pdf':'📄 fpdf','application/vnd.openxmlformats-officedocument.wordprocessingml.document':'📝 fdoc','application/vnd.openxmlformats-officedocument.presentationml.presentation':'📊 fppt','image/jpeg':'🖼️ fimg','image/png':'🖼️ fimg'};
+      const [ic,cls]=(typeMap[fd.mime]||'📄 fpdf').split(' ');
+      const size = fd.size ? (fd.size/1024/1024).toFixed(1)+'Mo' : '';
+      return `<div class="frow">
+        <div class="fic ${cls}">${ic}</div>
+        <div><div class="ffn">${fd.name}</div><div class="ffm">${size} · ${timeAgo(fd.createdAt?.toDate()||new Date())}</div></div>
+        <div class="ftags"><span class="tag">${fd.visibility||'privé'}</span></div>
+        <div class="fact">
+          <a class="ibt" href="${fd.url}" target="_blank" title="Télécharger">↓</a>
+          <button class="ibt" title="IA" onclick="nav('ai')">✦</button>
+          <button class="ibt" title="Supprimer" onclick="deleteFile('${d.id}','${fd.storagePath}')">🗑</button>
+        </div>
+      </div>`;
+    }).join('');
+  } else {
+    fsect.style.display = parentId ? 'block' : 'none';
+    if(parentId) flist.innerHTML = '<div class="empty"><div class="empty-txt">Aucun fichier dans ce dossier.</div></div>';
+  }
+}
+window.loadFolders = loadFolders;
+
+async function deleteFolder(id, storagePath) {
+  if(!confirm('Supprimer ce dossier ?')) return;
+  await deleteDoc(doc(db,'folders',id));
+  toast('Dossier supprimé','success');
+  loadFolders(currentFolderId);
+  loadDashboard();
+}
+window.deleteFolder = deleteFolder;
+
+async function deleteFile(id, storagePath) {
+  if(!confirm('Supprimer ce fichier ?')) return;
+  try {
+    if(storagePath) await deleteObject(ref(storage,storagePath));
+    await deleteDoc(doc(db,'files',id));
+    toast('Fichier supprimé','success');
+    loadFolders(currentFolderId);
+    loadDashboard();
+  } catch(e){ toast('Erreur suppression','error'); }
+}
+window.deleteFile = deleteFile;
+
+// ── FILE UPLOAD ───────────────────────────────────────────
+window.uploadFiles = async function(event) {
+  const files = event.target.files;
+  if(!files.length) return;
+  toast('Upload en cours…');
+  for (const file of files) {
+    try {
+      const path = `files/${currentUser.uid}/${Date.now()}_${file.name}`;
+      const storageRef = ref(storage,path);
+      await uploadBytes(storageRef,file);
+      const url = await getDownloadURL(storageRef);
+      await addDoc(collection(db,'files'),{
+        uid:currentUser.uid,
+        folderId:currentFolderId||null,
+        name:file.name,
+        mime:file.type,
+        size:file.size,
+        url,
+        storagePath:path,
+        visibility:'privé',
+        type:'file',
+        createdAt:serverTimestamp()
+      });
+    } catch(e){ toast('Erreur upload: '+file.name,'error'); }
+  }
+  toast('Fichier(s) importé(s) !','success');
+  loadFolders(currentFolderId);
+  loadDashboard();
+  event.target.value='';
+};
+
+// ── ASSIGNMENTS ───────────────────────────────────────────
+async function loadAssignments() {
+  const uid = currentUser.uid;
+  const snap = await getDocs(query(collection(db,'assignments'),where('uid','==',uid),orderBy('createdAt','desc')));
+  renderAssignments(snap.docs);
+  document.getElementById('badge-assign').textContent = snap.size;
+}
+
+function renderAssignments(docs) {
+  const el = document.getElementById('assign-list');
+  if(!docs.length){
+    el.innerHTML='<div class="empty"><div class="empty-ic">📋</div><div class="empty-txt">Aucun devoir encore. Crée le premier !</div></div>';
+    return;
+  }
+  const now = new Date();
+  el.innerHTML = `<table class="atbl">
+    <thead><tr><th>Titre</th><th>Classe</th><th>Échéance</th><th>Statut</th><th></th></tr></thead>
+    <tbody>${docs.map(d=>{
+      const fd=d.data();
+      const due = fd.dueDate?.toDate();
+      const past = due && due < now;
+      const pill = past
+        ? '<span class="pill pla"><span class="dot" style="background:var(--terra)"></span>Passé</span>'
+        : '<span class="pill ppd"><span class="dot" style="background:var(--amber)"></span>Actif</span>';
+      return `<tr>
+        <td><div class="att">${fd.title}</div><div class="atsub">${fd.description||''}</div></td>
+        <td><span class="tag">${fd.classe||'—'}</span></td>
+        <td style="font-size:11px;color:var(--ink-60)">${due?due.toLocaleDateString('fr-FR'):'—'}</td>
+        <td>${pill}</td>
+        <td><button class="btn btn-danger btn-sm" onclick="deleteAssign('${d.id}')">Supprimer</button></td>
+      </tr>`;
+    }).join('')}</tbody>
+  </table>`;
+}
+window.filterA = function(el,f){
+  assignFilter=f;
+  document.querySelectorAll('.fchip').forEach(c=>c.classList.remove('active'));
+  el.classList.add('active');
+  loadAssignments();
+};
+window.deleteAssign = async function(id){
+  if(!confirm('Supprimer ce devoir ?')) return;
+  await deleteDoc(doc(db,'assignments',id));
+  toast('Devoir supprimé','success');
+  loadAssignments();
+  loadDashboard();
+};
+
+// ── AI ────────────────────────────────────────────────────
+const aiPrompts = {
+  résumé: t => `Tu es un assistant pédagogique expert. Génère un résumé pédagogique structuré de ce texte de cours avec : les points clés numérotés, la notion centrale, et un encadré "À retenir". Langue : français.\n\nCours : ${t}`,
+  quiz: t => `Tu es un assistant pédagogique. Génère 5 questions de quiz pédagogique (mélange QCM, vrai/faux, réponse courte) avec corrections pour chaque question. Format clair et structuré. Langue : français.\n\nCours : ${t}`,
+  flashcards: t => `Tu es un assistant pédagogique. Génère 8 flashcards recto-verso pour réviser les notions clés. Format : RECTO: [terme] / VERSO: [définition]. Langue : français.\n\nCours : ${t}`,
+  exercices: t => `Tu es un assistant pédagogique. Génère 3 exercices différenciés : Niveau 1 (accessible), Niveau 2 (standard), Niveau 3 (expert). Chaque exercice inclut énoncé, consignes et éléments de correction. Langue : français.\n\nCours : ${t}`,
+  evaluation: t => `Tu es un assistant pédagogique. Génère une évaluation complète de 20 points avec 3 parties, un barème détaillé et un corrigé type. Langue : français.\n\nCours : ${t}`,
+  simplifié: t => `Tu es un assistant pédagogique spécialisé DYS. Crée une version simplifiée de ce cours : phrases courtes, vocabulaire simple, structure visuelle claire (bullet points), exemples concrets. Langue : français.\n\nCours : ${t}`,
+};
+
+window.selAI = function(mode, el) {
+  aiMode = mode;
+  document.querySelectorAll('.aic').forEach(c=>c.classList.remove('sel'));
+  el.classList.add('sel');
+  const labels = {résumé:'Résumé intelligent',quiz:'Quiz automatique',flashcards:'Flashcards',exercices:'Exercices adaptés',evaluation:'Évaluation type',simplifié:'Version simplifiée'};
+  document.getElementById('ai-mode-lbl').textContent = labels[mode];
+  const btn = document.getElementById('gen-btn');
+  btn.disabled = false;
+  btn.textContent = '✦ Générer le contenu';
+  document.getElementById('dout').classList.remove('show');
+};
+
+window.runAI = async function() {
+  if(!aiMode) return;
+  const text = document.getElementById('ai-source').value.trim();
+  if(!text) { toast('Colle ton texte de cours dans la zone de texte.','error'); return; }
+  if(OPENAI_KEY === 'REMPLACE_PAR_TON_OPENAI_KEY') { toast('Configure ta clé OpenAI dans le fichier dashboard.html','error'); return; }
+
+  const btn = document.getElementById('gen-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spin"></span>Génération en cours…';
+
+  try {
+    const res = await fetch('https://api.openai.com/v1/chat/completions',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':`Bearer ${OPENAI_KEY}`},
+      body:JSON.stringify({
+        model:'gpt-4o-mini',
+        messages:[{role:'user',content:aiPrompts[aiMode](text.slice(0,8000))}],
+        max_tokens:1500,temperature:0.7
+      })
+    });
+    const data = await res.json();
+    if(data.error) throw new Error(data.error.message);
+    const result = data.choices[0].message.content;
+    document.getElementById('dout-lbl').textContent = '✦ Résultat IA — '+aiMode;
+    document.getElementById('dout-txt').textContent = result;
+    document.getElementById('dout').classList.add('show');
+    btn.textContent = '↻ Régénérer';
+    btn.disabled = false;
+
+    // Save to Firestore
+    await addDoc(collection(db,'aiContent'),{
+      uid:currentUser.uid,
+      type:aiMode,
+      sourceText:text.slice(0,500)+'…',
+      result,
+      type2:'aiContent',
+      createdAt:serverTimestamp()
+    });
+    loadDashboard();
+  } catch(e){
+    toast('Erreur IA : '+e.message,'error');
+    btn.textContent='✦ Générer le contenu';
+    btn.disabled=false;
+  }
+};
+
+window.saveAI = async function(){
+  toast('Contenu sauvegardé dans Firestore ✓','success');
+};
+window.copyAI = function(){
+  const t = document.getElementById('dout-txt').textContent;
+  navigator.clipboard.writeText(t).then(()=>toast('Copié dans le presse-papiers !','success'));
+};
+
+// ── CALENDAR ─────────────────────────────────────────────
+function loadCalendar() {
+  const y = calDate.getFullYear(), m = calDate.getMonth();
+  const months = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
+  document.getElementById('cal-title').textContent = `${months[m]} ${y}`;
+  const first = new Date(y,m,1).getDay();
+  const offset = (first===0?6:first-1);
+  const days = new Date(y,m+1,0).getDate();
+  const today = new Date();
+  let html = '';
+  for(let i=0;i<offset;i++) html+=`<div class="cday other">${new Date(y,m,1-offset+i).getDate()}</div>`;
+  for(let d=1;d<=days;d++){
+    const isTd = d===today.getDate()&&m===today.getMonth()&&y===today.getFullYear();
+    html+=`<div class="cday${isTd?' today':''}">${d}</div>`;
+  }
+  document.getElementById('cal-grid').innerHTML=html;
+}
+window.calNav = function(dir){ calDate.setMonth(calDate.getMonth()+dir); loadCalendar(); };
+
+async function loadEvents(){
+  const uid=currentUser.uid;
+  const snap=await getDocs(query(collection(db,'events'),where('uid','==',uid),orderBy('date','asc')));
+  const el=document.getElementById('events-list');
+  if(snap.empty){
+    el.innerHTML='<div class="empty"><div class="empty-ic">📅</div><div class="empty-txt">Aucun événement à venir.</div></div>';
+    return;
+  }
+  const months=['JAN','FÉV','MAR','AVR','MAI','JUN','JUL','AOÛ','SEP','OCT','NOV','DÉC'];
+  const typeColors={cours:'var(--sage-p);color:var(--sage)',devoir:'var(--amber-p);color:var(--amber)',evaluation:'var(--terra-p);color:var(--terra)',reunion:'var(--blue-p);color:var(--blue)'};
+  el.innerHTML=snap.docs.map(d=>{
+    const fd=d.data();
+    const date=fd.date?.toDate()||new Date();
+    const tc=typeColors[fd.type]||'var(--ink-10);color:var(--ink-60)';
+    return `<div class="ecard">
+      <div class="edate"><div class="emon">${months[date.getMonth()]}</div><div class="eday">${date.getDate()}</div></div>
+      <div><div class="ettl">${fd.title}</div><div class="ecls">${fd.classe||''}</div><span class="etype" style="background:${tc}">${fd.type||'cours'}</span></div>
+    </div>`;
+  }).join('');
+}
+
+// ── MODALS ────────────────────────────────────────────────
+const modals = {
+  'new-folder':{
+    title:'Nouveau dossier',sub:'Organisez vos ressources',
+    body:`<div class="fg2"><label class="fl">Nom du dossier</label><input class="fi" id="m-name" placeholder="Ex: Exercices période 3"/></div>
+<div class="fg2"><label class="fl">Couleur</label><div class="cdots">
+  <div class="cdot2 sel" style="background:#5A8C6A" data-c="sage" onclick="selColor(this)"></div>
+  <div class="cdot2" style="background:#B8623A" data-c="terra" onclick="selColor(this)"></div>
+  <div class="cdot2" style="background:#D97706" data-c="amber" onclick="selColor(this)"></div>
+  <div class="cdot2" style="background:#1A4F9C" data-c="blue" onclick="selColor(this)"></div>
+  <div class="cdot2" style="background:#5B2E9C" data-c="purple" onclick="selColor(this)"></div>
+  <div class="cdot2" style="background:#BE185D" data-c="pink" onclick="selColor(this)"></div>
+</div></div>
+<div class="fg2"><label class="fl">Visibilité</label><select class="fs" id="m-vis"><option value="privé">Privé</option><option value="classe">Ma classe</option><option value="public">Public</option></select></div>`,
+    action: async () => {
+      const name = document.getElementById('m-name').value.trim();
+      const color = document.querySelector('.cdot2.sel')?.dataset.c||'sage';
+      const vis = document.getElementById('m-vis').value;
+      if(!name){toast('Donne un nom au dossier.','error');return;}
+      await addDoc(collection(db,'folders'),{
+        uid:currentUser.uid,name,color,visibility:vis,parentId:currentFolderId||null,fileCount:0,type:'folder',createdAt:serverTimestamp()
+      });
+      toast('Dossier créé !','success');
+      closeModal();
+      loadFolders(currentFolderId);
+      loadDashboard();
+    }
+  },
+  'new-assign':{
+    title:'Nouveau devoir',sub:'Créez et partagez un devoir',
+    body:`<div class="fg2"><label class="fl">Titre</label><input class="fi" id="m-title" placeholder="Ex: Analyse d'un document client"/></div>
+<div class="fg2"><label class="fl">Classe</label><input class="fi" id="m-class" placeholder="Ex: Terminale Pro MCV"/></div>
+<div class="fg2"><label class="fl">Description</label><textarea class="fta" id="m-desc" placeholder="Décrivez la tâche…"></textarea></div>
+<div class="fg2"><label class="fl">Date limite</label><input class="fi" id="m-date" type="date"/></div>
+<div class="fg2"><label class="fl">Note max</label><input class="fi" id="m-score" type="number" value="20"/></div>`,
+    action: async () => {
+      const title=document.getElementById('m-title').value.trim();
+      const classe=document.getElementById('m-class').value.trim();
+      const description=document.getElementById('m-desc').value.trim();
+      const dateStr=document.getElementById('m-date').value;
+      const maxScore=parseInt(document.getElementById('m-score').value)||20;
+      if(!title){toast('Donne un titre au devoir.','error');return;}
+      await addDoc(collection(db,'assignments'),{
+        uid:currentUser.uid,title,classe,description,maxScore,
+        dueDate:dateStr?new Date(dateStr):null,
+        isPublished:true,type:'assignment',createdAt:serverTimestamp()
+      });
+      toast('Devoir créé !','success');
+      closeModal();
+      loadAssignments();
+      loadDashboard();
+    }
+  },
+  'new-event':{
+    title:'Nouvel événement',sub:'Ajoutez au calendrier',
+    body:`<div class="fg2"><label class="fl">Titre</label><input class="fi" id="m-title" placeholder="Ex: Évaluation Relation client"/></div>
+<div class="fg2"><label class="fl">Type</label><select class="fs" id="m-type"><option value="cours">Cours</option><option value="devoir">Devoir</option><option value="evaluation">Évaluation</option><option value="reunion">Réunion</option></select></div>
+<div class="fg2"><label class="fl">Classe</label><input class="fi" id="m-class" placeholder="Ex: Terminale Pro"/></div>
+<div class="fg2"><label class="fl">Date</label><input class="fi" id="m-date" type="datetime-local"/></div>`,
+    action: async () => {
+      const title=document.getElementById('m-title').value.trim();
+      const type=document.getElementById('m-type').value;
+      const classe=document.getElementById('m-class').value;
+      const dateStr=document.getElementById('m-date').value;
+      if(!title){toast('Donne un titre.','error');return;}
+      await addDoc(collection(db,'events'),{
+        uid:currentUser.uid,title,type,classe,
+        date:dateStr?new Date(dateStr):new Date(),
+        createdAt:serverTimestamp()
+      });
+      toast('Événement ajouté !','success');
+      closeModal();
+      loadEvents();
+      loadCalendar();
+    }
+  }
+};
+
+window.openModal = function(type){
+  const d=modals[type]; if(!d) return;
+  document.getElementById('modal-body').innerHTML=`
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px">
+      <div class="modal-title">${d.title}</div>
+      <button class="mc" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-sub">${d.sub}</div>
+    ${d.body}
+    <div class="mf">
+      <button class="btn btn-g" onclick="closeModal()">Annuler</button>
+      <button class="btn btn-p" onclick="window._modalAction()">Créer</button>
+    </div>`;
+  window._modalAction = d.action;
+  document.getElementById('ov').classList.add('open');
+};
+window.closeModal = function(e){
+  if(!e||e.target===document.getElementById('ov'))
+    document.getElementById('ov').classList.remove('open');
+};
+window.selColor = function(el){
+  document.querySelectorAll('.cdot2').forEach(d=>d.classList.remove('sel'));
+  el.classList.add('sel');
+};
+
+// ── SEARCH ───────────────────────────────────────────────
+document.getElementById('srch-input').addEventListener('input', async (e)=>{
+  const q2=e.target.value.trim().toLowerCase();
+  if(!q2) return;
+  nav('resources');
+});
+
+</script>
+</body>
+</html>
