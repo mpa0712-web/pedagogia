@@ -88,6 +88,8 @@ body::before{
 .panel{display:none}
 .panel.active{display:block}
 </style>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase.js"></script>
 </head>
 <body>
 <div class="bg-grid"></div>
@@ -145,31 +147,17 @@ body::before{
 
 <!-- Firebase SDK -->
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-import { getFirestore, doc, setDoc, getDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 // ─── REMPLACE AVEC TA CONFIG FIREBASE ─────────────────────
-const firebaseConfig = {
-  apiKey: "AIzaSyBYOQopUVm5vcjUur74ErhvehWC-UNiaz0",
-  authDomain: "pedagogia-18dda.firebaseapp.com",
-  projectId: "pedagogia-18dda",
-  storageBucket: "pedagogia-18dda.firebasestorage.app",
-  messagingSenderId: "465869483173",
-  appId: "1:465869483173:web:5874b245342c020127b14c"
-};
 // ──────────────────────────────────────────────────────────
 
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
 
 // Si déjà connecté → rediriger
-onAuthStateChanged(auth, async (user) => {
+sb.onAuthChange(async (user, event) => {
   if (user) {
     const snap = await getDoc(doc(db, 'users', user.uid));
     if (snap.exists()) {
-      const role = snap.data().role;
+      const role = snap.role;
       window.location.href = role === 'student' ? 'eleve.html' : 'dashboard.html';
     }
   }
@@ -202,9 +190,9 @@ window.login = async function() {
   if (!email || !pwd) return showError('Remplis tous les champs.');
   setLoading('btn-login', true);
   try {
-    const cred = await signInWithEmailAndPassword(auth, email, pwd);
+    const cred = await sb.signIn(email, pwd);
     const snap = await getDoc(doc(db, 'users', cred.user.uid));
-    const role = snap.exists() ? snap.data().role : 'teacher';
+    const role = snap.exists() ? snap.role : 'teacher';
     window.location.href = role === 'student' ? 'eleve.html' : 'dashboard.html';
   } catch(e) {
     showError('E-mail ou mot de passe incorrect.');
@@ -222,10 +210,10 @@ window.register = async function() {
   if (pwd.length < 6) return showError('Le mot de passe doit faire au moins 6 caractères.');
   setLoading('btn-register', true);
   try {
-    const cred = await createUserWithEmailAndPassword(auth, email, pwd);
+    const cred = await sb.signUp(email, pwd);
     await setDoc(doc(db, 'users', cred.user.uid), {
       uid: cred.user.uid, name, email, role,
-      createdAt: serverTimestamp()
+      createdAt: sb.now()
     });
     window.location.href = role === 'student' ? 'eleve.html' : 'dashboard.html';
   } catch(e) {
@@ -238,7 +226,7 @@ window.resetPwd = async function() {
   const email = document.getElementById('login-email').value.trim();
   if (!email) return showError('Entre ton e-mail pour réinitialiser ton mot de passe.');
   try {
-    await sendPasswordResetEmail(auth, email);
+    await sb.resetPassword(email);
     document.getElementById('auth-error').style.background = 'rgba(61,107,79,.15)';
     document.getElementById('auth-error').style.borderColor = 'rgba(61,107,79,.3)';
     document.getElementById('auth-error').style.color = '#5A8C6A';
