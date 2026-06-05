@@ -158,8 +158,6 @@ html,body{min-height:100%;font-family:'DM Sans',sans-serif;background:var(--sand
 .spin{width:16px;height:16px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:rot .7s linear infinite;display:inline-block;vertical-align:middle;margin-right:5px}
 @keyframes rot{to{transform:rotate(360deg)}}
 </style>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="supabase.js"></script>
 </head>
 <body>
 <div class="app">
@@ -316,18 +314,38 @@ html,body{min-height:100%;font-family:'DM Sans',sans-serif;background:var(--sand
 
 <div class="toast" id="toast"></div>
 
-<script type="module">
+<!-- Firebase SDK (compat) -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
 
+<script>
 
+// ─── CONFIG FIREBASE — REMPLACE ICI ───────────────────────
+const firebaseConfig = {
+  apiKey: "AIzaSyBYOQopUVm5vcjUur74ErhvehWC-UNiaz0",
+  authDomain: "pedagogia-18dda.firebaseapp.com",
+  projectId: "pedagogia-18dda",
+  storageBucket: "pedagogia-18dda.firebasestorage.app",
+  messagingSenderId: "465869483173",
+  appId: "1:465869483173:web:5874b245342c020127b14c"
+};
+// ──────────────────────────────────────────────────────────
+
+const app = firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+const storage = firebase.storage();
 let currentUser = null;
 let currentAssignId = null;
 
-sb.onAuthChange(async (user, event) => {
+auth.onAuthStateChanged( async (user) => {
   if (!user) { window.location.href='index.html'; return; }
   currentUser = user;
-  const snap = await getDoc(doc(db,'users',user.uid));
-  if (snap.exists()) {
-    const d = snap;
+  const snap = (await db.doc('users',user.uid.get()));
+  if (snap.exists) {
+    const d = snap.data();
     if (d.role === 'teacher') { window.location.href='dashboard.html'; return; }
     const initials = d.name.split(' ').map(n=>n[0]).join('').toUpperCase().slice(0,2);
     document.getElementById('s-av').textContent = initials;
@@ -348,7 +366,7 @@ sb.onAuthChange(async (user, event) => {
   loadDevoirsBadge();
 });
 
-window.logout = async () => { await sb.signOut(); };
+window.logout = async () => { await auth.signOut(); window.location.href='index.html'; };
 
 const TITLES = {home:'Accueil',resources:'Mes cours',devoirs:'Mes devoirs',resultats:'Mes résultats',maclasse:'Ma classe'};
 function goTo(id) {
@@ -377,30 +395,30 @@ async function loadSharedResources() {
   // Charger les classes de l'élève pour filtrer les ressources
   let classeNames = [];
   try {
-    const memberSnap = await getDocs(query(collection(db,'classMembers'), where('studentId','==',currentUser.uid)));
-    classeNames = memberData.map(d => d.className);
+    const memberSnap = (await query(db.collection('classMembers'.get()), where('studentId','==',currentUser.uid)));
+    classeNames = memberSnap.docs.map(d => d.data().className);
   } catch(e) {}
 
-  const foldersSnap = await getDocs(query(collection(db,'folders'),where('visibility','==','public')));
-  const filesSnap = await getDocs(query(collection(db,'files'),where('visibility','==','public')));
+  const foldersSnap = (await query(db.collection('folders'.get()),where('visibility','==','public')));
+  const filesSnap = (await query(db.collection('files'.get()),where('visibility','==','public')));
 
   const grid = document.getElementById('shared-resources');
   const colors = {sage:'#EAF2ED',terra:'#FBF0EA',amber:'#FDF5E6',blue:'#EBF2FF',purple:'#F3EEFF',pink:'#FDE8F0'};
-  if ((!foldersData || foldersData.length === 0)) {
+  if (foldersSnap.empty) {
     grid.innerHTML = '<div class="empty" style="grid-column:1/-1"><div class="empty-ic">📁</div><div class="empty-txt">Aucune ressource partagée pour le moment.</div></div>';
   } else {
-    grid.innerHTML = foldersData.map(d=>{
-      const fd=d;
+    grid.innerHTML = foldersSnap.docs.map(d=>{
+      const fd=d.data();
       const bg = colors[fd.color]||'#F0EBE3';
       return `<div class="rc"><div class="rc-cover" style="background:${bg}">📁</div><div class="rc-body"><div class="rc-title">${fd.name}</div><div class="rc-meta">Partagé par l'enseignant</div></div></div>`;
     }).join('');
   }
 
   const flist = document.getElementById('shared-files');
-  if (!(!filesData || filesData.length === 0)) {
+  if (!filesSnap.empty) {
     const typeMap={'application/pdf':['📄','fpdf'],'application/vnd.openxmlformats-officedocument.wordprocessingml.document':['📝','fdoc'],'application/vnd.openxmlformats-officedocument.presentationml.presentation':['📊','fppt']};
-    flist.innerHTML = filesData.map(d=>{
-      const fd=d;
+    flist.innerHTML = filesSnap.docs.map(d=>{
+      const fd=d.data();
       const [ic,cls]=typeMap[fd.mime]||['📄','fpdf'];
       return `<div class="frow">
         <div class="fic ${cls}">${ic}</div>
@@ -416,7 +434,7 @@ async function loadSharedResources() {
 // ── DEVOIRS ───────────────────────────────────────────────
 async function loadDevoirs() {
   // Charge tous les devoirs publiés (tous enseignants)
-  const snap = await getDocs(query(collection(db,'assignments'),where('isPublished','==',true),orderBy('createdAt','desc')));
+  const snap = (await db.collection('assignments'.get().where('isPublished', '==', true).orderBy('createdAt', 'desc'));
   const list = document.getElementById('devoirs-list');
   if (snap.empty) {
     list.innerHTML = '<div class="empty"><div class="empty-ic">📋</div><div class="empty-txt">Aucun devoir pour le moment.</div></div>';
@@ -424,7 +442,7 @@ async function loadDevoirs() {
   }
   const now = new Date();
   list.innerHTML = snap.docs.map(d=>{
-    const fd=d;
+    const fd=d.data();
     const due=fd.dueDate?.toDate();
     const isUrgent = due && (due.getTime()-now.getTime())<86400000*3 && due>now;
     const isPast = due && due<now;
@@ -446,13 +464,13 @@ async function loadDevoirs() {
 window.checkRendu = async function(assignId) {
   const statusEl = document.getElementById('status-'+assignId);
   try {
-    const snap = await getDocs(query(collection(db,'submissions'),where('assignmentId','==',assignId),where('uid','==',currentUser.uid)));
+    const snap = (await query(db.collection('submissions'.get()),where('assignmentId','==',assignId),where('uid','==',currentUser.uid)));
     if (snap.empty) {
       statusEl.innerHTML = `<div style="background:var(--amber-p);border:1px solid rgba(156,107,30,.2);border-radius:8px;padding:10px 12px;font-size:12px;color:var(--amber)">
         ⏳ Tu n'as pas encore rendu ce devoir.
       </div>`;
     } else {
-      const sub = snap.docs[0];
+      const sub = snap.docs[0].data();
       const date = sub.submittedAt?.toDate?.();
       const dateStr = date ? date.toLocaleDateString('fr-FR')+' à '+date.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}) : '—';
       const isGraded = sub.score != null;
@@ -521,28 +539,30 @@ window.submitDevoir = async function() {
     let fileUrl = null, storagePath = null;
     if(file){
       storagePath = 'submissions/'+currentUser.uid+'/'+Date.now()+'_'+file.name;
-      const storageRef = ref(storage,storagePath);
-      await uploadBytes(storageRef,file);
-      fileUrl = await getDownloadURL(storageRef);
+      const storageRef = storage.ref(storagePath);
+      await storageRef.put(file);
+      fileUrl = await storageRef.getDownloadURL();
     }
-    await addDoc(collection(db,'submissions'),{
+    await db.collection('submissions').add(
+      {
       uid:currentUser.uid,
       assignmentId:currentAssignId,
       textResponse:text||null,
       fileUrl:fileUrl||null,
       storagePath:storagePath||null,
       status:'submitted',
-      submittedAt:sb.now(),
-      createdAt:sb.now()
+      submittedAt:firebase.firestore.FieldValue.serverTimestamp(),
+      createdAt:firebase.firestore.FieldValue.serverTimestamp()
     });
     // Notification pour l'enseignant
-    await addDoc(collection(db,'notifications'),{
+    await db.collection('notifications').add(
+      {
       userId:'teacher_broadcast',
       title:'Nouveau rendu',
       body:'Un élève a rendu son devoir',
       type:'submission',
       isRead:false,
-      createdAt:sb.now()
+      createdAt:firebase.firestore.FieldValue.serverTimestamp()
     });
     document.getElementById('modal-body').innerHTML = `
       <div style="text-align:center;padding:28px 20px">
@@ -569,14 +589,14 @@ window.submitDevoir = async function() {
 
 // ── RÉSULTATS ─────────────────────────────────────────────
 async function loadResults() {
-  const snap = await getDocs(query(collection(db,'submissions'),where('uid','==',currentUser.uid),orderBy('submittedAt','desc')));
+  const snap = (await db.collection('submissions'.get().where('uid', '==', currentUser.uid).orderBy('submittedAt', 'desc'));
   const el = document.getElementById('results-list');
   if(snap.empty){
     el.innerHTML='<div class="empty"><div class="empty-ic">📊</div><div class="empty-txt">Pas encore de résultats.</div></div>';
     return;
   }
   el.innerHTML = snap.docs.map(d=>{
-    const fd=d;
+    const fd=d.data();
     const date=fd.submittedAt?.toDate();
     const scored=fd.score!=null;
     return `<div style="display:flex;align-items:center;gap:14px;padding:12px 0;border-bottom:1px solid var(--ink-10)">
@@ -593,18 +613,18 @@ async function loadResults() {
 
 async function loadHomeData() {
   // Devoirs urgents
-  const aSnap = await getDocs(query(collection(db,'assignments'),where('isPublished','==',true)));
+  const aSnap = (await query(db.collection('assignments'.get()),where('isPublished','==',true)));
   const hd = document.getElementById('home-devoirs-list');
   const now = new Date();
-  const upcoming = aData.filter(d=>{
-    const due=d.dueDate?.toDate();
+  const upcoming = aSnap.docs.filter(d=>{
+    const due=d.data().dueDate?.toDate();
     return due && due>now;
   }).slice(0,3);
   if(!upcoming.length){
     hd.innerHTML='<div class="empty"><div class="empty-txt">Aucun devoir à venir.</div></div>';
   } else {
     hd.innerHTML = upcoming.map(d=>{
-      const fd=d;
+      const fd=d.data();
       const due=fd.dueDate?.toDate();
       return `<div style="display:flex;align-items:center;gap:10px;padding:10px 16px;cursor:pointer;transition:background .1s" onclick="goTo('devoirs')" onmouseover="this.style.background='var(--sand)'" onmouseout="this.style.background=''">
         <div style="width:36px;height:36px;border-radius:8px;background:var(--blue-p);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0">📋</div>
@@ -614,14 +634,14 @@ async function loadHomeData() {
   }
 
   // Résultats récents
-  const rSnap = await getDocs(query(collection(db,'submissions'),where('uid','==',currentUser.uid)));
+  const rSnap = (await query(db.collection('submissions'.get()),where('uid','==',currentUser.uid)));
   const hr = document.getElementById('home-results-list');
-  const graded = rData.filter(d=>d.score!=null).slice(0,3);
+  const graded = rSnap.docs.filter(d=>d.data().score!=null).slice(0,3);
   if(!graded.length){
     hr.innerHTML='<div class="empty"><div class="empty-txt">Pas encore de résultats corrigés.</div></div>';
   } else {
     hr.innerHTML = graded.map(d=>{
-      const fd=d;
+      const fd=d.data();
       return `<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 16px;border-bottom:1px solid var(--ink-10)">
         <div style="font-size:12px;color:var(--ink-60)">Devoir rendu</div>
         <div style="font-family:'Lora',serif;font-size:18px;font-weight:700;color:var(--sage)">${fd.score}<span style="font-size:11px;color:var(--ink-30)">/${fd.maxScore||20}</span></div>
@@ -641,7 +661,7 @@ window.joinClass = async function(){
   }
 
   // Chercher la classe avec ce code
-  const snap = await getDocs(query(collection(db,'classes'),where('code','==',code)));
+  const snap = (await query(db.collection('classes'.get()),where('code','==',code)));
   if(snap.empty){
     msgEl.style.display='block';
     msgEl.innerHTML='<div style="background:var(--terra-p);color:var(--terra);padding:8px 12px;border-radius:7px;font-size:12px">❌ Code introuvable. Vérifie avec ton enseignant.</div>';
@@ -649,10 +669,10 @@ window.joinClass = async function(){
   }
 
   const classDoc = snap.docs[0];
-  const classData = classDoc;
+  const classData = classDoc.data();
 
   // Vérifier si déjà inscrit
-  const already = await getDocs(query(collection(db,'classMembers'),
+  const already = (await query(db.collection('classMembers'.get()),
     where('classId','==',classDoc.id),
     where('studentId','==',currentUser.uid)
   ));
@@ -663,12 +683,13 @@ window.joinClass = async function(){
   }
 
   // Inscrire l'élève
-  await addDoc(collection(db,'classMembers'),{
+  await db.collection('classMembers').add(
+      {
     classId: classDoc.id,
     studentId: currentUser.uid,
     teacherId: classData.uid,
     className: classData.name,
-    joinedAt: sb.now()
+    joinedAt: firebase.firestore.FieldValue.serverTimestamp()
   });
 
   msgEl.style.display='block';
@@ -678,7 +699,7 @@ window.joinClass = async function(){
 };
 
 async function loadMyClasses(){
-  const snap = await getDocs(query(collection(db,'classMembers'),where('studentId','==',currentUser.uid)));
+  const snap = (await query(db.collection('classMembers'.get()),where('studentId','==',currentUser.uid)));
   const el = document.getElementById('my-classes-list');
   if(!el) return;
 
@@ -688,7 +709,7 @@ async function loadMyClasses(){
   }
 
   el.innerHTML = snap.docs.map(d=>{
-    const fd=d;
+    const fd=d.data();
     return `<div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--ink-10)">
       <div style="display:flex;align-items:center;gap:12px">
         <div style="width:40px;height:40px;border-radius:10px;background:var(--sage-p);display:flex;align-items:center;justify-content:center;font-size:18px">🏫</div>
@@ -706,7 +727,7 @@ async function loadMyClasses(){
 async function loadDevoirsBadge() {
   try {
     const snap = await getDocs(query(
-      collection(db,'assignments'),
+      db.collection('assignments'),
       where('isPublished','==',true)
     ));
     const badge = document.getElementById('badge-devoirs');

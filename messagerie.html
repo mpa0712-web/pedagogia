@@ -187,8 +187,6 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--sand);co
 .ann-comment-input input{flex:1;padding:6px 10px;border-radius:7px;border:1px solid var(--ink-10);font-size:11.5px;background:var(--white);outline:none;font-family:'DM Sans',sans-serif}
 .ann-comment-input input:focus{border-color:var(--sage-l)}
 </style>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="supabase.js"></script>
 </head>
 <body>
 <div class="app">
@@ -374,8 +372,26 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--sand);co
 </div>
 <div class="toast" id="toast"></div>
 
-<script type="module">
+<!-- Firebase SDK (compat) -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
 
+<script>
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBYOQopUVm5vcjUur74ErhvehWC-UNiaz0",
+  authDomain: "pedagogia-18dda.firebaseapp.com",
+  projectId: "pedagogia-18dda",
+  storageBucket: "pedagogia-18dda.firebasestorage.app",
+  messagingSenderId: "465869483173",
+  appId: "1:465869483173:web:5874b245342c020127b14c"
+};
+
+const app = firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
 let currentUser = null;
 let currentConv = null;
 let annType = 'info';
@@ -425,15 +441,16 @@ const demoAnnonces = [
 ];
 
 window.logout = async function() {
-  await sb.signOut();
+  await auth.signOut();
+  window.location.href = 'index.html';
 };
 
-sb.onAuthChange(async (user, event) => {
+auth.onAuthStateChanged( async (user) => {
   if (!user) { window.location.href='index.html'; return; }
   currentUser = user;
-  const snap = await getDoc(doc(db,'users',user.uid));
-  if (snap.exists()) {
-    const d = snap;
+  const snap = (await db.doc('users',user.uid.get()));
+  if (snap.exists) {
+    const d = snap.data();
     const initials = d.name.split(' ').map(n=>n[0]).join('').toUpperCase().slice(0,2);
     document.getElementById('s-av').textContent = initials;
     document.getElementById('s-nm').textContent = d.name;
@@ -554,11 +571,12 @@ window.sendMsg = async function() {
   toast('Message envoyé','success');
   // Sauvegarder en Firestore
   try {
-    await addDoc(collection(db,'messages'), {
+    await db.collection('messages').add(
+      {
       fromUid: currentUser.uid,
       toId: currentConv.id,
       text, convName: currentConv.name,
-      createdAt: sb.now()
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
     });
   } catch(e) { console.log('Sauvegarde message:', e.message); }
 
@@ -593,12 +611,12 @@ window.filterConvs = function(q) {
 
 // ── ANNONCES ────────────────────────────────────────────
 async function loadAnnoncesDB() {
-  const snap = await getDocs(query(collection(db,'annonces'), orderBy('createdAt','desc')));
-  const dbAnns = snap.docs.map(d=>({id:d.id,...d,
-    author: d.authorName||'Enseignant',
-    initials: (d.authorName||'ML').split(' ').map(n=>n[0]).join('').toUpperCase().slice(0,2),
-    time: timeAgo(d.createdAt?.toDate()||new Date()),
-    likes: d.likes||0, comments:0, commentsData:[]
+  const snap = (await query(db.collection('annonces'.get()), orderBy('createdAt','desc')));
+  const dbAnns = snap.docs.map(d=>({id:d.id,...d.data(),
+    author: d.data().authorName||'Enseignant',
+    initials: (d.data().authorName||'ML').split(' ').map(n=>n[0]).join('').toUpperCase().slice(0,2),
+    time: timeAgo(d.data().createdAt?.toDate()||new Date()),
+    likes: d.data().likes||0, comments:0, commentsData:[]
   }));
   annonces = [...demoAnnonces, ...dbAnns];
   renderAnnonces();
@@ -646,12 +664,13 @@ window.publierAnnonce = async function() {
   const content = document.getElementById('ann-content').value.trim();
   const classe = document.getElementById('ann-class').value;
   if(!content){toast('Écris quelque chose.','error');return;}
-  const snap = await getDoc(doc(db,'users',currentUser.uid));
-  const authorName = snap.exists()?snap.name:'Enseignant';
-  await addDoc(collection(db,'annonces'),{
+  const snap = (await db.doc('users',currentUser.uid.get()));
+  const authorName = snap.exists?snap.data().name:'Enseignant';
+  await db.collection('annonces').add(
+      {
     uid:currentUser.uid, content, type:annType,
     authorName, classe:classe==='all'?'Toutes les classes':classe,
-    likes:0, comments:0, pinned:false, createdAt:sb.now()
+    likes:0, comments:0, pinned:false, createdAt:firebase.firestore.FieldValue.serverTimestamp()
   });
   document.getElementById('ann-content').value='';
   toast('Annonce publiée !','success');
@@ -691,18 +710,18 @@ async function loadNotifications() {
   // Charger depuis Firestore et fusionner avec les démo
   try {
     const snap = await getDocs(query(
-      collection(db,'notifications'),
+      db.collection('notifications'),
       where('userId','==',currentUser.uid),
       orderBy('createdAt','desc')
     ));
     const fbNotifs = snap.docs.map(d => ({
       id: d.id,
-      icon: d.type==='submission'?'📤':d.type==='message'?'💬':d.type==='grade'?'📊':'🔔',
-      title: d.title,
-      body: d.body,
-      time: d.createdAt?.toDate ? timeAgo(d.createdAt.toDate()) : 'Récemment',
-      type: d.type,
-      unread: !d.isRead,
+      icon: d.data().type==='submission'?'📤':d.data().type==='message'?'💬':d.data().type==='grade'?'📊':'🔔',
+      title: d.data().title,
+      body: d.data().body,
+      time: d.data().createdAt?.toDate ? timeAgo(d.data().createdAt.toDate()) : 'Récemment',
+      type: d.data().type,
+      unread: !d.data().isRead,
       action: 'Voir'
     }));
     // Fusionner avec démo, FB en premier
@@ -786,12 +805,12 @@ window.markAllRead = async function() {
   // Marquer aussi dans Firestore
   try {
     const snap = await getDocs(query(
-      collection(db,'notifications'),
+      db.collection('notifications'),
       where('userId','==',currentUser.uid),
       where('isRead','==',false)
     ));
     for(const d of snap.docs) {
-      await updateDoc(doc(db,'notifications',d.id), {isRead: true});
+      await updateDoc(db.doc('notifications',d.id), {isRead: true});
     }
   } catch(e) {}
   toast('Toutes les notifications lues','success');
@@ -833,20 +852,22 @@ window.sendNewMsg = async function() {
   const body = document.getElementById('msg-body').value.trim();
   if(!body){toast('Écris un message.','error');return;}
   try {
-    await addDoc(collection(db,'messages'), {
+    await db.collection('messages').add(
+      {
       fromUid: currentUser.uid,
       toName: to,
       text: body,
-      createdAt: sb.now()
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
     });
     // Créer aussi une notification
-    await addDoc(collection(db,'notifications'), {
+    await db.collection('notifications').add(
+      {
       userId: currentUser.uid,
       title: 'Message envoyé',
       body: 'À ' + to + ' : ' + body.slice(0,80),
       type: 'message',
       isRead: true,
-      createdAt: sb.now()
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
     });
   } catch(e) { console.log(e); }
   toast('Message envoyé à '+to+' !','success');

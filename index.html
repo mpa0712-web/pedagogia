@@ -143,11 +143,13 @@ body::before{
   </div>
 </div>
 
-<!-- Firebase SDK -->
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-import { getFirestore, doc, setDoc, getDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+<!-- Firebase SDK (compat) -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
+<script>
+
 
 // ─── REMPLACE AVEC TA CONFIG FIREBASE ─────────────────────
 const firebaseConfig = {
@@ -160,15 +162,15 @@ const firebaseConfig = {
 };
 // ──────────────────────────────────────────────────────────
 
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
+const app = firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
 
 // Si déjà connecté → rediriger
-onAuthStateChanged(auth, async (user) => {
+auth.onAuthStateChanged( async (user) => {
   if (user) {
-    const snap = await getDoc(doc(db, 'users', user.uid));
-    if (snap.exists()) {
+    const snap = (await db.doc( 'users', user.uid.get()));
+    if (snap.exists) {
       const role = snap.data().role;
       window.location.href = role === 'student' ? 'eleve.html' : 'dashboard.html';
     }
@@ -210,9 +212,9 @@ window.login = async function() {
   if (!email || !pwd) return showError('Remplis tous les champs.');
   setLoading('btn-login', true);
   try {
-    const cred = await signInWithEmailAndPassword(auth, email, pwd);
-    const snap = await getDoc(doc(db, 'users', cred.user.uid));
-    const role = snap.exists() ? snap.data().role : 'teacher';
+    const cred = await auth.signInWithEmailAndPassword( email, pwd);
+    const snap = (await db.doc( 'users', cred.user.uid.get()));
+    const role = snap.exists ? snap.data().role : 'teacher';
     window.location.href = role === 'student' ? 'eleve.html' : 'dashboard.html';
   } catch(e) {
     showError('E-mail ou mot de passe incorrect.');
@@ -230,10 +232,10 @@ window.register = async function() {
   if (pwd.length < 6) return showError('Le mot de passe doit faire au moins 6 caractères.');
   setLoading('btn-register', true);
   try {
-    const cred = await createUserWithEmailAndPassword(auth, email, pwd);
-    await setDoc(doc(db, 'users', cred.user.uid), {
+    const cred = await auth.createUserWithEmailAndPassword( email, pwd);
+    await setDoc(db.doc( 'users', cred.user.uid), {
       uid: cred.user.uid, name, email, role,
-      createdAt: serverTimestamp()
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
     });
     window.location.href = role === 'student' ? 'eleve.html' : 'dashboard.html';
   } catch(e) {
@@ -246,7 +248,7 @@ window.resetPwd = async function() {
   const email = document.getElementById('login-email').value.trim();
   if (!email) return showError('Entre ton e-mail pour réinitialiser ton mot de passe.');
   try {
-    await sendPasswordResetEmail(auth, email);
+    await auth.sendPasswordResetEmail( email);
     document.getElementById('auth-error').style.background = 'rgba(61,107,79,.15)';
     document.getElementById('auth-error').style.borderColor = 'rgba(61,107,79,.3)';
     document.getElementById('auth-error').style.color = '#5A8C6A';

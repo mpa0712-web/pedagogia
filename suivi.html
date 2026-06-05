@@ -210,8 +210,6 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--sand);co
 .export-title{font-size:13px;font-weight:700}
 .export-desc{font-size:11px;color:var(--ink-30);margin-top:2px}
 </style>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="supabase.js"></script>
 </head>
 <body>
 <div class="app">
@@ -554,9 +552,27 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--sand);co
 <div class="ov" id="ov" onclick="closeModal(event)"><div class="modal" id="modal-body"></div></div>
 <div class="toast" id="toast"></div>
 
-<script type="module">
+<!-- Firebase SDK (compat) -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
 
+<script>
 
+const firebaseConfig = {
+  apiKey: "AIzaSyBYOQopUVm5vcjUur74ErhvehWC-UNiaz0",
+  authDomain: "pedagogia-18dda.firebaseapp.com",
+  projectId: "pedagogia-18dda",
+  storageBucket: "pedagogia-18dda.firebasestorage.app",
+  messagingSenderId: "465869483173",
+  appId: "1:465869483173:web:5874b245342c020127b14c"
+};
+const GEMINI_KEY = "AIzaSyB5WHwnUCVMxm0D4a9JZLhjQxqHnF8nGkY";
+
+const app = firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
 let currentUser = null;
 let calDate2 = new Date();
 let notes = [];
@@ -565,15 +581,16 @@ let currentNoteId = null;
 let sequences = [];
 
 window.logout = async function() {
-  await sb.signOut();
+  await auth.signOut();
+  window.location.href = 'index.html';
 };
 
-sb.onAuthChange(async (user, event) => {
+auth.onAuthStateChanged( async (user) => {
   if (!user) { window.location.href='index.html'; return; }
   currentUser = user;
-  const snap = await getDoc(doc(db,'users',user.uid));
-  if (snap.exists()) {
-    const d = snap;
+  const snap = (await db.doc('users',user.uid.get()));
+  if (snap.exists) {
+    const d = snap.data();
     const initials = d.name.split(' ').map(n=>n[0]).join('').toUpperCase().slice(0,2);
     document.getElementById('s-av').textContent = initials;
     document.getElementById('s-nm').textContent = d.name;
@@ -630,16 +647,16 @@ async function buildCharts(){
   // Charger les données réelles depuis Firestore
   try {
     const [aSnap, subSnap, fSnap] = await Promise.all([
-      getDocs(query(collection(db,'assignments'), where('uid','==',currentUser.uid))),
-      getDocs(collection(db,'submissions')),
-      getDocs(query(collection(db,'files'), where('uid','==',currentUser.uid))),
+      getDocs(query(db.collection('assignments'), where('uid','==',currentUser.uid))),
+      getDocs(db.collection('submissions')),
+      getDocs(query(db.collection('files'), where('uid','==',currentUser.uid))),
     ]);
-    const totalDevoirs = aData.length;
-    const totalSubs = subData.length;
-    const totalFichiers = fData.length;
-    const graded = subData.filter(d => d.score != null);
+    const totalDevoirs = aSnap.size;
+    const totalSubs = subSnap.size;
+    const totalFichiers = fSnap.size;
+    const graded = subSnap.docs.filter(d => d.data().score != null);
     const avgScore = graded.length > 0
-      ? graded.reduce((acc,d) => acc+(d.score||0), 0) / graded.length
+      ? graded.reduce((acc,d) => acc+(d.data().score||0), 0) / graded.length
       : 0;
     // Mettre à jour les stats du tableau
     document.querySelector('#screen-tb-enrichi .db-stat.green .ds-val').textContent =
@@ -673,7 +690,7 @@ async function buildPlanningFromFirestore(){
   if(!currentUser) return;
   try {
     const snap = await getDocs(query(
-      collection(db,'events'),
+      db.collection('events'),
       where('uid','==',currentUser.uid),
       orderBy('date','asc')
     ));
@@ -712,8 +729,8 @@ function buildPlanning(){
 // NOTES
 async function loadNotes(){
   if(!currentUser) return;
-  const snap=await getDocs(query(collection(db,'notes'),where('uid','==',currentUser.uid),orderBy('updatedAt','desc')));
-  notes=snap.docs.map(d=>({id:d.id,...d}));
+  const snap=(await db.collection('notes'.get().where('uid', '==', currentUser.uid).orderBy('updatedAt', 'desc'));
+  notes=snap.docs.map(d=>({id:d.id,...d.data()}));
   if(!notes.length){
     notes=[
       {id:'demo1',title:'Préparation séquence Communication',category:'cours',content:'Séquence 2 — La communication professionnelle\n\n• Objectifs : identifier les types de communication, maîtriser l\'écoute active\n• Durée : 8 séances\n• Ressources : cours magistral + exercices différenciés + évaluation finale',tags:'cours, communication, seconde',updatedAt:{toDate:()=>new Date()}},
@@ -771,12 +788,13 @@ window.saveNote = async function(){
   const content = contentEl?.value || '';
   const tags = tagsEl?.value || '';
   const category = catEl?.value || 'général';
-  const data = {uid:currentUser.uid, title, content, tags, category, updatedAt:sb.now()};
+  const data = {uid:currentUser.uid, title, content, tags, category, updatedAt:firebase.firestore.FieldValue.serverTimestamp()};
   const isDemo = currentNoteId && ['demo1','demo2','demo3'].includes(currentNoteId);
   if(currentNoteId && !isDemo) {
-    await setDoc(doc(db,'notes',currentNoteId), {...data,createdAt:sb.now()}, {merge:true});
+    await setDoc(db.doc('notes',currentNoteId), {...data,createdAt:firebase.firestore.FieldValue.serverTimestamp()}, {merge:true});
   } else {
-    const ref = await addDoc(collection(db,'notes'), {...data, createdAt:sb.now()});
+    const ref = await db.collection('notes').add(
+      {...data, createdAt:firebase.firestore.FieldValue.serverTimestamp()});
     currentNoteId = ref.id;
   }
   const savedEl = document.getElementById('ne-saved-info');
@@ -787,7 +805,7 @@ window.saveNote = async function(){
 
 window.deleteNote = async function(id){
   if(!confirm('Supprimer cette note ?')) return;
-  if(!id.startsWith('demo')) await deleteDoc(doc(db,'notes',id));
+  if(!id.startsWith('demo')) await db.doc('notes',id.delete());
   notes=notes.filter(n=>n.id!==id);
   renderNotesList();
   if(currentNoteId===id) closeNoteEditor();
@@ -806,8 +824,8 @@ const POSTIT_COLORS=['#FEF3C7','#DBEAFE','#F0FDF4','#FDE8F0','#F3EEFF','#FBF0EA'
 
 async function loadPostits(){
   if(!currentUser) return;
-  const snap=await getDocs(query(collection(db,'postits'),where('uid','==',currentUser.uid),orderBy('createdAt','desc')));
-  postits=snap.docs.map(d=>({id:d.id,...d}));
+  const snap=(await db.collection('postits'.get().where('uid', '==', currentUser.uid).orderBy('createdAt', 'desc'));
+  postits=snap.docs.map(d=>({id:d.id,...d.data()}));
   if(!postits.length){
     postits=[
       {id:'p1',text:'Préparer l\'évaluation de vendredi — ne pas oublier les grilles de compétences',color:'#FEF3C7',createdAt:{toDate:()=>new Date()}},
@@ -860,8 +878,8 @@ window.selectDay=function(d){ toast('Jour sélectionné : '+d+' — fonctionnali
 
 async function loadEvents2(){
   if(!currentUser) return;
-  const snap=await getDocs(query(collection(db,'events'),where('uid','==',currentUser.uid),orderBy('date','asc')));
-  const eventsDB=snap.docs.map(d=>({id:d.id,...d}));
+  const snap=(await db.collection('events'.get().where('uid', '==', currentUser.uid).orderBy('date', 'asc'));
+  const eventsDB=snap.docs.map(d=>({id:d.id,...d.data()}));
   const eventsDemo=[
     {title:'Évaluation Relation client',type:'evaluation',classe:'Term. Pro MCV',date:{toDate:()=>{const d=new Date();d.setDate(d.getDate()+1);return d;}},dotColor:'var(--terra)'},
     {title:'Rendu — Plan de vente',type:'devoir',classe:'Première Pro',date:{toDate:()=>{const d=new Date();d.setDate(d.getDate()+4);return d;}},dotColor:'var(--amber)'},
@@ -889,8 +907,8 @@ async function loadEvents2(){
 // SÉQUENCES
 async function loadSequences(){
   if(!currentUser) return;
-  const snap=await getDocs(query(collection(db,'sequences'),where('uid','==',currentUser.uid)));
-  const seqDB=snap.docs.map(d=>({id:d.id,...d}));
+  const snap=(await query(db.collection('sequences'.get()),where('uid','==',currentUser.uid)));
+  const seqDB=snap.docs.map(d=>({id:d.id,...d.data()}));
   sequences=[
     {id:'s1',title:'La communication professionnelle',classe:'Seconde Générale',periode:'Période 2',duree:'8 séances',progression:75,seances:[
       {title:'Introduction — types de communication',done:true},
@@ -961,10 +979,10 @@ window.toggleSeance=async function(seqId,idx){
   // Sauvegarder dans Firestore si ce n'est pas une démo
   if(!seqId.startsWith('s1')&&!seqId.startsWith('s2')) {
     try {
-      await setDoc(doc(db,'sequences',seqId), {
+      await setDoc(db.doc('sequences',seqId), {
         seances: s.seances,
         progression: s.progression,
-        updatedAt: sb.now()
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
       }, {merge:true});
     } catch(e) { console.warn('Sauvegarde séance:', e); }
   }
@@ -981,19 +999,19 @@ window.exportAction = async function(type) {
   if(type === 'stats') {
     // Générer un rapport statistique réel
     const [fSnap, aSnap, subSnap] = await Promise.all([
-      getDocs(query(collection(db,'folders'), where('uid','==',currentUser.uid))),
-      getDocs(query(collection(db,'assignments'), where('uid','==',currentUser.uid))),
-      getDocs(collection(db,'submissions'))
+      getDocs(query(db.collection('folders'), where('uid','==',currentUser.uid))),
+      getDocs(query(db.collection('assignments'), where('uid','==',currentUser.uid))),
+      getDocs(db.collection('submissions'))
     ]);
-    const snap2 = await getDoc(doc(db,'users',currentUser.uid));
-    const name = snap2.exists() ? snap2.name : 'Enseignant';
+    const snap2 = (await db.doc('users',currentUser.uid.get()));
+    const name = snap2.exists ? snap2.data().name : 'Enseignant';
     const rapport = `RAPPORT PÉDAGOGIQUE — ${name}
 Généré le ${new Date().toLocaleDateString('fr-FR')}
 ${'─'.repeat(40)}
 RESSOURCES
-  Dossiers créés : ${fData.length}
-  Devoirs actifs : ${aData.length}
-  Rendus reçus   : ${subData.length}
+  Dossiers créés : ${fSnap.size}
+  Devoirs actifs : ${aSnap.size}
+  Rendus reçus   : ${subSnap.size}
 ${'─'.repeat(40)}
 CLASSES
   Terminale Pro MCV : 27 élèves
@@ -1012,9 +1030,10 @@ Rapport généré par Pédagogia`;
   }
   if(type === 'partage') {
     const code = Math.random().toString(36).substring(2,10).toUpperCase();
-    await addDoc(collection(db,'shareLinks'), {
+    await db.collection('shareLinks').add(
+      {
       uid: currentUser.uid, code, type: 'global',
-      createdAt: sb.now()
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
     });
     const link = window.location.origin + '/pedagogia?share=' + code;
     navigator.clipboard.writeText(link).catch(()=>{});
@@ -1022,10 +1041,10 @@ Rapport généré par Pédagogia`;
     return;
   }
   if(type === 'sequences') {
-    const snap3 = await getDocs(query(collection(db,'sequences'), where('uid','==',currentUser.uid)));
+    const snap3 = (await query(db.collection('sequences'.get()), where('uid','==',currentUser.uid)));
     const lines = ['SÉQUENCES PÉDAGOGIQUES', '─'.repeat(40)];
     snap3.docs.forEach((d,i) => {
-      const fd = d;
+      const fd = d.data();
       lines.push((i+1)+'. '+fd.title+' — '+fd.classe);
       lines.push('   Progression: '+fd.progression+'% ('+fd.duree+')');
       (fd.seances||[]).forEach((s,j) => lines.push('   '+(j+1)+'. '+(s.done?'✓':'○')+' '+s.title));
@@ -1062,7 +1081,8 @@ ${POSTIT_COLORS.map((c,i)=>`<div style="width:28px;height:28px;border-radius:6px
         const text=document.getElementById('pi-text').value.trim();
         if(!text){toast('Écris quelque chose.','error');return;}
         const color=window._piColor||POSTIT_COLORS[0];
-        await addDoc(collection(db,'postits'),{uid:currentUser.uid,text,color,createdAt:sb.now()});
+        await db.collection('postits').add(
+      {uid:currentUser.uid,text,color,createdAt:firebase.firestore.FieldValue.serverTimestamp()});
         toast('Post-it ajouté !','success');
         closeModal();
         loadPostits();
@@ -1081,7 +1101,8 @@ ${POSTIT_COLORS.map((c,i)=>`<div style="width:28px;height:28px;border-radius:6px
         const classe=document.getElementById('ev-class').value;
         const dateStr=document.getElementById('ev-date').value;
         if(!title){toast('Donne un titre.','error');return;}
-        await addDoc(collection(db,'events'),{uid:currentUser.uid,title,type,classe,date:dateStr?new Date(dateStr):new Date(),createdAt:sb.now()});
+        await db.collection('events').add(
+      {uid:currentUser.uid,title,type,classe,date:dateStr?new Date(dateStr):new Date(),createdAt:firebase.firestore.FieldValue.serverTimestamp()});
         toast('Événement ajouté !','success');
         closeModal();
         loadEvents2();
@@ -1100,13 +1121,14 @@ ${POSTIT_COLORS.map((c,i)=>`<div style="width:28px;height:28px;border-radius:6px
         if(!title){toast('Donne un titre.','error');return;}
         const nb=parseInt(document.getElementById('sq-nb').value)||6;
         const seances=Array.from({length:nb},(_,i)=>({title:`Séance ${i+1}`,done:false}));
-        await addDoc(collection(db,'sequences'),{
+        await db.collection('sequences').add(
+      {
           uid:currentUser.uid,
           title,classe:document.getElementById('sq-class').value,
           periode:document.getElementById('sq-per').value,
           duree:nb+' séances',progression:0,seances,
           objectifs:document.getElementById('sq-obj').value,
-          createdAt:sb.now()
+          createdAt:firebase.firestore.FieldValue.serverTimestamp()
         });
         toast('Séquence créée !','success');
         closeModal();

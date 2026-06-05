@@ -330,8 +330,6 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--sand);co
 .ann-txt{font-size:12px;color:var(--ink-60);flex:1}
 .ann-pg{font-size:10px;color:var(--ink-30)}
 </style>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="supabase.js"></script>
 </head>
 <body>
 <div class="app">
@@ -699,11 +697,29 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--sand);co
 
 <div class="toast" id="toast"></div>
 
-<script type="module">
+<!-- Firebase SDK (compat) -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
+
+<script>
 
 // ─── CONFIG FIREBASE ───────────────────────────────────────
+const firebaseConfig = {
+  apiKey: "AIzaSyBYOQopUVm5vcjUur74ErhvehWC-UNiaz0",
+  authDomain: "pedagogia-18dda.firebaseapp.com",
+  projectId: "pedagogia-18dda",
+  storageBucket: "pedagogia-18dda.firebasestorage.app",
+  messagingSenderId: "465869483173",
+  appId: "1:465869483173:web:5874b245342c020127b14c"
+};
+const GEMINI_KEY = "AIzaSyB5WHwnUCVMxm0D4a9JZLhjQxqHnF8nGkY";
 // ──────────────────────────────────────────────────────────
 
+const app = firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
 let currentUser = null;
 let currentMurId = null;
 let currentMurData = null;
@@ -721,15 +737,16 @@ let annotations = [];
 let draggedCard = null;
 
 window.logout = async function() {
-  await sb.signOut();
+  await auth.signOut();
+  window.location.href = 'index.html';
 };
 
-sb.onAuthChange(async (user, event) => {
+auth.onAuthStateChanged( async (user) => {
   if (!user) { window.location.href='index.html'; return; }
   currentUser = user;
-  const snap = await getDoc(doc(db,'users',user.uid));
-  if (snap.exists()) {
-    const d = snap;
+  const snap = (await db.doc('users',user.uid.get()));
+  if (snap.exists) {
+    const d = snap.data();
     const initials = d.name.split(' ').map(n=>n[0]).join('').toUpperCase().slice(0,2);
     document.getElementById('s-av').textContent = initials;
     document.getElementById('s-nm').textContent = d.name;
@@ -787,14 +804,14 @@ const MUR_COLORS = {
 
 async function loadMurs() {
   if(!currentUser) return;
-  const snap = await getDocs(query(collection(db,'murs'),where('uid','==',currentUser.uid),orderBy('createdAt','desc')));
+  const snap = (await db.collection('murs'.get().where('uid', '==', currentUser.uid).orderBy('createdAt', 'desc'));
   const grid = document.getElementById('murs-grid');
   if(snap.empty){
     grid.innerHTML=`<div style="grid-column:1/-1"><div class="empty"><div class="empty-ic">🗂</div><div class="empty-txt">Aucun mur encore.<br>Crée ton premier mur collaboratif !</div></div></div>`;
     return;
   }
   grid.innerHTML = snap.docs.map(d=>{
-    const fd=d;
+    const fd=d.data();
     const col = MUR_COLORS[fd.color]||MUR_COLORS.sage;
     const carteCount = (fd.columns||[]).reduce((acc,c)=>(acc+(c.cards||[]).length),0);
     return `<div class="mur-card" onclick="ouvrirMur('${d.id}')">
@@ -815,10 +832,10 @@ async function loadMurs() {
 }
 
 window.ouvrirMur = async function(murId) {
-  const snap = await getDoc(doc(db,'murs',murId));
-  if(!snap.exists()) return;
+  const snap = (await db.doc('murs',murId.get()));
+  if(!snap.exists) return;
   currentMurId = murId;
-  currentMurData = {id:murId, ...snap};
+  currentMurData = {id:murId, ...snap.data()};
   document.getElementById('mur-detail-name').textContent = currentMurData.name;
   document.getElementById('murs-liste').style.display='none';
   document.getElementById('mur-detail').classList.add('active');
@@ -913,7 +930,7 @@ window.deleteCard = function(ci,ki){
 
 window.saveMur = async function(){
   if(!currentMurId||!currentMurData) return;
-  await setDoc(doc(db,'murs',currentMurId), {...currentMurData, updatedAt:sb.now()});
+  await setDoc(db.doc('murs',currentMurId), {...currentMurData, updatedAt:firebase.firestore.FieldValue.serverTimestamp()});
   toast('Mur sauvegardé !','success');
 };
 
@@ -922,8 +939,8 @@ window.saveMur = async function(){
 // ════════════════════════════════════════
 async function loadAnnonces(){
   if(!currentUser) return;
-  const snap = await getDocs(query(collection(db,'annonces'),where('uid','==',currentUser.uid),orderBy('createdAt','desc')));
-  annonces = snap.docs.map(d=>({id:d.id,...d}));
+  const snap = (await db.collection('annonces'.get().where('uid', '==', currentUser.uid).orderBy('createdAt', 'desc'));
+  annonces = snap.docs.map(d=>({id:d.id,...d.data()}));
   renderAnnonces();
   document.getElementById('ann-count').textContent = snap.size;
 }
@@ -977,13 +994,14 @@ window.setAnnType = function(type){
 window.publierAnnonce = async function(){
   const content = document.getElementById('compose-text').value.trim();
   if(!content){ toast('Écris quelque chose avant de publier.','error'); return; }
-  const snap = await getDoc(doc(db,'users',currentUser.uid));
-  const authorName = snap.exists()?snap.name:'Enseignant';
-  await addDoc(collection(db,'annonces'),{
+  const snap = (await db.doc('users',currentUser.uid.get()));
+  const authorName = snap.exists?snap.data().name:'Enseignant';
+  await db.collection('annonces').add(
+      {
     uid:currentUser.uid, content, type:annType,
     authorName, classe:'Toutes les classes',
     likes:0, comments:0, pinned:false,
-    createdAt:sb.now()
+    createdAt:firebase.firestore.FieldValue.serverTimestamp()
   });
   document.getElementById('compose-text').value='';
   toast('Annonce publiée !','success');
@@ -992,7 +1010,7 @@ window.publierAnnonce = async function(){
 
 window.deleteAnnonce = async function(id){
   if(!confirm('Supprimer cette annonce ?')) return;
-  await deleteDoc(doc(db,'annonces',id));
+  await db.doc('annonces',id.delete());
   toast('Annonce supprimée','success');
   loadAnnonces();
 };
@@ -1006,7 +1024,7 @@ window.likeAnnonce = function(id){
 // ════════════════════════════════════════
 async function loadCours(){
   if(!currentUser) return;
-  const snap = await getDocs(query(collection(db,'cours'),where('uid','==',currentUser.uid),orderBy('createdAt','desc')));
+  const snap = (await db.collection('cours'.get().where('uid', '==', currentUser.uid).orderBy('createdAt', 'desc'));
   const el = document.getElementById('cours-list');
   if(snap.empty){
     el.innerHTML='<div class="empty"><div class="empty-ic">✍️</div><div class="empty-txt">Aucun cours encore.<br>Crée ton premier cours !</div></div>';
@@ -1015,7 +1033,7 @@ async function loadCours(){
   const colors={sage:'#EAF2ED',terra:'#FBF0EA',blue:'#EBF2FF',purple:'#F3EEFF'};
   const icons=['📗','📘','📙','📒','📕'];
   el.innerHTML = snap.docs.map((d,i)=>{
-    const fd=d;
+    const fd=d.data();
     const bg=colors[['sage','terra','blue','purple'][i%4]];
     return `<div class="cours-item" onclick="ouvrirCours('${d.id}')">
       <div class="ci-icon" style="background:${bg}">${icons[i%5]}</div>
@@ -1044,9 +1062,9 @@ window.ouvrirEditeur = function(coursId=null){
 };
 
 window.ouvrirCours = async function(id){
-  const snap = await getDoc(doc(db,'cours',id));
-  if(!snap.exists()) return;
-  const fd = snap;
+  const snap = (await db.doc('cours',id.get()));
+  if(!snap.exists) return;
+  const fd = snap.data();
   currentCoursId = id;
   blocsData = fd.blocs||[];
   document.getElementById('edit-title').value = fd.title||'';
@@ -1101,11 +1119,12 @@ window.autoResize = function(el){ el.style.height='auto'; el.style.height=el.scr
 window.sauvegarderCours = async function(){
   const title = document.getElementById('edit-title').value.trim()||'Sans titre';
   const classe = document.getElementById('edit-class').value;
-  const data = { uid:currentUser.uid, title, classe, blocs:blocsData, published:false, updatedAt:sb.now() };
+  const data = { uid:currentUser.uid, title, classe, blocs:blocsData, published:false, updatedAt:firebase.firestore.FieldValue.serverTimestamp() };
   if(currentCoursId){
-    await setDoc(doc(db,'cours',currentCoursId),{...data,createdAt:sb.now()},{merge:true});
+    await setDoc(db.doc('cours',currentCoursId),{...data,createdAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});
   } else {
-    const ref = await addDoc(collection(db,'cours'),{...data,createdAt:sb.now()});
+    const ref = await db.collection('cours').add(
+      {...data,createdAt:firebase.firestore.FieldValue.serverTimestamp()});
     currentCoursId=ref.id;
   }
   toast('Cours sauvegardé !','success');
@@ -1114,7 +1133,7 @@ window.sauvegarderCours = async function(){
 window.publierCours = async function(){
   await window.sauvegarderCours();
   if(currentCoursId){
-    await setDoc(doc(db,'cours',currentCoursId),{published:true},{merge:true});
+    await setDoc(db.doc('cours',currentCoursId),{published:true},{merge:true});
     toast('Cours publié aux élèves !','success');
   }
 };
@@ -1164,34 +1183,34 @@ async function loadEleves(){
   if(!currentUser) return;
   try {
     // Charger les membres des classes de l'enseignant
-    const classSnap = await getDocs(query(collection(db,'classes'), where('uid','==',currentUser.uid)));
-    const classIds = classData.map(d => d.id);
+    const classSnap = (await query(db.collection('classes'.get()), where('uid','==',currentUser.uid)));
+    const classIds = classSnap.docs.map(d => d.id);
     if(classIds.length === 0) {
       renderElevesList(elevesDemo); // fallback démo
       return;
     }
-    const memberSnap = await getDocs(query(collection(db,'classMembers'), where('teacherId','==',currentUser.uid)));
-    if((!memberData || memberData.length === 0)) {
+    const memberSnap = (await query(db.collection('classMembers'.get()), where('teacherId','==',currentUser.uid)));
+    if(memberSnap.empty) {
       renderElevesList(elevesDemo); // fallback démo
       return;
     }
-    const eleveIds = [...new Set(memberData.map(d => d.studentId))];
+    const eleveIds = [...new Set(memberSnap.docs.map(d => d.data().studentId))];
     const elevesFirestore = await Promise.all(eleveIds.map(async (uid, i) => {
       try {
-        const userSnap = await getDoc(doc(db,'users',uid));
-        const userData = (userData != null) ? userSnap : {};
-        const memberData = memberData.find(d => d.studentId === uid)? || {};
-        const subSnap = await getDocs(query(collection(db,'submissions'), where('uid','==',uid)));
-        const graded = subData.filter(d => d.score != null);
+        const userSnap = (await db.doc('users',uid.get()));
+        const userData = userSnap.exists ? userSnap.data() : {};
+        const memberData = memberSnap.docs.find(d => d.data().studentId === uid)?.data() || {};
+        const subSnap = (await query(db.collection('submissions'.get()), where('uid','==',uid)));
+        const graded = subSnap.docs.filter(d => d.data().score != null);
         const avg = graded.length > 0
-          ? (graded.reduce((acc,d) => acc + (d.score||0), 0) / graded.length).toFixed(1)
+          ? (graded.reduce((acc,d) => acc + (d.data().score||0), 0) / graded.length).toFixed(1)
           : '—';
         const colors = ['#5A8C6A','#B8623A','#1A4F9C','#5B2E9C','#9C6B1E','#9C1A5B'];
         return {
           name: userData.name || 'Élève '+uid.slice(0,4),
           class: memberData.className || 'Classe',
           avg: avg,
-          done: subData.length,
+          done: subSnap.size,
           total: 10,
           color: colors[i % colors.length],
           uid
@@ -1474,9 +1493,10 @@ const MODALS = {
       const theme=document.getElementById('m-theme').value;
       const visibility=document.getElementById('m-vis').value;
       const defaultCols=[{title:'À faire',cards:[]},{title:'En cours',cards:[]},{title:'Terminé',cards:[]}];
-      await addDoc(collection(db,'murs'),{
+      await db.collection('murs').add(
+      {
         uid:currentUser.uid,name,color,emoji,classe,theme,visibility,
-        columns:defaultCols,createdAt:sb.now()
+        columns:defaultCols,createdAt:firebase.firestore.FieldValue.serverTimestamp()
       });
       toast('Mur créé !','success');
       closeModal();
@@ -1498,7 +1518,7 @@ const MODALS = {
     action: async () => {
       const vis = document.getElementById('sh-vis').value;
       if(currentMurId) {
-        await setDoc(doc(db,'murs',currentMurId), {visibility: vis}, {merge:true});
+        await setDoc(db.doc('murs',currentMurId), {visibility: vis}, {merge:true});
         toast('Visibilité mise à jour : '+vis, 'success');
       }
       closeModal();
@@ -1519,10 +1539,11 @@ const MODALS = {
       const classe = document.getElementById('anc-class').value;
       const type = document.getElementById('anc-type').value;
       if(!msg){toast('Écris un message.','error');return;}
-      await addDoc(collection(db,'annonces'),{
+      await db.collection('annonces').add(
+      {
         uid:currentUser.uid, content:msg, type, classe,
         authorName: document.getElementById('s-nm').textContent,
-        likes:0, comments:0, pinned:false, createdAt:sb.now()
+        likes:0, comments:0, pinned:false, createdAt:firebase.firestore.FieldValue.serverTimestamp()
       });
       toast('Annonce envoyée à '+classe+' !','success');
       closeModal();
@@ -1605,7 +1626,8 @@ const EXTRA_MODALS = {
       const vis = document.getElementById('sm-vis').value;
       const classe = document.getElementById('sm-classe').value;
       if(currentMurId) {
-        await setDoc(doc(db,'murs',currentMurId), { visibility: vis, classe }, { merge: true });
+        const { setDoc, doc } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
+        await setDoc(db.doc('murs',currentMurId), { visibility: vis, classe }, { merge: true });
       }
       toast(vis === 'public' ? '✓ Mur partagé avec les élèves !' : '🔒 Mur mis en privé', 'success');
       closeModal();
@@ -1635,12 +1657,13 @@ const EXTRA_MODALS = {
       const classe = document.getElementById('ac-classe').value;
       const type = document.getElementById('ac-type').value;
       if(!content2) { toast('Écris un message.','error'); return; }
-      const snap2 = await getDoc(doc(db,'users',currentUser.uid));
-      const authorName = snap2.exists() ? snap2.name : 'Enseignant';
-      await addDoc(collection(db,'annonces'), {
+      const snap2 = (await db.doc('users',currentUser.uid.get()));
+      const authorName = snap2.exists ? snap2.data().name : 'Enseignant';
+      await db.collection('annonces').add(
+      {
         uid: currentUser.uid, content: content2, type, authorName,
         classe, likes: 0, comments: 0, pinned: false,
-        createdAt: sb.now()
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
       });
       toast('Annonce envoyée à '+classe+' !', 'success');
       closeModal();

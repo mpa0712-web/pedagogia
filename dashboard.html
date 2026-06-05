@@ -233,8 +233,6 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--sand);co
 .s-bottom-btn{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:8px;font-size:11px;color:rgba(255,255,255,.4);cursor:pointer;transition:all .12s;width:100%}
 .s-bottom-btn:hover{background:rgba(255,255,255,.07);color:rgba(255,255,255,.7)}
 </style>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="supabase.js"></script>
 </head>
 <body>
 <div class="app">
@@ -522,13 +520,33 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--sand);co
 <!-- TOAST -->
 <div class="toast" id="toast"></div>
 
-<!-- Firebase SDK -->
-<script type="module">
+<!-- Firebase SDK (compat) -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
+<script>
 
 
-// ─── GOOGLE GEMINI API KEY ──────────────────────────────────
+// ─── CONFIG FIREBASE — REMPLACE ICI ───────────────────────
+const firebaseConfig = {
+  apiKey: "AIzaSyBYOQopUVm5vcjUur74ErhvehWC-UNiaz0",
+  authDomain: "pedagogia-18dda.firebaseapp.com",
+  projectId: "pedagogia-18dda",
+  storageBucket: "pedagogia-18dda.firebasestorage.app",
+  messagingSenderId: "465869483173",
+  appId: "1:465869483173:web:5874b245342c020127b14c"
+};
 // ──────────────────────────────────────────────────────────
 
+// ─── GOOGLE GEMINI API KEY ──────────────────────────────────
+const GEMINI_KEY = "AIzaSyB5WHwnUCVMxm0D4a9JZLhjQxqHnF8nGkY";
+// ──────────────────────────────────────────────────────────
+
+const app = firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+const storage = firebase.storage();
 
 let currentUser = null;
 let currentFolderId = null;
@@ -537,12 +555,12 @@ let calDate = new Date();
 let assignFilter = 'all';
 
 // ── AUTH ─────────────────────────────────────────────────
-sb.onAuthChange(async (user, event) => {
+auth.onAuthStateChanged( async (user) => {
   if (!user) { window.location.href='index.html'; return; }
   currentUser = user;
-  const snap = await getDoc(doc(db,'users',user.uid));
-  if (snap.exists()) {
-    const d = snap;
+  const snap = (await db.doc('users',user.uid.get()));
+  if (snap.exists) {
+    const d = snap.data();
     if (d.role === 'student') { window.location.href='eleve.html'; return; }
     const initials = d.name.split(' ').map(n=>n[0]).join('').toUpperCase().slice(0,2);
     document.getElementById('s-av').textContent = initials;
@@ -563,7 +581,7 @@ sb.onAuthChange(async (user, event) => {
   document.getElementById('w-date').textContent = `${days[now.getDay()]} ${now.getDate()} ${months[now.getMonth()]} ${now.getFullYear()}`;
 });
 
-window.logout = async () => { await sb.signOut(); };
+window.logout = async () => { await auth.signOut(); window.location.href='index.html'; };
 
 // ── NAVIGATION ────────────────────────────────────────────
 const TITLES = {dashboard:'Tableau de bord',resources:'Ressources',assignments:'Devoirs',ai:'Assistant IA',calendar:'Calendrier',classes:'Mes classes'};
@@ -589,25 +607,25 @@ window.showToast = toast;
 async function loadDashboard() {
   const uid = currentUser.uid;
   const [fSnap, fileSnap, aSnap, aiSnap] = await Promise.all([
-    getDocs(query(collection(db,'folders'),where('uid','==',uid))),
-    getDocs(query(collection(db,'files'),where('uid','==',uid))),
-    getDocs(query(collection(db,'assignments'),where('uid','==',uid))),
-    getDocs(query(collection(db,'aiContent'),where('uid','==',uid))),
+    getDocs(query(db.collection('folders'),where('uid','==',uid))),
+    getDocs(query(db.collection('files'),where('uid','==',uid))),
+    getDocs(query(db.collection('assignments'),where('uid','==',uid))),
+    getDocs(query(db.collection('aiContent'),where('uid','==',uid))),
   ]);
-  document.getElementById('stat-folders').textContent = fData.length;
-  document.getElementById('stat-files').textContent = fileData.length;
-  document.getElementById('stat-assigns').textContent = aData.length;
-  document.getElementById('stat-ai').textContent = aiData.length;
-  document.getElementById('badge-assign').textContent = aData.length;
+  document.getElementById('stat-folders').textContent = fSnap.size;
+  document.getElementById('stat-files').textContent = fileSnap.size;
+  document.getElementById('stat-assigns').textContent = aSnap.size;
+  document.getElementById('stat-ai').textContent = aiSnap.size;
+  document.getElementById('badge-assign').textContent = aSnap.size;
 
   // Recent folders
   const fList = document.getElementById('recent-folders-list');
-  if ((!fData || fData.length === 0)) {
+  if (fSnap.empty) {
     fList.innerHTML = '<div class="empty"><div class="empty-ic">📁</div><div class="empty-txt">Aucun dossier encore.<br>Crée ton premier dossier !</div></div>';
   } else {
     const icons = {sage:'📗',terra:'📙',amber:'📓',blue:'📘',purple:'📒',pink:'📕'};
-    fList.innerHTML = fData.slice(0,5).map(d=>{
-      const fd=d;
+    fList.innerHTML = fSnap.docs.slice(0,5).map(d=>{
+      const fd=d.data();
       return `<div class="crow" onclick="nav('resources')">
         <div class="cth" style="background:${getColorBg(fd.color)}">${icons[fd.color]||'📁'}</div>
         <div><div class="cnm">${fd.name}</div><div class="cmt">${fd.fileCount||0} fichiers</div></div>
@@ -619,9 +637,9 @@ async function loadDashboard() {
   // Activity enrichie
   const aList = document.getElementById('activity-list');
   const allDocs = [
-    ...fData.map(d=>({...d, _type:'folder', _id:d.id})),
-    ...fileData.map(d=>({...d, _type:'file', _id:d.id})),
-    ...aData.map(d=>({...d, _type:'assignment', _id:d.id}))
+    ...fSnap.docs.map(d=>({...d.data(), _type:'folder', _id:d.id})),
+    ...fileSnap.docs.map(d=>({...d.data(), _type:'file', _id:d.id})),
+    ...aSnap.docs.map(d=>({...d.data(), _type:'assignment', _id:d.id}))
   ].sort((a,b)=>{
     const ta = a.createdAt?.toMillis?.() || a.createdAt?.seconds*1000 || 0;
     const tb = b.createdAt?.toMillis?.() || b.createdAt?.seconds*1000 || 0;
@@ -639,10 +657,10 @@ async function loadDashboard() {
     let subDocs = [];
     try {
       const subSnap = await getDocs(query(
-        collection(db,'submissions'),
+        db.collection('submissions'),
         where('status','==','submitted')
       ));
-      subDocs = subData.slice(0,3).map(d=>({...d, _type:'submission', _id:d.id}));
+      subDocs = subSnap.docs.slice(0,3).map(d=>({...d.data(), _type:'submission', _id:d.id}));
     } catch(e) {}
 
     const combined = [...allDocs, ...subDocs].sort((a,b)=>{
@@ -683,17 +701,17 @@ async function loadFolders(parentId) {
   currentFolderId = parentId;
   const uid = currentUser.uid;
   const q = parentId
-    ? query(collection(db,'folders'),where('uid','==',uid),where('parentId','==',parentId))
-    : query(collection(db,'folders'),where('uid','==',uid),where('parentId','==',null));
-  const snap = await getDocs(q);
+    ? query(db.collection('folders'),where('uid','==',uid),where('parentId','==',parentId))
+    : query(db.collection('folders'),where('uid','==',uid),where('parentId','==',null));
+  const snap = (await q.get());
 
   // Breadcrumb
   const bc = document.getElementById('breadcrumb');
   if (!parentId) {
     bc.innerHTML = '<span class="bc-cur" onclick="loadFolders(null)">Mes ressources</span>';
   } else {
-    const fd = await getDoc(doc(db,'folders',parentId));
-    bc.innerHTML = `<span onclick="loadFolders(null)">Mes ressources</span><span class="bc-sep">/</span><span class="bc-cur">${fd?.name||'Dossier'}</span>`;
+    const fd = (await db.doc('folders',parentId.get()));
+    bc.innerHTML = `<span onclick="loadFolders(null)">Mes ressources</span><span class="bc-sep">/</span><span class="bc-cur">${fd.data()?.name||'Dossier'}</span>`;
   }
 
   const colorClass = {sage:'fg',terra:'ft',amber:'fa',blue:'fb',purple:'fp',pink:'fk'};
@@ -702,7 +720,7 @@ async function loadFolders(parentId) {
     grid.innerHTML = '<div class="empty" style="grid-column:1/-1"><div class="empty-ic">📁</div><div class="empty-txt">Aucun dossier. Crée le premier !</div></div>';
   } else {
     grid.innerHTML = snap.docs.map(d=>{
-      const fd=d;
+      const fd=d.data();
       const cc=colorClass[fd.color]||'fg';
       return `<div class="fc ${cc}" onclick="loadFolders('${d.id}')">
         <div class="fi2">📁</div>
@@ -718,12 +736,12 @@ async function loadFolders(parentId) {
   // Files for this folder
   const fsect = document.getElementById('file-section');
   const flist = document.getElementById('file-list');
-  const fq = query(collection(db,'files'),where('uid','==',uid),where('folderId','==',parentId||null));
-  const fsnap = await getDocs(fq);
+  const fq = query(db.collection('files'),where('uid','==',uid),where('folderId','==',parentId||null));
+  const fsnap = (await fq.get());
   if (!fsnap.empty) {
     fsect.style.display='block';
     flist.innerHTML = fsnap.docs.map(d=>{
-      const fd=d;
+      const fd=d.data();
       const typeMap={'application/pdf':'📄 fpdf','application/vnd.openxmlformats-officedocument.wordprocessingml.document':'📝 fdoc','application/vnd.openxmlformats-officedocument.presentationml.presentation':'📊 fppt','image/jpeg':'🖼️ fimg','image/png':'🖼️ fimg'};
       const [ic,cls]=(typeMap[fd.mime]||'📄 fpdf').split(' ');
       const size = fd.size ? (fd.size/1024/1024).toFixed(1)+'Mo' : '';
@@ -751,7 +769,7 @@ window.loadFolders = loadFolders;
 
 async function deleteFolder(id, storagePath) {
   if(!confirm('Supprimer ce dossier ?')) return;
-  await deleteDoc(doc(db,'folders',id));
+  await db.doc('folders',id.delete());
   toast('Dossier supprimé','success');
   loadFolders(currentFolderId);
   loadDashboard();
@@ -761,8 +779,8 @@ window.deleteFolder = deleteFolder;
 async function deleteFile(id, storagePath) {
   if(!confirm('Supprimer ce fichier ?')) return;
   try {
-    if(storagePath) await deleteObject(ref(storage,storagePath));
-    await deleteDoc(doc(db,'files',id));
+    if(storagePath) await storage.ref(storagePath.delete());
+    await db.doc('files',id.delete());
     toast('Fichier supprimé','success');
     loadFolders(currentFolderId);
     loadDashboard();
@@ -778,10 +796,11 @@ window.uploadFiles = async function(event) {
   for (const file of files) {
     try {
       const path = `files/${currentUser.uid}/${Date.now()}_${file.name}`;
-      const storageRef = ref(storage,path);
-      await uploadBytes(storageRef,file);
-      const url = await getDownloadURL(storageRef);
-      await addDoc(collection(db,'files'),{
+      const storageRef = storage.ref(path);
+      await storageRef.put(file);
+      const url = await storageRef.getDownloadURL();
+      await db.collection('files').add(
+      {
         uid:currentUser.uid,
         folderId:currentFolderId||null,
         name:file.name,
@@ -791,7 +810,7 @@ window.uploadFiles = async function(event) {
         storagePath:path,
         visibility:'privé',
         type:'file',
-        createdAt:sb.now()
+        createdAt:firebase.firestore.FieldValue.serverTimestamp()
       });
     } catch(e){ toast('Erreur upload: '+file.name,'error'); }
   }
@@ -804,7 +823,7 @@ window.uploadFiles = async function(event) {
 // ── ASSIGNMENTS ───────────────────────────────────────────
 async function loadAssignments() {
   const uid = currentUser.uid;
-  const snap = await getDocs(query(collection(db,'assignments'),where('uid','==',uid),orderBy('createdAt','desc')));
+  const snap = (await db.collection('assignments'.get().where('uid', '==', uid).orderBy('createdAt', 'desc'));
   renderAssignments(snap.docs);
   document.getElementById('badge-assign').textContent = snap.size;
 }
@@ -819,7 +838,7 @@ function renderAssignments(docs) {
   el.innerHTML = `<table class="atbl">
     <thead><tr><th>Titre</th><th>Classe</th><th>Échéance</th><th>Statut</th><th></th></tr></thead>
     <tbody>${docs.map(d=>{
-      const fd=d;
+      const fd=d.data();
       const due = fd.dueDate?.toDate();
       const past = due && due < now;
       const pill = past
@@ -843,8 +862,8 @@ window.filterA = function(el,f){
 };
 // ── VOIR DEVOIR ──────────────────────────────────────────
 window.voirDevoir = async function(id, title) {
-  const subSnap = await getDocs(query(collection(db,'submissions'), where('assignmentId','==',id)));
-  const subs = subData.map(d => d);
+  const subSnap = (await query(db.collection('submissions'.get()), where('assignmentId','==',id)));
+  const subs = subSnap.docs.map(d => d.data());
   const modal = document.getElementById('modal-body');
   const now = new Date();
   modal.innerHTML = `
@@ -878,8 +897,8 @@ window.voirDevoir = async function(id, title) {
 
 // ── CORRIGER IA ────────────────────────────────────────
 window.corrigerIA = async function(id, title) {
-  const subSnap = await getDocs(query(collection(db,'submissions'), where('assignmentId','==',id)));
-  const subs = subData.filter(d => d.textResponse && !d.score);
+  const subSnap = (await query(db.collection('submissions'.get()), where('assignmentId','==',id)));
+  const subs = subSnap.docs.filter(d => d.data().textResponse && !d.data().score);
   if(subs.length === 0) {
     toast('Aucun rendu à corriger pour ce devoir.', 'error');
     return;
@@ -894,7 +913,7 @@ window.corrigerIA = async function(id, title) {
     <div id="correction-zone">
       <div style="background:var(--sand);border-radius:9px;padding:14px;margin-bottom:12px">
         <div style="font-size:10.5px;font-weight:700;color:var(--ink-60);text-transform:uppercase;letter-spacing:.3px;margin-bottom:8px">Rendu de l'élève</div>
-        <div style="font-size:12.5px;color:var(--ink);line-height:1.7">${subs[0].textResponse?.slice(0,600)||'Pas de texte'}</div>
+        <div style="font-size:12.5px;color:var(--ink);line-height:1.7">${subs[0].data().textResponse?.slice(0,600)||'Pas de texte'}</div>
       </div>
       <button class="btn btn-ai" style="width:100%;justify-content:center" id="btn-ia-correct" onclick="lancerCorrectionIA('${subs[0].id}','${id}')">
         ✦ Générer la correction avec l'IA
@@ -918,9 +937,9 @@ window.lancerCorrectionIA = async function(subId, assignId) {
   btn.innerHTML = '<span class="spin"></span>Correction en cours…';
   btn.disabled = true;
   try {
-    const subSnap = await getDocs(query(collection(db,'submissions'), where('assignmentId','==',assignId)));
-    const sub = subData.find(d=>d.id===subId);
-    const text = sub??.textResponse || '';
+    const subSnap = (await query(db.collection('submissions'.get()), where('assignmentId','==',assignId)));
+    const sub = subSnap.docs.find(d=>d.id===subId);
+    const text = sub?.data()?.textResponse || '';
     const res = await fetch(\`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=\${GEMINI_KEY}\`, {
       method:'POST',
       headers:{'Content-Type':'application/json'},
@@ -949,8 +968,9 @@ window.validerCorrection = async function(subId) {
   const note = parseInt(document.getElementById('ia-note').value);
   const comment = document.getElementById('ia-corr-txt').innerText.slice(0,500);
   if(isNaN(note) || note < 0 || note > 20) { toast('Entre une note valide entre 0 et 20.', 'error'); return; }
-  const subRef = doc(db, 'submissions', subId);
-  await updateDoc(subRef, { score: note, teacherComment: comment, status: 'graded', gradedAt: sb.now() });
+  const subRef = db.doc( 'submissions', subId);
+  await subRef.update(
+      { score: note, teacherComment: comment, status: 'graded', gradedAt: firebase.firestore.FieldValue.serverTimestamp() });
   toast('Correction validée et envoyée à l'élève ! ✓', 'success');
   closeModal();
   loadAssignments();
@@ -958,23 +978,24 @@ window.validerCorrection = async function(subId) {
 
 // ── RELANCER DEVOIR ───────────────────────────────────
 window.relancerDevoir = async function(id, title) {
-  const subSnap = await getDocs(query(collection(db,'submissions'), where('assignmentId','==',id)));
-  const subIds = subData.map(d => d.uid);
+  const subSnap = (await query(db.collection('submissions'.get()), where('assignmentId','==',id)));
+  const subIds = subSnap.docs.map(d => d.data().uid);
   toast(\`📢 Relance envoyée pour "\${title}" — \${subIds.length} élève(s) ont déjà rendu\`, 'success');
   // Créer une notification pour les élèves de la classe
-  await addDoc(collection(db,'notifications'), {
+  await db.collection('notifications').add(
+      {
     userId: 'broadcast', // côté élève : filtrer par classe
     title: 'Rappel devoir',
     body: \`N'oublie pas de rendre : "\${title}"\`,
     type: 'reminder',
     isRead: false,
-    createdAt: sb.now()
+    createdAt: firebase.firestore.FieldValue.serverTimestamp()
   });
 };
 
 window.deleteAssign = async function(id){
   if(!confirm('Supprimer ce devoir ?')) return;
-  await deleteDoc(doc(db,'assignments',id));
+  await db.doc('assignments',id.delete());
   toast('Devoir supprimé','success');
   loadAssignments();
   loadDashboard();
@@ -1035,13 +1056,14 @@ window.runAI = async function() {
     btn.disabled = false;
 
     // Save to Firestore
-    await addDoc(collection(db,'aiContent'),{
+    await db.collection('aiContent').add(
+      {
       uid:currentUser.uid,
       type:aiMode,
       sourceText:text.slice(0,500)+'…',
       result,
       type2:'aiContent',
-      createdAt:sb.now()
+      createdAt:firebase.firestore.FieldValue.serverTimestamp()
     });
     loadDashboard();
   } catch(e){
@@ -1080,7 +1102,7 @@ window.calNav = function(dir){ calDate.setMonth(calDate.getMonth()+dir); loadCal
 
 async function loadEvents(){
   const uid=currentUser.uid;
-  const snap=await getDocs(query(collection(db,'events'),where('uid','==',uid),orderBy('date','asc')));
+  const snap=(await db.collection('events'.get().where('uid', '==', uid).orderBy('date', 'asc'));
   const el=document.getElementById('events-list');
   if(snap.empty){
     el.innerHTML='<div class="empty"><div class="empty-ic">📅</div><div class="empty-txt">Aucun événement à venir.</div></div>';
@@ -1089,7 +1111,7 @@ async function loadEvents(){
   const months=['JAN','FÉV','MAR','AVR','MAI','JUN','JUL','AOÛ','SEP','OCT','NOV','DÉC'];
   const typeColors={cours:'var(--sage-p);color:var(--sage)',devoir:'var(--amber-p);color:var(--amber)',evaluation:'var(--terra-p);color:var(--terra)',reunion:'var(--blue-p);color:var(--blue)'};
   el.innerHTML=snap.docs.map(d=>{
-    const fd=d;
+    const fd=d.data();
     const date=fd.date?.toDate()||new Date();
     const tc=typeColors[fd.type]||'var(--ink-10);color:var(--ink-60)';
     return `<div class="ecard">
@@ -1118,8 +1140,9 @@ const modals = {
       const color = document.querySelector('.cdot2.sel')?.dataset.c||'sage';
       const vis = document.getElementById('m-vis').value;
       if(!name){toast('Donne un nom au dossier.','error');return;}
-      await addDoc(collection(db,'folders'),{
-        uid:currentUser.uid,name,color,visibility:vis,parentId:currentFolderId||null,fileCount:0,type:'folder',createdAt:sb.now()
+      await db.collection('folders').add(
+      {
+        uid:currentUser.uid,name,color,visibility:vis,parentId:currentFolderId||null,fileCount:0,type:'folder',createdAt:firebase.firestore.FieldValue.serverTimestamp()
       });
       toast('Dossier créé !','success');
       closeModal();
@@ -1141,10 +1164,11 @@ const modals = {
       const dateStr=document.getElementById('m-date').value;
       const maxScore=parseInt(document.getElementById('m-score').value)||20;
       if(!title){toast('Donne un titre au devoir.','error');return;}
-      await addDoc(collection(db,'assignments'),{
+      await db.collection('assignments').add(
+      {
         uid:currentUser.uid,title,classe,description,maxScore,
         dueDate:dateStr?new Date(dateStr):null,
-        isPublished:true,type:'assignment',createdAt:sb.now()
+        isPublished:true,type:'assignment',createdAt:firebase.firestore.FieldValue.serverTimestamp()
       });
       toast('Devoir créé !','success');
       closeModal();
@@ -1166,12 +1190,13 @@ const modals = {
       if(!name){toast('Donne un nom à la classe.','error');return;}
       // Générer un code unique 6 caractères
       const code = Math.random().toString(36).substring(2,8).toUpperCase();
-      await addDoc(collection(db,'classes'),{
+      await db.collection('classes').add(
+      {
         uid:currentUser.uid,
         name, level, subject, description,
         code,
         students:[],
-        createdAt:sb.now()
+        createdAt:firebase.firestore.FieldValue.serverTimestamp()
       });
       toast('Classe créée ! Code : '+code,'success');
       closeModal();
@@ -1190,10 +1215,11 @@ const modals = {
       const classe=document.getElementById('m-class').value;
       const dateStr=document.getElementById('m-date').value;
       if(!title){toast('Donne un titre.','error');return;}
-      await addDoc(collection(db,'events'),{
+      await db.collection('events').add(
+      {
         uid:currentUser.uid,title,type,classe,
         date:dateStr?new Date(dateStr):new Date(),
-        createdAt:sb.now()
+        createdAt:firebase.firestore.FieldValue.serverTimestamp()
       });
       toast('Événement ajouté !','success');
       closeModal();
@@ -1222,9 +1248,9 @@ window.openModal = function(type){
 // ── APERÇU FICHIER ───────────────────────────────────────
 window.apercuFichier = async function(id) {
   try {
-    const snap = await getDoc(doc(db,'files',id));
-    if(!snap.exists()) return;
-    const fd = snap;
+    const snap = (await db.doc('files',id.get()));
+    if(!snap.exists) return;
+    const fd = snap.data();
     const sizeBytes = fd.size_bytes || fd.size || 0;
     const size = sizeBytes ? (sizeBytes/1024/1024).toFixed(1)+'Mo' : '';
     const modal = document.getElementById('modal-body');
@@ -1255,7 +1281,7 @@ window.apercuFichier = async function(id) {
 // ── PARTAGER FICHIER AUX ÉLÈVES ──────────────────────────
 window.partagerFichier = async function(id, name) {
   try {
-    await updateDoc(doc(db,'files',id), { visibility: 'public' });
+    await updateDoc(db.doc('files',id), { visibility: 'public' });
     toast('✓ "' + name + '" partagé avec tous tes élèves !', 'success');
     loadFolders(currentFolderId);
     closeModal();
@@ -1274,7 +1300,7 @@ window.selColor = function(el){
 // ── CLASSES ──────────────────────────────────────────────
 async function loadClasses() {
   const uid = currentUser.uid;
-  const snap = await getDocs(query(collection(db,'classes'),where('uid','==',uid),orderBy('createdAt','desc')));
+  const snap = (await db.collection('classes'.get().where('uid', '==', uid).orderBy('createdAt', 'desc'));
   const el = document.getElementById('classes-list');
   if(!el) return;
 
@@ -1284,7 +1310,7 @@ async function loadClasses() {
   }
 
   el.innerHTML = snap.docs.map(d=>{
-    const fd=d;
+    const fd=d.data();
     return `<div class="card" style="padding:18px;margin-bottom:12px;border:1px solid var(--ink-10)">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
         <div>
@@ -1317,7 +1343,7 @@ window.loadStudents = async function(classId, className){
   el.innerHTML = '<div style="font-size:12px;color:var(--ink-30);padding:8px 0">Chargement…</div>';
   el.style.display = 'block';
 
-  const snap = await getDocs(query(collection(db,'classMembers'),where('classId','==',classId)));
+  const snap = (await query(db.collection('classMembers'.get()),where('classId','==',classId)));
 
   if(snap.empty){
     el.innerHTML = `<div style="background:var(--sand);border-radius:8px;padding:14px 16px;font-size:12px;color:var(--ink-60)">
@@ -1329,9 +1355,9 @@ window.loadStudents = async function(classId, className){
 
   // Récupérer les profils des élèves
   const studentRows = await Promise.all(snap.docs.map(async d=>{
-    const fd=d;
-    const userSnap = await getDoc(doc(db,'users',fd.studentId));
-    const user = (userData != null) ? userSnap : {name:'Élève inconnu',email:''};
+    const fd=d.data();
+    const userSnap = (await db.doc('users',fd.studentId.get()));
+    const user = userSnap.exists ? userSnap.data() : {name:'Élève inconnu',email:''};
     return `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--ink-10)">
       <div style="width:30px;height:30px;border-radius:50%;background:var(--blue-p);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--blue);flex-shrink:0">
         ${user.name.split(' ').map(n=>n[0]).join('').toUpperCase().slice(0,2)}
@@ -1352,7 +1378,7 @@ window.loadStudents = async function(classId, className){
 
 window.deleteClass = async function(id){
   if(!confirm('Supprimer cette classe ? Les élèves inscrits seront retirés.')) return;
-  await deleteDoc(doc(db,'classes',id));
+  await db.doc('classes',id.delete());
   toast('Classe supprimée','success');
   loadClasses();
 };
@@ -1363,16 +1389,16 @@ document.getElementById('srch-input').addEventListener('input', async (e)=>{
   if(q.length < 2) return;
 
   // Chercher dans dossiers
-  const fSnap = await getDocs(query(collection(db,'folders'), where('uid','==',currentUser.uid)));
-  const fMatches = fData.filter(d => d.name?.toLowerCase().includes(q));
+  const fSnap = (await query(db.collection('folders'.get()), where('uid','==',currentUser.uid)));
+  const fMatches = fSnap.docs.filter(d => d.data().name?.toLowerCase().includes(q));
 
   // Chercher dans fichiers
-  const fileSnap = await getDocs(query(collection(db,'files'), where('uid','==',currentUser.uid)));
-  const fileMatches = fileData.filter(d => d.name?.toLowerCase().includes(q));
+  const fileSnap = (await query(db.collection('files'.get()), where('uid','==',currentUser.uid)));
+  const fileMatches = fileSnap.docs.filter(d => d.data().name?.toLowerCase().includes(q));
 
   // Chercher dans devoirs
-  const aSnap = await getDocs(query(collection(db,'assignments'), where('uid','==',currentUser.uid)));
-  const aMatches = aData.filter(d => d.title?.toLowerCase().includes(q));
+  const aSnap = (await query(db.collection('assignments'.get()), where('uid','==',currentUser.uid)));
+  const aMatches = aSnap.docs.filter(d => d.data().title?.toLowerCase().includes(q));
 
   const total = fMatches.length + fileMatches.length + aMatches.length;
   if(total === 0) { toast('Aucun résultat pour "'+q+'"', ''); return; }
@@ -1387,16 +1413,16 @@ document.getElementById('srch-input').addEventListener('input', async (e)=>{
     <div style="font-size:11.5px;color:var(--ink-60);margin-bottom:14px">${total} résultat(s) trouvé(s)</div>
     ${fMatches.length ? `<div style="font-size:10.5px;font-weight:700;color:var(--ink-60);text-transform:uppercase;letter-spacing:.3px;margin-bottom:6px">📁 Dossiers (${fMatches.length})</div>
     ${fMatches.map(d=>`<div style="display:flex;align-items:center;gap:10px;padding:8px 10px;background:var(--sand);border-radius:8px;margin-bottom:5px;cursor:pointer" onclick="closeModal();nav('resources');loadFolders('${d.id}')">
-      <span>📁</span><div><div style="font-size:12.5px;font-weight:600">${d.name}</div></div>
+      <span>📁</span><div><div style="font-size:12.5px;font-weight:600">${d.data().name}</div></div>
     </div>`).join('')}` : ''}
     ${fileMatches.length ? `<div style="font-size:10.5px;font-weight:700;color:var(--ink-60);text-transform:uppercase;letter-spacing:.3px;margin:10px 0 6px">📄 Fichiers (${fileMatches.length})</div>
     ${fileMatches.map(d=>`<div style="display:flex;align-items:center;gap:10px;padding:8px 10px;background:var(--sand);border-radius:8px;margin-bottom:5px">
-      <span>📄</span><div><div style="font-size:12.5px;font-weight:600">${d.name}</div><div style="font-size:10px;color:var(--ink-30)">${d.size?(d.size/1024/1024).toFixed(1)+'Mo':''}</div></div>
-      <a href="${d.url}" target="_blank" class="btn btn-g btn-sm" style="margin-left:auto">↓</a>
+      <span>📄</span><div><div style="font-size:12.5px;font-weight:600">${d.data().name}</div><div style="font-size:10px;color:var(--ink-30)">${d.data().size?(d.data().size/1024/1024).toFixed(1)+'Mo':''}</div></div>
+      <a href="${d.data().url}" target="_blank" class="btn btn-g btn-sm" style="margin-left:auto">↓</a>
     </div>`).join('')}` : ''}
     ${aMatches.length ? `<div style="font-size:10.5px;font-weight:700;color:var(--ink-60);text-transform:uppercase;letter-spacing:.3px;margin:10px 0 6px">📋 Devoirs (${aMatches.length})</div>
     ${aMatches.map(d=>`<div style="display:flex;align-items:center;gap:10px;padding:8px 10px;background:var(--sand);border-radius:8px;margin-bottom:5px;cursor:pointer" onclick="closeModal();nav('assignments')">
-      <span>📋</span><div><div style="font-size:12.5px;font-weight:600">${d.title}</div><div style="font-size:10px;color:var(--ink-30)">${d.classe||''}</div></div>
+      <span>📋</span><div><div style="font-size:12.5px;font-weight:600">${d.data().title}</div><div style="font-size:10px;color:var(--ink-30)">${d.data().classe||''}</div></div>
     </div>`).join('')}` : ''}
     <div style="display:flex;justify-content:flex-end;margin-top:14px;padding-top:12px;border-top:1px solid var(--ink-10)">
       <button class="btn btn-g" onclick="closeModal()">Fermer</button>
@@ -1483,7 +1509,7 @@ document.addEventListener('DOMContentLoaded', () => {
 async function loadNotificationsBadge() {
   try {
     const snap = await getDocs(query(
-      collection(db,'notifications'),
+      db.collection('notifications'),
       where('userId','==',currentUser.uid),
       where('isRead','==',false)
     ));
@@ -1496,7 +1522,7 @@ async function loadNotificationsBadge() {
 async function loadAssignmentsBadge() {
   try {
     const snap = await getDocs(query(
-      collection(db,'assignments'),
+      db.collection('assignments'),
       where('uid','==',currentUser.uid),
       where('isPublished','==',true)
     ));
