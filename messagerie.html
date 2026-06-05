@@ -1,0 +1,941 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pédagogia — Messagerie & Communication</title>
+<link href="https://fonts.googleapis.com/css2?family=Lora:wght@600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --sage:#3D6B4F;--sage-l:#5A8C6A;--sage-p:#EAF2ED;
+  --terra:#B8623A;--terra-p:#FBF0EA;
+  --ink:#1A1714;--ink-60:#5C574F;--ink-30:#A09990;--ink-10:#F0EBE3;
+  --sand:#FAF6F0;--white:#fff;
+  --amber:#9C6B1E;--amber-p:#FDF5E6;
+  --blue:#1A4F9C;--blue-p:#EBF2FF;
+  --purple:#5B2E9C;--purple-p:#F3EEFF;
+  --r:12px;--r-sm:8px;
+  --sh:0 1px 3px rgba(26,23,20,.07);--sh-md:0 4px 16px rgba(26,23,20,.10);--sh-lg:0 8px 32px rgba(26,23,20,.13);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--sand);color:var(--ink)}
+.app{display:flex;height:100vh}
+/* ═══ SIDEBAR GLOBALE ═══ */
+.sidebar{width:220px;flex-shrink:0;background:var(--ink);display:flex;flex-direction:column;overflow:hidden}
+.s-logo{padding:14px 16px 12px;border-bottom:1px solid rgba(255,255,255,.07);display:flex;align-items:center;gap:10px}
+.s-logo-icon{width:32px;height:32px;border-radius:8px;background:var(--sage-l);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.s-logo-text .wm{font-family:'Lora',serif;font-size:16px;font-weight:700;color:#fff;line-height:1}
+.s-logo-text .tg{font-size:8.5px;color:rgba(255,255,255,.3);letter-spacing:1px;text-transform:uppercase;margin-top:2px}
+.s-user{padding:8px 12px;display:flex;align-items:center;gap:9px;border-bottom:1px solid rgba(255,255,255,.05);cursor:pointer;transition:background .12s}
+.s-user:hover{background:rgba(255,255,255,.05)}
+.av{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;flex-shrink:0}
+.u-nm{font-size:11.5px;font-weight:500;color:#fff;line-height:1}
+.u-rl{font-size:9px;color:rgba(255,255,255,.3);margin-top:2px}
+.s-nav{flex:1;overflow-y:auto;padding:8px 0}
+
+/* NAV PRINCIPALE — grandes sections */
+.nav-main-item{display:flex;align-items:center;gap:0;margin:2px 8px;border-radius:9px;overflow:hidden;cursor:pointer;transition:all .12s}
+.nav-main-item:hover{background:rgba(255,255,255,.06)}
+.nav-main-item.active{background:rgba(255,255,255,.1)}
+.nav-main-btn{display:flex;align-items:center;gap:9px;padding:8px 10px;flex:1;min-width:0}
+.nav-main-icon{font-size:15px;width:20px;text-align:center;flex-shrink:0}
+.nav-main-label{font-size:12px;font-weight:600;color:rgba(255,255,255,.7);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nav-main-item.active .nav-main-label{color:#fff}
+.nav-main-chevron{padding:8px 8px 8px 0;font-size:10px;color:rgba(255,255,255,.3);transition:transform .2s;flex-shrink:0}
+.nav-main-item.open .nav-main-chevron{transform:rotate(90deg)}
+.nav-main-badge{background:var(--terra);color:#fff;font-size:8px;padding:1px 5px;border-radius:6px;font-weight:700;margin-left:auto;margin-right:4px}
+
+/* NAV SOUS-ITEMS */
+.nav-sub{display:none;padding:2px 0 4px}
+.nav-main-item.open .nav-sub{display:block}
+.nav-sub-item{display:flex;align-items:center;gap:8px;padding:5px 10px 5px 38px;font-size:11px;color:rgba(255,255,255,.45);cursor:pointer;border-radius:7px;margin:1px 8px;transition:all .12s}
+.nav-sub-item:hover{background:rgba(255,255,255,.07);color:rgba(255,255,255,.85)}
+.nav-sub-item.active{color:rgba(255,255,255,.9);background:rgba(255,255,255,.08)}
+.nav-sub-icon{font-size:12px;width:16px;text-align:center;flex-shrink:0}
+
+/* NAV PILL — couleur par section */
+.nav-main-item[data-page="dashboard"] .nav-main-icon{color:#7BAF8E}
+.nav-main-item[data-page="enseigner"] .nav-main-icon{color:#6B9FD4}
+.nav-main-item[data-page="maclasse"] .nav-main-icon{color:#D48C6B}
+.nav-main-item[data-page="communication"] .nav-main-icon{color:#9B7FD4}
+.nav-main-item[data-page="suivi"] .nav-main-icon{color:#D4B86B}
+
+/* SÉPARATEUR */
+.nav-sep{height:1px;background:rgba(255,255,255,.05);margin:6px 12px}
+
+/* COMPTE EN BAS */
+.s-bottom{padding:10px;border-top:1px solid rgba(255,255,255,.07)}
+.s-bottom-btn{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:8px;font-size:11px;color:rgba(255,255,255,.4);cursor:pointer;transition:all .12s;width:100%}
+.s-bottom-btn:hover{background:rgba(255,255,255,.07);color:rgba(255,255,255,.7)}
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.topbar{height:54px;flex-shrink:0;background:var(--white);border-bottom:1px solid var(--ink-10);display:flex;align-items:center;padding:0 20px;gap:10px}
+.pt{font-size:15px;font-weight:600}
+.tb-r{margin-left:auto;display:flex;align-items:center;gap:7px}
+.btn{display:inline-flex;align-items:center;gap:5px;padding:6px 13px;border-radius:7px;font-size:11.5px;font-weight:600;cursor:pointer;border:none;transition:all .12s;font-family:'DM Sans',sans-serif}
+.btn-p{background:var(--sage-l);color:#fff}.btn-p:hover{background:var(--sage)}
+.btn-g{background:transparent;color:var(--ink-60);border:1px solid var(--ink-10)}.btn-g:hover{background:var(--ink-10)}
+.btn-sm{padding:4px 10px;font-size:10.5px}
+.content{flex:1;overflow-y:auto}
+.screen{display:none;animation:fi .2s ease}.screen.active{display:block;height:100%}
+@keyframes fi{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+.card{background:var(--white);border-radius:var(--r);box-shadow:var(--sh);border:1px solid var(--ink-10);overflow:hidden}
+.badge{display:inline-flex;align-items:center;padding:2px 7px;border-radius:8px;font-size:9.5px;font-weight:700}
+.bg{background:var(--sage-p);color:var(--sage)}.bt{background:var(--terra-p);color:var(--terra)}.ba{background:var(--amber-p);color:var(--amber)}.bb{background:var(--blue-p);color:var(--blue)}
+.tag{background:var(--ink-10);color:var(--ink-60);font-size:9.5px;padding:2px 7px;border-radius:7px}
+.toast{position:fixed;bottom:24px;right:24px;background:var(--ink);color:#fff;padding:12px 18px;border-radius:10px;font-size:12.5px;font-weight:500;z-index:999;transform:translateY(80px);opacity:0;transition:all .3s;pointer-events:none}
+.toast.show{transform:translateY(0);opacity:1}
+.toast.success{background:var(--sage-l)}.toast.error{background:var(--terra)}
+.empty{padding:36px 20px;text-align:center;color:var(--ink-30)}
+.empty-ic{font-size:36px;margin-bottom:10px}.empty-txt{font-size:12.5px;line-height:1.6}
+.ov{display:none;position:fixed;inset:0;background:rgba(26,23,20,.5);z-index:200;align-items:center;justify-content:center;backdrop-filter:blur(3px)}
+.ov.open{display:flex}
+.modal{background:var(--white);border-radius:16px;width:480px;max-height:88vh;overflow-y:auto;padding:22px;box-shadow:var(--sh-lg)}
+.fg{margin-bottom:12px}
+.fl{font-size:10.5px;font-weight:700;color:var(--ink-60);margin-bottom:4px;display:block;text-transform:uppercase;letter-spacing:.3px}
+.fi,.fs,.fta{width:100%;padding:8px 11px;border-radius:7px;border:1px solid var(--ink-10);font-size:12.5px;color:var(--ink);background:var(--sand);outline:none;font-family:'DM Sans',sans-serif;transition:border .12s}
+.fi:focus,.fs:focus,.fta:focus{border-color:var(--sage-l)}
+.fta{min-height:70px;resize:vertical}
+.mf{display:flex;justify-content:flex-end;gap:7px;margin-top:18px;padding-top:14px;border-top:1px solid var(--ink-10)}
+
+/* ══ MESSAGERIE ══ */
+.msg-layout{display:grid;grid-template-columns:280px 1fr;height:100%}
+.msg-sidebar{border-right:1px solid var(--ink-10);background:var(--white);overflow-y:auto;display:flex;flex-direction:column}
+.msg-sidebar-hd{padding:14px 16px;border-bottom:1px solid var(--ink-10);display:flex;align-items:center;justify-content:space-between}
+.msg-sidebar-title{font-size:13px;font-weight:700}
+.msg-search{padding:10px 12px;border-bottom:1px solid var(--ink-10)}
+.msg-search input{width:100%;padding:7px 10px 7px 30px;border-radius:8px;border:none;background:var(--sand);font-size:12px;outline:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='none' viewBox='0 0 24 24'%3E%3Ccircle cx='11' cy='11' r='8' stroke='%23A09990' stroke-width='2'/%3E%3Cpath d='m21 21-4.35-4.35' stroke='%23A09990' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:10px center}
+.conv-item{display:flex;align-items:center;gap:10px;padding:11px 14px;cursor:pointer;transition:background .1s;border-bottom:1px solid rgba(26,23,20,.04)}
+.conv-item:hover{background:var(--sand)}
+.conv-item.active{background:var(--sage-p)}
+.conv-item.unread .conv-name{font-weight:700;color:var(--ink)}
+.conv-av{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;flex-shrink:0;position:relative}
+.conv-unread-dot{position:absolute;top:0;right:0;width:9px;height:9px;background:var(--terra);border-radius:50%;border:2px solid var(--white)}
+.conv-name{font-size:12.5px;font-weight:500;color:var(--ink)}
+.conv-last{font-size:10.5px;color:var(--ink-30);margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:160px}
+.conv-time{font-size:9.5px;color:var(--ink-30);margin-left:auto;flex-shrink:0}
+/* Chat area */
+.chat-area{display:flex;flex-direction:column;height:100%;overflow:hidden}
+.chat-header{padding:12px 20px;border-bottom:1px solid var(--ink-10);background:var(--white);display:flex;align-items:center;gap:12px;flex-shrink:0}
+.chat-av{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;flex-shrink:0}
+.chat-name{font-size:14px;font-weight:700}
+.chat-status{font-size:10.5px;color:var(--sage);margin-top:1px}
+.chat-messages{flex:1;overflow-y:auto;padding:16px 20px;display:flex;flex-direction:column;gap:10px;background:var(--sand)}
+.msg-bubble{display:flex;gap:8px;align-items:flex-end;max-width:75%}
+.msg-bubble.mine{flex-direction:row-reverse;align-self:flex-end}
+.msg-av{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;flex-shrink:0}
+.msg-content{background:var(--white);border-radius:12px 12px 12px 3px;padding:9px 13px;box-shadow:var(--sh);max-width:100%}
+.msg-bubble.mine .msg-content{background:var(--sage-l);border-radius:12px 12px 3px 12px}
+.msg-text{font-size:12.5px;line-height:1.6;color:var(--ink)}
+.msg-bubble.mine .msg-text{color:#fff}
+.msg-time{font-size:9.5px;color:var(--ink-30);margin-top:4px}
+.msg-bubble.mine .msg-time{color:rgba(255,255,255,.6);text-align:right}
+.msg-attachment{background:var(--sand);border-radius:8px;padding:8px 10px;margin-top:6px;display:flex;align-items:center;gap:7px;font-size:11.5px;cursor:pointer}
+.msg-attachment:hover{background:var(--ink-10)}
+.chat-input-area{padding:12px 16px;background:var(--white);border-top:1px solid var(--ink-10);flex-shrink:0}
+.chat-input-wrap{display:flex;gap:8px;align-items:flex-end}
+.chat-input{flex:1;padding:9px 12px;border-radius:10px;border:1px solid var(--ink-10);font-size:12.5px;background:var(--sand);outline:none;font-family:'DM Sans',sans-serif;resize:none;max-height:100px;transition:border .12s}
+.chat-input:focus{border-color:var(--sage-l)}
+.chat-send{width:36px;height:36px;border-radius:50%;background:var(--sage-l);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;transition:all .12s}
+.chat-send:hover{background:var(--sage)}
+.chat-actions{display:flex;gap:6px;margin-bottom:8px}
+.chat-action-btn{padding:4px 9px;border-radius:6px;border:1px solid var(--ink-10);background:transparent;font-size:10.5px;cursor:pointer;color:var(--ink-60);transition:all .12s}
+.chat-action-btn:hover{background:var(--ink-10)}
+/* Pas de conversation sélectionnée */
+.no-conv{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:var(--ink-30)}
+.no-conv-ic{font-size:48px;margin-bottom:14px}
+.no-conv-txt{font-size:14px;font-weight:500}
+.no-conv-sub{font-size:12px;margin-top:5px}
+
+/* ══ NOTIFICATIONS ══ */
+.notifs-layout{padding:22px;max-width:700px}
+.notif-item{background:var(--white);border:1px solid var(--ink-10);border-radius:var(--r);padding:14px 16px;margin-bottom:8px;display:flex;align-items:flex-start;gap:12px;cursor:pointer;transition:all .12s;box-shadow:var(--sh)}
+.notif-item:hover{box-shadow:var(--sh-md)}
+.notif-item.unread{border-left:3px solid var(--sage-l);background:var(--sage-p)}
+.ni-icon{font-size:20px;flex-shrink:0;margin-top:2px}
+.ni-title{font-size:13px;font-weight:600;margin-bottom:2px}
+.ni-body{font-size:11.5px;color:var(--ink-60);line-height:1.5}
+.ni-time{font-size:10px;color:var(--ink-30);margin-top:4px}
+.ni-actions{display:flex;gap:5px;margin-top:8px}
+
+/* ══ ANNONCES CLASSE ══ */
+.ann-layout{padding:22px}
+.ann-compose{background:var(--white);border:1px solid var(--ink-10);border-radius:var(--r);padding:18px;margin-bottom:18px;box-shadow:var(--sh)}
+.ann-types{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap}
+.ann-type-btn{padding:5px 11px;border-radius:14px;border:1px solid var(--ink-10);background:transparent;font-size:10.5px;cursor:pointer;color:var(--ink-60);transition:all .12s;font-family:'DM Sans',sans-serif}
+.ann-type-btn.active{background:var(--sage-l);color:#fff;border-color:var(--sage-l)}
+.ann-feed{display:flex;flex-direction:column;gap:10px}
+.ann-card{background:var(--white);border:1px solid var(--ink-10);border-radius:var(--r);padding:16px;box-shadow:var(--sh)}
+.ann-card.pinned{border-left:3px solid var(--amber)}
+.ann-card.urgent{border-left:3px solid var(--terra)}
+.ann-hdr{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.ann-av2{width:36px;height:36px;border-radius:50%;background:var(--sage-l);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;flex-shrink:0}
+.ann-author{font-size:12.5px;font-weight:600}
+.ann-meta2{font-size:10px;color:var(--ink-30);margin-top:1px}
+.ann-body2{font-size:13px;color:var(--ink);line-height:1.7;margin-bottom:10px}
+.ann-footer2{display:flex;align-items:center;gap:8px;padding-top:8px;border-top:1px solid var(--ink-10);flex-wrap:wrap}
+.ann-react{background:none;border:1px solid var(--ink-10);border-radius:6px;padding:3px 9px;font-size:11.5px;cursor:pointer;transition:all .12s}
+.ann-react:hover{background:var(--sand)}
+.ann-class-tag{margin-left:auto}
+/* Commentaires annonce */
+.ann-comments{background:var(--sand);border-radius:8px;padding:10px 12px;margin-top:8px;display:none}
+.ann-comments.open{display:block}
+.ann-comment-item{display:flex;gap:8px;padding:6px 0;border-bottom:1px solid var(--ink-10)}
+.ann-comment-item:last-child{border:none}
+.ann-comment-av{width:24px;height:24px;border-radius:50%;background:var(--blue);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#fff;flex-shrink:0}
+.ann-comment-txt{font-size:11.5px;color:var(--ink-60);line-height:1.5}
+.ann-comment-input{display:flex;gap:6px;margin-top:8px}
+.ann-comment-input input{flex:1;padding:6px 10px;border-radius:7px;border:1px solid var(--ink-10);font-size:11.5px;background:var(--white);outline:none;font-family:'DM Sans',sans-serif}
+.ann-comment-input input:focus{border-color:var(--sage-l)}
+</style>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase.js"></script>
+</head>
+<body>
+<div class="app">
+<!-- SIDEBAR PÉDAGOGIA -->
+  <nav class="sidebar" id="main-sidebar">
+    <div class="s-logo">
+      <div class="s-logo-icon">🎓</div>
+      <div class="s-logo-text">
+        <div class="wm">Pédagogia</div>
+        <div class="tg">Enseignant</div>
+      </div>
+    </div>
+    <div class="s-user" onclick="window.location.href='suivi.html'">
+      <div class="av" id="s-av" style="background:var(--sage-l)">ML</div>
+      <div>
+        <div class="u-nm" id="s-nm">Chargement…</div>
+        <div class="u-rl">Voir mon profil →</div>
+      </div>
+    </div>
+    <div class="s-nav" id="s-nav">
+      <!-- Section Accueil -->
+      <div class="nav-main-item" data-page="dashboard" onclick="navTo('dashboard.html','','dashboard')">
+        <div class="nav-main-btn">
+          <span class="nav-main-icon">⌂</span>
+          <span class="nav-main-label">Accueil</span>
+        </div>
+      </div>
+
+      <!-- Section Enseigner -->
+      <div class="nav-main-item" data-page="enseigner" id="nav-enseigner">
+        <div class="nav-main-btn" onclick="toggleNav('nav-enseigner')">
+          <span class="nav-main-icon">📚</span>
+          <span class="nav-main-label">Enseigner</span>
+        </div>
+        <span class="nav-main-chevron">›</span>
+        <div class="nav-sub">
+          <div class="nav-sub-item" onclick="navTo('murs.html','editeur','enseigner')"><span class="nav-sub-icon">✍️</span> Créer un cours</div>
+          <div class="nav-sub-item" onclick="navTo('murs.html','murs','enseigner')"><span class="nav-sub-icon">🗂</span> Murs collaboratifs</div>
+          <div class="nav-sub-item" onclick="navTo('murs.html','quiz-live','enseigner')"><span class="nav-sub-icon">⚡</span> Quiz temps réel</div>
+          <div class="nav-sub-item" onclick="navTo('dashboard.html','ai','enseigner')"><span class="nav-sub-icon">✦</span> Assistant IA</div>
+          <div class="nav-sub-item" onclick="navTo('murs.html','pdf-viewer','enseigner')"><span class="nav-sub-icon">📄</span> Aperçu documents</div>
+        </div>
+      </div>
+
+      <!-- Section Ma Classe -->
+      <div class="nav-main-item" data-page="maclasse" id="nav-maclasse">
+        <div class="nav-main-btn" onclick="toggleNav('nav-maclasse')">
+          <span class="nav-main-icon">👥</span>
+          <span class="nav-main-label">Ma classe</span>
+        </div>
+        <span class="nav-main-chevron">›</span>
+        <div class="nav-sub">
+          <div class="nav-sub-item" onclick="navTo('dashboard.html','classes','maclasse')"><span class="nav-sub-icon">🏫</span> Mes classes</div>
+          <div class="nav-sub-item" onclick="navTo('murs.html','eleves','maclasse')"><span class="nav-sub-icon">👤</span> Fiches élèves</div>
+          <div class="nav-sub-item" onclick="navTo('dashboard.html','resources','maclasse')"><span class="nav-sub-icon">📁</span> Ressources</div>
+          <div class="nav-sub-item" onclick="navTo('dashboard.html','assignments','maclasse')"><span class="nav-sub-icon">📋</span> Devoirs <span class="nav-main-badge" id="badge-assign">0</span></div>
+        </div>
+      </div>
+
+      <!-- Section Communication -->
+      <div class="nav-main-item" data-page="communication" id="nav-communication">
+        <div class="nav-main-btn" onclick="toggleNav('nav-communication')">
+          <span class="nav-main-icon">💬</span>
+          <span class="nav-main-label">Communication</span>
+          <span class="nav-main-badge" id="badge-msg">3</span>
+        </div>
+        <span class="nav-main-chevron">›</span>
+        <div class="nav-sub">
+          <div class="nav-sub-item" onclick="navTo('messagerie.html','messagerie','communication')"><span class="nav-sub-icon">✉️</span> Messagerie</div>
+          <div class="nav-sub-item" onclick="navTo('messagerie.html','annonces','communication')"><span class="nav-sub-icon">📢</span> Annonces</div>
+          <div class="nav-sub-item" onclick="navTo('messagerie.html','notifications','communication')"><span class="nav-sub-icon">🔔</span> Notifications <span class="nav-main-badge" id="badge-notif">5</span></div>
+        </div>
+      </div>
+
+      <!-- Section Suivi -->
+      <div class="nav-main-item" data-page="suivi" id="nav-suivi">
+        <div class="nav-main-btn" onclick="toggleNav('nav-suivi')">
+          <span class="nav-main-icon">📊</span>
+          <span class="nav-main-label">Suivi & Organisation</span>
+        </div>
+        <span class="nav-main-chevron">›</span>
+        <div class="nav-sub">
+          <div class="nav-sub-item" onclick="navTo('suivi.html','tb-enrichi','suivi')"><span class="nav-sub-icon">📈</span> Vue d'ensemble</div>
+          <div class="nav-sub-item" onclick="navTo('suivi.html','planning','suivi')"><span class="nav-sub-icon">🗓</span> Planning semaine</div>
+          <div class="nav-sub-item" onclick="navTo('suivi.html','notes','suivi')"><span class="nav-sub-icon">📓</span> Notes & Carnets</div>
+          <div class="nav-sub-item" onclick="navTo('suivi.html','postits','suivi')"><span class="nav-sub-icon">💛</span> Post-its</div>
+          <div class="nav-sub-item" onclick="navTo('suivi.html','agenda','suivi')"><span class="nav-sub-icon">📅</span> Agenda</div>
+          <div class="nav-sub-item" onclick="navTo('suivi.html','sequences','suivi')"><span class="nav-sub-icon">🔖</span> Séquences</div>
+          <div class="nav-sub-item" onclick="navTo('suivi.html','export','suivi')"><span class="nav-sub-icon">⬇</span> Exporter</div>
+        </div>
+      </div>
+
+    </div><!-- /s-nav -->
+
+    <div class="s-bottom">
+      <div class="s-bottom-btn" onclick="logout()">
+        <span>↩</span> Déconnexion
+      </div>
+    </div>
+  </nav>
+<div class="main">
+  <div class="topbar">
+    <div class="pt" id="pt">Messagerie</div>
+    <div class="tb-r">
+      <button class="btn btn-p btn-sm" onclick="openModal('new-message')">✉ Nouveau message</button>
+      <button class="btn btn-g btn-sm" onclick="markAllRead()">✓ Tout lire</button>
+    </div>
+  </div>
+  <div class="content">
+
+    <!-- MESSAGERIE -->
+    <div class="screen active" id="screen-messagerie" style="height:calc(100vh - 54px)">
+      <div class="msg-layout" style="height:100%">
+        <div class="msg-sidebar">
+          <div class="msg-sidebar-hd">
+            <span class="msg-sidebar-title">Messages</span>
+            <span class="badge bt" id="unread-count">3 non lus</span>
+          </div>
+          <div class="msg-search"><input type="text" placeholder="Rechercher…" oninput="filterConvs(this.value)"></div>
+          <div id="convs-list"></div>
+        </div>
+        <div id="chat-area">
+          <div class="no-conv">
+            <div class="no-conv-ic">💬</div>
+            <div class="no-conv-txt">Sélectionne une conversation</div>
+            <div class="no-conv-sub">ou crée un nouveau message</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ANNONCES -->
+    <div class="screen" id="screen-annonces">
+      <div class="ann-layout">
+        <div class="ann-compose">
+          <div style="font-size:13px;font-weight:700;font-family:'Lora',serif;margin-bottom:12px">📢 Nouvelle annonce</div>
+          <div class="ann-types">
+            <button class="ann-type-btn active" onclick="setType(this,'info')">ℹ Info</button>
+            <button class="ann-type-btn" onclick="setType(this,'urgent')">⚠ Urgent</button>
+            <button class="ann-type-btn" onclick="setType(this,'devoir')">📋 Devoir</button>
+            <button class="ann-type-btn" onclick="setType(this,'cours')">📚 Cours</button>
+            <button class="ann-type-btn" onclick="setType(this,'evenement')">📅 Événement</button>
+            <button class="ann-type-btn" onclick="setType(this,'felicitations')">🏆 Félicitations</button>
+          </div>
+          <div class="fg">
+            <select class="fs" id="ann-class" style="margin-bottom:10px">
+              <option value="all">Toutes mes classes</option>
+              <option>Terminale Pro MCV</option>
+              <option>Seconde Générale</option>
+              <option>Première Pro</option>
+            </select>
+          </div>
+          <textarea class="fta" id="ann-content" placeholder="Écris ton annonce ici… Les élèves de la classe sélectionnée la verront instantanément." style="min-height:90px"></textarea>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px">
+            <div style="display:flex;gap:6px">
+              <button class="chat-action-btn">📎 Joindre fichier</button>
+              <button class="chat-action-btn">📌 Épingler</button>
+            </div>
+            <button class="btn btn-p" onclick="publierAnnonce()">🚀 Publier</button>
+          </div>
+        </div>
+        <div class="ann-feed" id="ann-feed"></div>
+      </div>
+    </div>
+
+    <!-- NOTIFICATIONS -->
+    <div class="screen" id="screen-notifications">
+      <div class="notifs-layout">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+          <div style="font-size:15px;font-weight:700;font-family:'Lora',serif">Centre de notifications</div>
+          <button class="btn btn-g btn-sm" onclick="markAllRead()">✓ Tout marquer lu</button>
+        </div>
+        <div id="notifs-list"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+</div>
+
+<div class="ov" id="ov" onclick="closeModal(event)">
+  <div class="modal" id="modal-body"></div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script type="module">
+
+let currentUser = null;
+let currentConv = null;
+let annType = 'info';
+let annonces = [];
+
+// Données démo conversations
+const demoConvs = [
+  {id:'conv1', name:'Lucas Martin', initials:'LM', color:'#5A8C6A', role:'Élève · Term. Pro MCV', lastMsg:'Bonjour Madame, j\'ai une question sur le devoir…', time:'9:42', unread:2, msgs:[
+    {mine:false, text:'Bonjour Madame, j\'ai une question concernant le devoir sur la relation client.', time:'9:40'},
+    {mine:false, text:'Est-ce qu\'on doit analyser les deux types de communication ou seulement la communication externe ?', time:'9:42'},
+  ]},
+  {id:'conv2', name:'Emma Dubois', initials:'ED', color:'#B8623A', role:'Élève · Term. Pro MCV', lastMsg:'Merci pour la correction !', time:'Hier', unread:1, msgs:[
+    {mine:true, text:'Bonjour Emma, j\'ai corrigé ton devoir. Tu peux le consulter dans ton espace élève.', time:'Hier, 14:32'},
+    {mine:false, text:'Merci beaucoup Madame ! Je vais regarder ça ce soir.', time:'Hier, 16:15'},
+  ]},
+  {id:'conv3', name:'Classe Term. Pro MCV', initials:'TP', color:'#1A4F9C', role:'Groupe · 27 élèves', lastMsg:'Rappel : évaluation vendredi', time:'Lun.', unread:0, msgs:[
+    {mine:true, text:'Bonjour à tous ! Rappel : l\'évaluation sur la communication professionnelle aura lieu vendredi matin à 8h. Préparez bien les chapitres 1 à 3.', time:'Lun. 8:00'},
+    {mine:true, text:'N\'oubliez pas vos fiches de révision. Bon courage ! 💪', time:'Lun. 8:01'},
+  ]},
+  {id:'conv4', name:'Nathan Bernard', initials:'NB', color:'#5B2E9C', role:'Élève · Term. Pro MCV', lastMsg:'D\'accord, je vais revoir ça.', time:'Jeu.', unread:0, msgs:[
+    {mine:true, text:'Nathan, j\'ai remarqué que tu n\'as pas rendu le dernier devoir. Est-ce que tout va bien ?', time:'Jeu. 10:15'},
+    {mine:false, text:'Désolé Madame, j\'avais eu un souci technique. Je vous l\'envoie aujourd\'hui.', time:'Jeu. 11:30'},
+    {mine:true, text:'Pas de problème, envoie-le moi dès que possible.', time:'Jeu. 11:35'},
+    {mine:false, text:'D\'accord, je vais revoir ça.', time:'Jeu. 11:36'},
+  ]},
+];
+
+const demoNotifs = [
+  {id:'n1', icon:'📤', title:'Nouveau rendu reçu', body:'Lucas Martin a rendu son devoir "Analyse document commercial"', time:'Il y a 5 min', type:'submission', unread:true, action:'Voir le rendu'},
+  {id:'n2', icon:'⏰', title:'Devoir en retard', body:'3 élèves n\'ont pas encore rendu "Plan de vente commenté" (échéance dépassée)', time:'Il y a 1h', type:'late', unread:true, action:'Voir le devoir'},
+  {id:'n3', icon:'💬', title:'Nouveau message', body:'Emma Dubois vous a envoyé un message', time:'Il y a 2h', type:'message', unread:true, action:'Répondre'},
+  {id:'n4', icon:'✦', title:'Génération IA terminée', body:'Votre quiz "Vocabulaire pro" de 5 questions est prêt', time:'Il y a 3h', type:'ai', unread:true, action:'Voir le quiz'},
+  {id:'n5', icon:'🏆', title:'Résultat remarquable', body:'Léa Moreau a obtenu 18/20 à l\'évaluation Communication', time:'Hier', type:'grade', unread:true, action:'Voir la fiche'},
+  {id:'n6', icon:'📅', title:'Rappel événement', body:'Évaluation Terminale Pro MCV demain à 8h00', time:'Hier', type:'reminder', unread:false, action:'Voir le calendrier'},
+  {id:'n7', icon:'👥', title:'Nouvel élève inscrit', body:'Thomas Petit a rejoint la classe Seconde Générale avec le code ABC123', time:'Il y a 2j', type:'join', unread:false, action:'Voir la classe'},
+];
+
+const demoAnnonces = [
+  {id:'a1', type:'urgent', author:'Marie Laurent', initials:'ML', classe:'Terminale Pro MCV', content:'⚠️ RAPPEL IMPORTANT : L\'évaluation sur la communication professionnelle a lieu vendredi 19 mai à 8h00 en salle B204. Apportez vos fiches de révision. La durée est de 1h30.', time:'Il y a 2h', likes:5, comments:3, pinned:true, commentsData:[
+    {author:'Lucas M.', text:'Merci du rappel !', initials:'LM'},
+    {author:'Emma D.', text:'On peut utiliser nos notes de cours ?', initials:'ED'},
+  ]},
+  {id:'a2', type:'cours', author:'Marie Laurent', initials:'ML', classe:'Toutes les classes', content:'📚 Nouveau cours disponible dans votre espace ! Le chapitre 4 sur la "Relation client avancée" est en ligne. N\'oubliez pas de le consulter avant le prochain cours.', time:'Hier', likes:8, comments:1, pinned:false, commentsData:[]},
+  {id:'a3', type:'felicitations', author:'Marie Laurent', initials:'ML', classe:'Seconde Générale', content:'🏆 Félicitations à toute la classe de Seconde pour vos excellents résultats ! La moyenne de classe est de 15.2/20. Continuez comme ça, vous progressez vraiment bien !', time:'Il y a 3j', likes:15, comments:6, pinned:false, commentsData:[
+    {author:'Léa M.', text:'Merci beaucoup ! 😊', initials:'LM2'},
+  ]},
+];
+
+window.logout = async function() {
+  await sb.signOut();
+};
+
+sb.onAuthChange(async (user, event) => {
+  if (!user) { window.location.href='index.html'; return; }
+  currentUser = user;
+  const snap = await getDoc(doc(db,'users',user.uid));
+  if (snap.exists()) {
+    const d = snap;
+    const initials = d.name.split(' ').map(n=>n[0]).join('').toUpperCase().slice(0,2);
+    document.getElementById('s-av').textContent = initials;
+    document.getElementById('s-nm').textContent = d.name;
+  }
+  loadConversations();
+  loadAnnoncesDB();
+  loadNotifications();
+});
+
+// ── NAVIGATION
+const TITLES = {messagerie:'Messagerie',annonces:'Annonces & Communication',notifications:'Notifications'};
+function nav(id) {
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('screen-'+id).classList.add('active');
+  document.getElementById('pt').textContent = TITLES[id]||id;
+  document.querySelectorAll('.nav-item[data-screen]').forEach(n=>n.classList.toggle('active',n.dataset.screen===id));
+}
+document.querySelectorAll('.nav-item[data-screen]').forEach(n=>n.addEventListener('click',()=>nav(n.dataset.screen)));
+
+function toast(msg,type=''){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.className='toast '+(type);
+  t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3000);
+}
+
+// ── MESSAGERIE ────────────────────────────────────────────
+function loadConversations() {
+  const el = document.getElementById('convs-list');
+  el.innerHTML = demoConvs.map(c=>`
+    <div class="conv-item ${c.unread?'unread':''}" onclick="openConv('${c.id}')">
+      <div class="conv-av" style="background:${c.color}">
+        ${c.initials}
+        ${c.unread?'<div class="conv-unread-dot"></div>':''}
+      </div>
+      <div style="flex:1;min-width:0">
+        <div class="conv-name">${c.name}</div>
+        <div class="conv-last">${c.lastMsg}</div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">
+        <div class="conv-time">${c.time}</div>
+        ${c.unread?`<span style="background:var(--terra);color:#fff;font-size:9px;padding:1px 5px;border-radius:7px;font-weight:700">${c.unread}</span>`:''}
+      </div>
+    </div>`).join('');
+}
+
+window.openConv = function(id) {
+  const conv = demoConvs.find(c=>c.id===id);
+  if(!conv) return;
+  currentConv = conv;
+  document.querySelectorAll('.conv-item').forEach(el=>{
+    el.classList.remove('active');
+    if(el.onclick.toString().includes(id)) el.classList.add('active');
+  });
+  // Marquer comme lu
+  conv.unread = 0;
+  loadConversations();
+  updateUnreadBadge();
+
+  document.getElementById('chat-area').innerHTML = `
+    <div class="chat-area">
+      <div class="chat-header">
+        <div class="chat-av" style="background:${conv.color}">${conv.initials}</div>
+        <div>
+          <div class="chat-name">${conv.name}</div>
+          <div class="chat-status">● En ligne</div>
+        </div>
+        <div style="margin-left:auto;display:flex;gap:6px">
+          <button class="btn btn-g btn-sm">📎 Partager ressource</button>
+          <button class="btn btn-g btn-sm">📋 Voir profil</button>
+        </div>
+      </div>
+      <div class="chat-messages" id="chat-msgs">
+        ${conv.msgs.map(m=>renderMsg(m, conv)).join('')}
+      </div>
+      <div class="chat-input-area">
+        <div class="chat-actions">
+          <button class="chat-action-btn" onclick="toast('Fonctionnalité : joindre un fichier')">📎 Fichier</button>
+          <button class="chat-action-btn" onclick="toast('Fonctionnalité : partager un cours')">📚 Cours</button>
+          <button class="chat-action-btn" onclick="toast('Fonctionnalité : envoyer un devoir')">📋 Devoir</button>
+          <button class="chat-action-btn" onclick="toast('Fonctionnalité : note vocale')">🎤 Audio</button>
+        </div>
+        <div class="chat-input-wrap">
+          <textarea class="chat-input" id="msg-input" placeholder="Écris ton message…" rows="1" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendMsg()}"></textarea>
+          <button class="chat-send" onclick="sendMsg()">➤</button>
+        </div>
+      </div>
+    </div>`;
+  // Scroll vers le bas
+  setTimeout(()=>{const m=document.getElementById('chat-msgs');if(m)m.scrollTop=m.scrollHeight;},100);
+};
+
+function renderMsg(m, conv) {
+  return `<div class="msg-bubble ${m.mine?'mine':''}">
+    ${!m.mine?`<div class="msg-av" style="background:${conv.color}">${conv.initials}</div>`:''}
+    <div class="msg-content">
+      <div class="msg-text">${m.text}</div>
+      <div class="msg-time">${m.time}</div>
+    </div>
+    ${m.mine?`<div class="msg-av" style="background:var(--sage-l)">ML</div>`:''}
+  </div>`;
+}
+
+window.sendMsg = async function() {
+  const input = document.getElementById('msg-input');
+  const text = input.value.trim();
+  if(!text || !currentConv) return;
+  const now = new Date();
+  const timeStr = now.getHours()+':'+String(now.getMinutes()).padStart(2,'0');
+  const newMsg = {mine:true, text, time:timeStr};
+  currentConv.msgs.push(newMsg);
+  currentConv.lastMsg = text;
+  currentConv.time = 'Maintenant';
+  const msgsEl = document.getElementById('chat-msgs');
+  msgsEl.innerHTML += renderMsg(newMsg, currentConv);
+  msgsEl.scrollTop = msgsEl.scrollHeight;
+  input.value = '';
+  loadConversations();
+  toast('Message envoyé','success');
+  // Sauvegarder en Firestore
+  try {
+    await addDoc(collection(db,'messages'), {
+      fromUid: currentUser.uid,
+      toId: currentConv.id,
+      text, convName: currentConv.name,
+      createdAt: sb.now()
+    });
+  } catch(e) { console.log('Sauvegarde message:', e.message); }
+
+  // Simuler réponse automatique
+  setTimeout(()=>{
+    const replies = ['Merci pour votre réponse !','D\'accord, je comprends.','Très bien, merci Madame.','Je vais faire ça tout de suite.'];
+    const reply = {mine:false, text:replies[Math.floor(Math.random()*replies.length)], time:timeStr};
+    currentConv.msgs.push(reply);
+    if(msgsEl) { msgsEl.innerHTML += renderMsg(reply, currentConv); msgsEl.scrollTop = msgsEl.scrollHeight; }
+  }, 2000);
+};
+
+function updateUnreadBadge() {
+  const total = demoConvs.reduce((acc,c)=>acc+(c.unread||0),0);
+  const badge = document.getElementById('badge-msg');
+  if(badge) badge.textContent = total||'';
+  badge.style.display = total ? 'inline' : 'none';
+}
+
+window.filterConvs = function(q) {
+  const el = document.getElementById('convs-list');
+  const filtered = demoConvs.filter(c=>c.name.toLowerCase().includes(q.toLowerCase())||c.lastMsg.toLowerCase().includes(q.toLowerCase()));
+  el.innerHTML = filtered.map(c=>`
+    <div class="conv-item" onclick="openConv('${c.id}')">
+      <div class="conv-av" style="background:${c.color}">${c.initials}</div>
+      <div style="flex:1;min-width:0">
+        <div class="conv-name">${c.name}</div>
+        <div class="conv-last">${c.lastMsg}</div>
+      </div>
+    </div>`).join('');
+};
+
+// ── ANNONCES ────────────────────────────────────────────
+async function loadAnnoncesDB() {
+  const snap = await getDocs(query(collection(db,'annonces'), orderBy('createdAt','desc')));
+  const dbAnns = snap.docs.map(d=>({id:d.id,...d,
+    author: d.authorName||'Enseignant',
+    initials: (d.authorName||'ML').split(' ').map(n=>n[0]).join('').toUpperCase().slice(0,2),
+    time: timeAgo(d.createdAt?.toDate()||new Date()),
+    likes: d.likes||0, comments:0, commentsData:[]
+  }));
+  annonces = [...demoAnnonces, ...dbAnns];
+  renderAnnonces();
+}
+
+function renderAnnonces() {
+  const typeIcons={info:'ℹ️',urgent:'⚠️',devoir:'📋',cours:'📚',evenement:'📅',felicitations:'🏆'};
+  const typeCols={info:'bb',urgent:'bt',devoir:'ba',cours:'bg',evenement:'bp',felicitations:'ba'};
+  document.getElementById('ann-feed').innerHTML = annonces.map(a=>`
+    <div class="ann-card ${a.pinned?'pinned':''} ${a.type==='urgent'?'urgent':''}">
+      <div class="ann-hdr">
+        <div class="ann-av2">${a.initials||'ML'}</div>
+        <div style="flex:1">
+          <div class="ann-author">${a.author||'Enseignant'} <span class="badge ${typeCols[a.type]||'bb'}" style="margin-left:6px">${typeIcons[a.type]||'ℹ️'} ${a.type}</span>${a.pinned?'<span class="badge ba" style="margin-left:4px">📌 Épinglé</span>':''}</div>
+          <div class="ann-meta2">${a.time} · ${a.classe||'Toutes les classes'}</div>
+        </div>
+        <button style="background:none;border:none;cursor:pointer;color:var(--ink-30);font-size:14px" onclick="deleteAnn('${a.id}')">🗑</button>
+      </div>
+      <div class="ann-body2">${a.content}</div>
+      <div class="ann-footer2">
+        <button class="ann-react" onclick="likeAnn(this)">❤️ ${a.likes}</button>
+        <button class="ann-react" onclick="toggleComments('${a.id}')">💬 ${a.commentsData?.length||0} commentaire(s)</button>
+        <span class="ann-class-tag tag">${a.classe||'Toutes les classes'}</span>
+      </div>
+      <div class="ann-comments" id="comments-${a.id}">
+        ${(a.commentsData||[]).map(c=>`<div class="ann-comment-item">
+          <div class="ann-comment-av">${c.initials||c.author.slice(0,2).toUpperCase()}</div>
+          <div><strong style="font-size:11px">${c.author}</strong> <span class="ann-comment-txt">${c.text}</span></div>
+        </div>`).join('')}
+        <div class="ann-comment-input">
+          <input type="text" placeholder="Ajouter un commentaire…" onkeydown="if(event.key==='Enter')addComment('${a.id}',this)">
+          <button class="btn btn-p btn-sm" onclick="addComment('${a.id}',this.previousElementSibling)">Envoyer</button>
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+window.setType = function(btn, type) {
+  annType = type;
+  document.querySelectorAll('.ann-type-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+};
+
+window.publierAnnonce = async function() {
+  const content = document.getElementById('ann-content').value.trim();
+  const classe = document.getElementById('ann-class').value;
+  if(!content){toast('Écris quelque chose.','error');return;}
+  const snap = await getDoc(doc(db,'users',currentUser.uid));
+  const authorName = snap.exists()?snap.name:'Enseignant';
+  await addDoc(collection(db,'annonces'),{
+    uid:currentUser.uid, content, type:annType,
+    authorName, classe:classe==='all'?'Toutes les classes':classe,
+    likes:0, comments:0, pinned:false, createdAt:sb.now()
+  });
+  document.getElementById('ann-content').value='';
+  toast('Annonce publiée !','success');
+  loadAnnoncesDB();
+};
+
+window.deleteAnn = function(id) {
+  annonces = annonces.filter(a=>a.id!==id);
+  renderAnnonces();
+  toast('Annonce supprimée','success');
+};
+
+window.likeAnn = function(btn) {
+  const current = parseInt(btn.textContent.replace('❤️ ',''))||0;
+  btn.textContent = '❤️ '+(current+1);
+};
+
+window.toggleComments = function(id) {
+  const el = document.getElementById('comments-'+id);
+  if(el) el.classList.toggle('open');
+};
+
+window.addComment = function(id, input) {
+  const text = input.value.trim();
+  if(!text) return;
+  const ann = annonces.find(a=>a.id===id);
+  if(ann){
+    if(!ann.commentsData) ann.commentsData=[];
+    ann.commentsData.push({author:'Moi',initials:'ML',text});
+    renderAnnonces();
+    setTimeout(()=>{ const el=document.getElementById('comments-'+id); if(el) el.classList.add('open');},50);
+  }
+};
+
+// ── NOTIFICATIONS ────────────────────────────────────────
+async function loadNotifications() {
+  // Charger depuis Firestore et fusionner avec les démo
+  try {
+    const snap = await getDocs(query(
+      collection(db,'notifications'),
+      where('userId','==',currentUser.uid),
+      orderBy('createdAt','desc')
+    ));
+    const fbNotifs = snap.docs.map(d => ({
+      id: d.id,
+      icon: d.type==='submission'?'📤':d.type==='message'?'💬':d.type==='grade'?'📊':'🔔',
+      title: d.title,
+      body: d.body,
+      time: d.createdAt?.toDate ? timeAgo(d.createdAt.toDate()) : 'Récemment',
+      type: d.type,
+      unread: !d.isRead,
+      action: 'Voir'
+    }));
+    // Fusionner avec démo, FB en premier
+    const combined = [...fbNotifs, ...demoNotifs].slice(0,15);
+    const unreadCount = combined.filter(n=>n.unread).length;
+    const badge = document.getElementById('badge-notif');
+    if(badge) { badge.textContent = unreadCount || ''; badge.style.display = unreadCount>0?'inline':'none'; }
+    // Re-render avec combiné
+    const el = document.getElementById('notifs-list');
+    if(!el) return;
+    renderNotificationsData(combined);
+  } catch(e) {
+    // Fallback démo
+    const unreadCount = demoNotifs.filter(n=>n.unread).length;
+    const badge = document.getElementById('badge-notif');
+    if(badge) badge.textContent = unreadCount;
+    renderNotifications();
+  }
+}
+
+function renderNotificationsData(notifs) {
+  const el = document.getElementById('notifs-list');
+  if(!el) return;
+  const typeColors={submission:'var(--sage)',late:'var(--terra)',message:'var(--blue)',ai:'var(--purple)',grade:'var(--amber)',reminder:'var(--ink-30)',join:'var(--blue)'};
+  el.innerHTML = notifs.map(n=>`
+    <div class="notif-item ${n.unread?'unread':''}" onclick="readNotif('${n.id}',this)">
+      <div class="ni-icon">${n.icon}</div>
+      <div style="flex:1">
+        <div class="ni-title">${n.title}</div>
+        <div class="ni-body">${n.body}</div>
+        <div style="display:flex;align-items:center;gap:8px;margin-top:6px">
+          <div class="ni-time">🕐 ${n.time}</div>
+          ${n.unread?'<span class="badge bg">Nouveau</span>':''}
+        </div>
+        <div class="ni-actions">
+          <button class="btn btn-p btn-sm" onclick="event.stopPropagation();toast('${n.action||'Voir'}');">${n.action||'Voir'}</button>
+          <button class="btn btn-g btn-sm" onclick="event.stopPropagation();dismissNotif('${n.id}',this)">Ignorer</button>
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+function renderNotifications() {
+  const el = document.getElementById('notifs-list');
+  const typeColors={submission:'var(--sage)',late:'var(--terra)',message:'var(--blue)',ai:'var(--purple)',grade:'var(--amber)',reminder:'var(--ink-30)',join:'var(--blue)'};
+  el.innerHTML = demoNotifs.map(n=>`
+    <div class="notif-item ${n.unread?'unread':''}" onclick="readNotif('${n.id}',this)">
+      <div class="ni-icon">${n.icon}</div>
+      <div style="flex:1">
+        <div class="ni-title">${n.title}</div>
+        <div class="ni-body">${n.body}</div>
+        <div style="display:flex;align-items:center;gap:8px;margin-top:6px">
+          <div class="ni-time">🕐 ${n.time}</div>
+          ${n.unread?'<span class="badge bg">Nouveau</span>':''}
+        </div>
+        <div class="ni-actions">
+          <button class="btn btn-p btn-sm" onclick="event.stopPropagation();toast('Navigation vers : ${n.action}','success')">${n.action}</button>
+          <button class="btn btn-g btn-sm" onclick="event.stopPropagation();dismissNotif('${n.id}',this)">Ignorer</button>
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+window.readNotif = function(id, el) {
+  const n = demoNotifs.find(n=>n.id===id);
+  if(n) n.unread=false;
+  el.classList.remove('unread');
+  loadNotifications();
+};
+
+window.dismissNotif = function(id, btn) {
+  const idx = demoNotifs.findIndex(n=>n.id===id);
+  if(idx>-1) demoNotifs.splice(idx,1);
+  renderNotifications();
+};
+
+window.markAllRead = async function() {
+  demoNotifs.forEach(n=>n.unread=false);
+  renderNotifications();
+  loadNotifications();
+  // Marquer aussi dans Firestore
+  try {
+    const snap = await getDocs(query(
+      collection(db,'notifications'),
+      where('userId','==',currentUser.uid),
+      where('isRead','==',false)
+    ));
+    for(const d of snap.docs) {
+      await updateDoc(doc(db,'notifications',d.id), {isRead: true});
+    }
+  } catch(e) {}
+  toast('Toutes les notifications lues','success');
+};
+
+function timeAgo(date){
+  const diff=(Date.now()-date.getTime())/1000;
+  if(diff<60) return 'À l\'instant';
+  if(diff<3600) return `Il y a ${Math.floor(diff/60)} min`;
+  if(diff<86400) return `Il y a ${Math.floor(diff/3600)}h`;
+  return `Il y a ${Math.floor(diff/86400)}j`;
+}
+
+// ── MODAL ────────────────────────────────────────────────
+window.openModal = function(type) {
+  if(type==='new-message'){
+    document.getElementById('modal-body').innerHTML=`
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px">
+        <div style="font-family:'Lora',serif;font-size:17px;font-weight:700">Nouveau message</div>
+        <button style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--ink-30)" onclick="closeModal()">✕</button>
+      </div>
+      <div style="font-size:11.5px;color:var(--ink-60);margin-top:3px;margin-bottom:18px">Envoyer un message à un élève ou à une classe</div>
+      <div class="fg"><label class="fl">Destinataire</label><select class="fs" id="msg-to">
+        <option>Lucas Martin</option><option>Emma Dubois</option><option>Nathan Bernard</option>
+        <option>Classe Term. Pro MCV (27 élèves)</option><option>Classe Seconde (31 élèves)</option>
+      </select></div>
+      <div class="fg"><label class="fl">Message</label><textarea class="fta" id="msg-body" placeholder="Ton message…" rows="4"></textarea></div>
+      <div class="fg"><label class="fl">Joindre (optionnel)</label><select class="fs"><option value="">— Aucune ressource —</option><option>Cours RC Chap3.pdf</option><option>Exercices P3.docx</option></select></div>
+      <div class="mf">
+        <button class="btn btn-g" onclick="closeModal()">Annuler</button>
+        <button class="btn btn-p" onclick="sendNewMsg()">Envoyer ➤</button>
+      </div>`;
+    document.getElementById('ov').classList.add('open');
+  }
+};
+
+window.sendNewMsg = async function() {
+  const to = document.getElementById('msg-to').value;
+  const body = document.getElementById('msg-body').value.trim();
+  if(!body){toast('Écris un message.','error');return;}
+  try {
+    await addDoc(collection(db,'messages'), {
+      fromUid: currentUser.uid,
+      toName: to,
+      text: body,
+      createdAt: sb.now()
+    });
+    // Créer aussi une notification
+    await addDoc(collection(db,'notifications'), {
+      userId: currentUser.uid,
+      title: 'Message envoyé',
+      body: 'À ' + to + ' : ' + body.slice(0,80),
+      type: 'message',
+      isRead: true,
+      createdAt: sb.now()
+    });
+  } catch(e) { console.log(e); }
+  toast('Message envoyé à '+to+' !','success');
+  closeModal();
+};
+
+window.closeModal = function(e) {
+  if(!e||e.target===document.getElementById('ov'))
+    document.getElementById('ov').classList.remove('open');
+};
+
+
+// ═══ NAVIGATION GLOBALE ═══
+function navTo(url, screen, section) {
+  // Si même page, juste changer l'écran
+  const currentPage = window.location.pathname.split('/').pop() || 'dashboard.html';
+  if (url === currentPage || url === '') {
+    if (screen && typeof window.nav === 'function') {
+      window.nav(screen);
+    }
+    setActiveNav(section, screen);
+  } else {
+    // Stocker l'écran cible pour la page destination
+    if (screen) sessionStorage.setItem('targetScreen', screen);
+    if (section) sessionStorage.setItem('targetSection', section);
+    window.location.href = url;
+  }
+}
+
+function toggleNav(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const isOpen = el.classList.contains('open');
+  // Fermer tous les autres
+  document.querySelectorAll('.nav-main-item').forEach(n => n.classList.remove('open'));
+  if (!isOpen) el.classList.add('open');
+}
+
+function setActiveNav(section, screen) {
+  document.querySelectorAll('.nav-main-item').forEach(n => n.classList.remove('active'));
+  document.querySelectorAll('.nav-sub-item').forEach(n => n.classList.remove('active'));
+  if (section) {
+    const mainEl = document.querySelector(`[data-page="${section}"]`);
+    if (mainEl) { mainEl.classList.add('active'); mainEl.classList.add('open'); }
+  }
+  if (screen) {
+    document.querySelectorAll('.nav-sub-item').forEach(n => {
+      if (n.getAttribute('onclick') && n.getAttribute('onclick').includes(`'${screen}'`)) {
+        n.classList.add('active');
+      }
+    });
+  }
+}
+
+// Au chargement : restaurer l'écran cible
+document.addEventListener('DOMContentLoaded', () => {
+  const targetScreen = sessionStorage.getItem('targetScreen');
+  const targetSection = sessionStorage.getItem('targetSection');
+  if (targetScreen) {
+    sessionStorage.removeItem('targetScreen');
+    sessionStorage.removeItem('targetSection');
+    if (typeof window.nav === 'function') {
+      setTimeout(() => window.nav(targetScreen), 100);
+    }
+    setActiveNav(targetSection, targetScreen);
+  } else {
+    // Détecter la page courante et ouvrir la bonne section
+    const page = window.location.pathname.split('/').pop() || 'dashboard.html';
+    const pageMap = {
+      'dashboard.html': 'dashboard',
+      'murs.html': 'enseigner',
+      'messagerie.html': 'communication',
+      'suivi.html': 'suivi',
+    };
+    const section = pageMap[page];
+    if (section && section !== 'dashboard') {
+      const el = document.getElementById('nav-' + section);
+      if (el) el.classList.add('open', 'active');
+    } else if (section === 'dashboard') {
+      const el = document.querySelector('[data-page="dashboard"]');
+      if (el) el.classList.add('active');
+    }
+  }
+});
+
+window.navTo = navTo;
+window.toggleNav = toggleNav;
+window.setActiveNav = setActiveNav;
+
+</script>
+</body>
+</html>

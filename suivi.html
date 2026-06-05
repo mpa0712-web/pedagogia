@@ -1,0 +1,1226 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pédagogia — Suivi, Notes & Agenda</title>
+<link href="https://fonts.googleapis.com/css2?family=Lora:wght@600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --sage:#3D6B4F;--sage-l:#5A8C6A;--sage-p:#EAF2ED;
+  --terra:#B8623A;--terra-p:#FBF0EA;
+  --ink:#1A1714;--ink-60:#5C574F;--ink-30:#A09990;--ink-10:#F0EBE3;
+  --sand:#FAF6F0;--white:#fff;
+  --amber:#9C6B1E;--amber-p:#FDF5E6;
+  --blue:#1A4F9C;--blue-p:#EBF2FF;
+  --purple:#5B2E9C;--purple-p:#F3EEFF;
+  --r:12px;--r-sm:8px;
+  --sh:0 1px 3px rgba(26,23,20,.07);--sh-md:0 4px 16px rgba(26,23,20,.10);--sh-lg:0 8px 32px rgba(26,23,20,.13);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--sand);color:var(--ink)}
+.app{display:flex;height:100vh}
+/* ═══ SIDEBAR GLOBALE ═══ */
+.sidebar{width:220px;flex-shrink:0;background:var(--ink);display:flex;flex-direction:column;overflow:hidden}
+.s-logo{padding:14px 16px 12px;border-bottom:1px solid rgba(255,255,255,.07);display:flex;align-items:center;gap:10px}
+.s-logo-icon{width:32px;height:32px;border-radius:8px;background:var(--sage-l);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.s-logo-text .wm{font-family:'Lora',serif;font-size:16px;font-weight:700;color:#fff;line-height:1}
+.s-logo-text .tg{font-size:8.5px;color:rgba(255,255,255,.3);letter-spacing:1px;text-transform:uppercase;margin-top:2px}
+.s-user{padding:8px 12px;display:flex;align-items:center;gap:9px;border-bottom:1px solid rgba(255,255,255,.05);cursor:pointer;transition:background .12s}
+.s-user:hover{background:rgba(255,255,255,.05)}
+.av{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;flex-shrink:0}
+.u-nm{font-size:11.5px;font-weight:500;color:#fff;line-height:1}
+.u-rl{font-size:9px;color:rgba(255,255,255,.3);margin-top:2px}
+.s-nav{flex:1;overflow-y:auto;padding:8px 0}
+
+/* NAV PRINCIPALE — grandes sections */
+.nav-main-item{display:flex;align-items:center;gap:0;margin:2px 8px;border-radius:9px;overflow:hidden;cursor:pointer;transition:all .12s}
+.nav-main-item:hover{background:rgba(255,255,255,.06)}
+.nav-main-item.active{background:rgba(255,255,255,.1)}
+.nav-main-btn{display:flex;align-items:center;gap:9px;padding:8px 10px;flex:1;min-width:0}
+.nav-main-icon{font-size:15px;width:20px;text-align:center;flex-shrink:0}
+.nav-main-label{font-size:12px;font-weight:600;color:rgba(255,255,255,.7);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nav-main-item.active .nav-main-label{color:#fff}
+.nav-main-chevron{padding:8px 8px 8px 0;font-size:10px;color:rgba(255,255,255,.3);transition:transform .2s;flex-shrink:0}
+.nav-main-item.open .nav-main-chevron{transform:rotate(90deg)}
+.nav-main-badge{background:var(--terra);color:#fff;font-size:8px;padding:1px 5px;border-radius:6px;font-weight:700;margin-left:auto;margin-right:4px}
+
+/* NAV SOUS-ITEMS */
+.nav-sub{display:none;padding:2px 0 4px}
+.nav-main-item.open .nav-sub{display:block}
+.nav-sub-item{display:flex;align-items:center;gap:8px;padding:5px 10px 5px 38px;font-size:11px;color:rgba(255,255,255,.45);cursor:pointer;border-radius:7px;margin:1px 8px;transition:all .12s}
+.nav-sub-item:hover{background:rgba(255,255,255,.07);color:rgba(255,255,255,.85)}
+.nav-sub-item.active{color:rgba(255,255,255,.9);background:rgba(255,255,255,.08)}
+.nav-sub-icon{font-size:12px;width:16px;text-align:center;flex-shrink:0}
+
+/* NAV PILL — couleur par section */
+.nav-main-item[data-page="dashboard"] .nav-main-icon{color:#7BAF8E}
+.nav-main-item[data-page="enseigner"] .nav-main-icon{color:#6B9FD4}
+.nav-main-item[data-page="maclasse"] .nav-main-icon{color:#D48C6B}
+.nav-main-item[data-page="communication"] .nav-main-icon{color:#9B7FD4}
+.nav-main-item[data-page="suivi"] .nav-main-icon{color:#D4B86B}
+
+/* SÉPARATEUR */
+.nav-sep{height:1px;background:rgba(255,255,255,.05);margin:6px 12px}
+
+/* COMPTE EN BAS */
+.s-bottom{padding:10px;border-top:1px solid rgba(255,255,255,.07)}
+.s-bottom-btn{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:8px;font-size:11px;color:rgba(255,255,255,.4);cursor:pointer;transition:all .12s;width:100%}
+.s-bottom-btn:hover{background:rgba(255,255,255,.07);color:rgba(255,255,255,.7)}
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.topbar{height:54px;flex-shrink:0;background:var(--white);border-bottom:1px solid var(--ink-10);display:flex;align-items:center;padding:0 20px;gap:10px}
+.pt{font-size:15px;font-weight:600}
+.tb-r{margin-left:auto;display:flex;align-items:center;gap:7px}
+.btn{display:inline-flex;align-items:center;gap:5px;padding:6px 13px;border-radius:7px;font-size:11.5px;font-weight:600;cursor:pointer;border:none;transition:all .12s;font-family:'DM Sans',sans-serif}
+.btn-p{background:var(--sage-l);color:#fff}.btn-p:hover{background:var(--sage)}
+.btn-g{background:transparent;color:var(--ink-60);border:1px solid var(--ink-10)}.btn-g:hover{background:var(--ink-10)}
+.btn-ai{background:linear-gradient(135deg,#5B2E9C,#3D6B4F);color:#fff}
+.btn-sm{padding:4px 10px;font-size:10.5px}
+.content{flex:1;overflow-y:auto;padding:22px}
+.screen{display:none;animation:fi .2s ease}.screen.active{display:block}
+@keyframes fi{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+.card{background:var(--white);border-radius:var(--r);box-shadow:var(--sh);border:1px solid var(--ink-10);overflow:hidden}
+.card-hd{padding:14px 18px 11px;border-bottom:1px solid var(--ink-10);display:flex;align-items:center;justify-content:space-between}
+.card-title{font-size:13.5px;font-weight:600}
+.badge{display:inline-flex;align-items:center;padding:2px 7px;border-radius:8px;font-size:9.5px;font-weight:700}
+.bg{background:var(--sage-p);color:var(--sage)}.bt{background:var(--terra-p);color:var(--terra)}.ba{background:var(--amber-p);color:var(--amber)}.bb{background:var(--blue-p);color:var(--blue)}.bp{background:var(--purple-p);color:var(--purple)}
+.tag{background:var(--ink-10);color:var(--ink-60);font-size:9.5px;padding:2px 7px;border-radius:7px}
+.toast{position:fixed;bottom:24px;right:24px;background:var(--ink);color:#fff;padding:12px 18px;border-radius:10px;font-size:12.5px;z-index:999;transform:translateY(80px);opacity:0;transition:all .3s;pointer-events:none}
+.toast.show{transform:translateY(0);opacity:1}
+.toast.success{background:var(--sage-l)}.toast.error{background:var(--terra)}
+.empty{padding:36px;text-align:center;color:var(--ink-30)}
+.fi,.fs,.fta{width:100%;padding:8px 11px;border-radius:7px;border:1px solid var(--ink-10);font-size:12.5px;color:var(--ink);background:var(--sand);outline:none;font-family:'DM Sans',sans-serif;transition:border .12s}
+.fi:focus,.fs:focus,.fta:focus{border-color:var(--sage-l)}
+.fta{resize:vertical;min-height:70px}
+.ov{display:none;position:fixed;inset:0;background:rgba(26,23,20,.5);z-index:200;align-items:center;justify-content:center;backdrop-filter:blur(3px)}
+.ov.open{display:flex}
+.modal{background:var(--white);border-radius:16px;width:480px;max-height:88vh;overflow-y:auto;padding:22px;box-shadow:var(--sh-lg)}
+.fg{margin-bottom:12px}
+.fl{font-size:10.5px;font-weight:700;color:var(--ink-60);margin-bottom:4px;display:block;text-transform:uppercase;letter-spacing:.3px}
+.mf{display:flex;justify-content:flex-end;gap:7px;margin-top:18px;padding-top:14px;border-top:1px solid var(--ink-10)}
+
+/* ══ TABLEAU DE BORD ENRICHI ══ */
+.db-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:18px}
+.db-stat{background:var(--white);border-radius:var(--r);padding:16px;box-shadow:var(--sh);border:1px solid var(--ink-10);position:relative;overflow:hidden}
+.db-stat::after{content:'';position:absolute;right:-10px;top:-10px;width:60px;height:60px;border-radius:50%;opacity:.06}
+.db-stat.green::after{background:var(--sage)}
+.db-stat.terra::after{background:var(--terra)}
+.db-stat.blue::after{background:var(--blue)}
+.db-stat.purple::after{background:var(--purple)}
+.ds-label{font-size:9.5px;color:var(--ink-30);text-transform:uppercase;letter-spacing:.5px}
+.ds-val{font-size:28px;font-weight:700;font-family:'Lora',serif;line-height:1;margin:6px 0 4px}
+.ds-delta{font-size:10.5px;display:flex;align-items:center;gap:4px}
+.ds-chart{height:40px;margin-top:8px;display:flex;align-items:flex-end;gap:2px}
+.ds-bar{flex:1;border-radius:2px 2px 0 0;min-height:4px;transition:height .5s ease}
+/* Alertes */
+.alert-item{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:8px;margin-bottom:7px}
+.alert-item.warn{background:var(--amber-p);border:1px solid rgba(156,107,30,.2)}
+.alert-item.danger{background:var(--terra-p);border:1px solid rgba(184,98,58,.2)}
+.alert-item.success{background:var(--sage-p);border:1px solid rgba(61,107,79,.2)}
+.alert-ic{font-size:18px;flex-shrink:0}
+.alert-txt{font-size:12px;color:var(--ink-60);flex:1;line-height:1.5}
+.alert-btn{font-size:10.5px;padding:3px 8px;border-radius:6px;border:none;cursor:pointer;font-family:'DM Sans',sans-serif;white-space:nowrap}
+/* Planning semaine */
+.planning-grid{display:grid;grid-template-columns:60px repeat(5,1fr);gap:4px;font-size:11px}
+.pg-header{background:var(--ink);color:#fff;border-radius:6px;padding:5px;text-align:center;font-weight:600}
+.pg-time{color:var(--ink-30);display:flex;align-items:center;justify-content:flex-end;padding-right:6px;font-size:10px}
+.pg-cell{min-height:40px;border-radius:6px;background:var(--sand);border:1px solid var(--ink-10)}
+.pg-event{border-radius:6px;padding:5px 7px;font-size:10.5px;font-weight:600;cursor:pointer;transition:opacity .12s}
+.pg-event:hover{opacity:.8}
+.pg-cours{background:var(--sage-p);color:var(--sage);border-left:3px solid var(--sage)}
+.pg-eval{background:var(--terra-p);color:var(--terra);border-left:3px solid var(--terra)}
+.pg-devoir{background:var(--amber-p);color:var(--amber);border-left:3px solid var(--amber)}
+.pg-reunion{background:var(--blue-p);color:var(--blue);border-left:3px solid var(--blue)}
+
+/* ══ NOTES & CARNETS ══ */
+.notes-layout{display:grid;grid-template-columns:240px 1fr;gap:16px}
+.notes-sidebar{display:flex;flex-direction:column;gap:8px}
+.note-folder{background:var(--white);border:1px solid var(--ink-10);border-radius:var(--r-sm);padding:10px 12px;cursor:pointer;transition:all .12s}
+.note-folder:hover,.note-folder.active{background:var(--sage-p);border-color:var(--sage-l)}
+.nf-title{font-size:12px;font-weight:600}
+.nf-count{font-size:10px;color:var(--ink-30);margin-top:2px}
+.note-editor{background:var(--white);border:1px solid var(--ink-10);border-radius:var(--r);box-shadow:var(--sh)}
+.ne-header{padding:14px 18px;border-bottom:1px solid var(--ink-10);display:flex;align-items:center;gap:10px}
+.ne-title{flex:1;border:none;font-size:16px;font-weight:700;font-family:'Lora',serif;outline:none;background:transparent}
+.ne-title::placeholder{color:var(--ink-30)}
+.ne-body{padding:16px 18px;min-height:300px}
+.ne-content{width:100%;border:none;outline:none;font-size:13.5px;line-height:1.9;color:var(--ink-60);background:transparent;font-family:'DM Sans',sans-serif;resize:none;min-height:280px}
+.ne-footer{padding:10px 16px;border-top:1px solid var(--ink-10);display:flex;align-items:center;gap:8px}
+.ne-tag-input{padding:4px 8px;border-radius:6px;border:1px solid var(--ink-10);font-size:11px;outline:none;background:var(--sand);font-family:'DM Sans',sans-serif}
+.notes-list-panel{display:flex;flex-direction:column;gap:7px;margin-bottom:14px}
+.note-preview{background:var(--white);border:1px solid var(--ink-10);border-radius:var(--r-sm);padding:12px 14px;cursor:pointer;transition:all .12s}
+.note-preview:hover{box-shadow:var(--sh-md);transform:translateX(2px)}
+.note-preview.active{border-color:var(--sage-l);background:var(--sage-p)}
+.np-title{font-size:12.5px;font-weight:600;margin-bottom:3px}
+.np-preview{font-size:11px;color:var(--ink-30);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.np-meta{display:flex;align-items:center;gap:6px;margin-top:5px}
+/* Post-its */
+.postits-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px}
+.postit{border-radius:8px;padding:14px;min-height:120px;cursor:pointer;transition:all .15s;position:relative;box-shadow:var(--sh)}
+.postit:hover{transform:rotate(-1deg) scale(1.02);box-shadow:var(--sh-md)}
+.postit-txt{font-size:12.5px;line-height:1.6;color:var(--ink);margin-bottom:8px}
+.postit-date{font-size:9.5px;color:rgba(26,23,20,.4)}
+.postit-del{position:absolute;top:6px;right:6px;background:none;border:none;cursor:pointer;font-size:13px;opacity:0;transition:opacity .12s}
+.postit:hover .postit-del{opacity:1}
+
+/* ══ AGENDA AVANCÉ ══ */
+.agenda-layout{display:grid;grid-template-columns:1fr 300px;gap:16px}
+.calendar-big{background:var(--white);border-radius:var(--r);box-shadow:var(--sh);border:1px solid var(--ink-10);overflow:hidden}
+.cal-nav-bar{padding:14px 16px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--ink-10)}
+.cal-views{display:flex;gap:4px}
+.cv-btn{padding:4px 10px;border-radius:6px;border:1px solid var(--ink-10);background:transparent;font-size:10.5px;cursor:pointer;color:var(--ink-60);transition:all .12s}
+.cv-btn.active{background:var(--ink);color:#fff}
+.cal-dnames{display:grid;grid-template-columns:repeat(7,1fr)}
+.cal-dname{text-align:center;padding:8px 0;font-size:9px;text-transform:uppercase;letter-spacing:.5px;color:var(--ink-30)}
+.cal-days-grid{display:grid;grid-template-columns:repeat(7,1fr);padding:4px 6px 8px}
+.cday{aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:8px;font-size:11.5px;cursor:pointer;position:relative;margin:2px;transition:background .1s;color:var(--ink-60)}
+.cday:hover{background:var(--sand)}
+.cday.today{background:var(--sage-l);color:#fff;font-weight:700}
+.cday.selected{background:var(--ink);color:#fff}
+.cday.has-event::after{content:'';width:4px;height:4px;border-radius:50%;background:var(--terra);position:absolute;bottom:3px}
+.cday.today.has-event::after,.cday.selected.has-event::after{background:#fff}
+.cday.other-month{color:var(--ink-10)}
+/* Événements sidebar */
+.event-list-sidebar{display:flex;flex-direction:column;gap:8px}
+.event-card2{background:var(--white);border:1px solid var(--ink-10);border-radius:var(--r-sm);padding:12px;box-shadow:var(--sh);cursor:pointer;transition:box-shadow .12s}
+.event-card2:hover{box-shadow:var(--sh-md)}
+.ec2-header{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.ec2-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.ec2-title{font-size:12.5px;font-weight:700;flex:1}
+.ec2-time{font-size:10px;color:var(--ink-30)}
+.ec2-body{font-size:11.5px;color:var(--ink-60);line-height:1.5}
+.ec2-tags{display:flex;gap:4px;margin-top:6px;flex-wrap:wrap}
+/* Séquences pédagogiques */
+.seq-item{background:var(--white);border:1px solid var(--ink-10);border-radius:var(--r);padding:16px;margin-bottom:10px;box-shadow:var(--sh)}
+.seq-header{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+.seq-num{width:32px;height:32px;border-radius:50%;background:var(--sage-l);color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0}
+.seq-title{font-size:14px;font-weight:700}
+.seq-meta{font-size:10.5px;color:var(--ink-30);margin-top:2px}
+.seq-progress{margin-top:10px}
+.seq-prog-bar{height:6px;background:var(--ink-10);border-radius:3px;overflow:hidden;margin-bottom:4px}
+.seq-prog-fill{height:100%;border-radius:3px;transition:width .5s}
+.seq-seances{display:flex;flex-direction:column;gap:6px;margin-top:10px}
+.seance-item{display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--sand);border-radius:7px;font-size:12px}
+.seance-check{width:18px;height:18px;border-radius:4px;border:2px solid var(--ink-30);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .12s}
+.seance-check.done{background:var(--sage-l);border-color:var(--sage-l);color:#fff}
+/* Export */
+.export-card{background:var(--white);border:1px solid var(--ink-10);border-radius:var(--r);padding:16px;margin-bottom:10px;box-shadow:var(--sh);display:flex;align-items:center;gap:14px;cursor:pointer;transition:all .12s}
+.export-card:hover{box-shadow:var(--sh-md);transform:translateY(-1px)}
+.export-icon{font-size:28px;flex-shrink:0}
+.export-title{font-size:13px;font-weight:700}
+.export-desc{font-size:11px;color:var(--ink-30);margin-top:2px}
+</style>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase.js"></script>
+</head>
+<body>
+<div class="app">
+<!-- SIDEBAR PÉDAGOGIA -->
+  <nav class="sidebar" id="main-sidebar">
+    <div class="s-logo">
+      <div class="s-logo-icon">🎓</div>
+      <div class="s-logo-text">
+        <div class="wm">Pédagogia</div>
+        <div class="tg">Enseignant</div>
+      </div>
+    </div>
+    <div class="s-user" onclick="window.location.href='suivi.html'">
+      <div class="av" id="s-av" style="background:var(--sage-l)">ML</div>
+      <div>
+        <div class="u-nm" id="s-nm">Chargement…</div>
+        <div class="u-rl">Voir mon profil →</div>
+      </div>
+    </div>
+    <div class="s-nav" id="s-nav">
+      <!-- Section Accueil -->
+      <div class="nav-main-item" data-page="dashboard" onclick="navTo('dashboard.html','','dashboard')">
+        <div class="nav-main-btn">
+          <span class="nav-main-icon">⌂</span>
+          <span class="nav-main-label">Accueil</span>
+        </div>
+      </div>
+
+      <!-- Section Enseigner -->
+      <div class="nav-main-item" data-page="enseigner" id="nav-enseigner">
+        <div class="nav-main-btn" onclick="toggleNav('nav-enseigner')">
+          <span class="nav-main-icon">📚</span>
+          <span class="nav-main-label">Enseigner</span>
+        </div>
+        <span class="nav-main-chevron">›</span>
+        <div class="nav-sub">
+          <div class="nav-sub-item" onclick="navTo('murs.html','editeur','enseigner')"><span class="nav-sub-icon">✍️</span> Créer un cours</div>
+          <div class="nav-sub-item" onclick="navTo('murs.html','murs','enseigner')"><span class="nav-sub-icon">🗂</span> Murs collaboratifs</div>
+          <div class="nav-sub-item" onclick="navTo('murs.html','quiz-live','enseigner')"><span class="nav-sub-icon">⚡</span> Quiz temps réel</div>
+          <div class="nav-sub-item" onclick="navTo('dashboard.html','ai','enseigner')"><span class="nav-sub-icon">✦</span> Assistant IA</div>
+          <div class="nav-sub-item" onclick="navTo('murs.html','pdf-viewer','enseigner')"><span class="nav-sub-icon">📄</span> Aperçu documents</div>
+        </div>
+      </div>
+
+      <!-- Section Ma Classe -->
+      <div class="nav-main-item" data-page="maclasse" id="nav-maclasse">
+        <div class="nav-main-btn" onclick="toggleNav('nav-maclasse')">
+          <span class="nav-main-icon">👥</span>
+          <span class="nav-main-label">Ma classe</span>
+        </div>
+        <span class="nav-main-chevron">›</span>
+        <div class="nav-sub">
+          <div class="nav-sub-item" onclick="navTo('dashboard.html','classes','maclasse')"><span class="nav-sub-icon">🏫</span> Mes classes</div>
+          <div class="nav-sub-item" onclick="navTo('murs.html','eleves','maclasse')"><span class="nav-sub-icon">👤</span> Fiches élèves</div>
+          <div class="nav-sub-item" onclick="navTo('dashboard.html','resources','maclasse')"><span class="nav-sub-icon">📁</span> Ressources</div>
+          <div class="nav-sub-item" onclick="navTo('dashboard.html','assignments','maclasse')"><span class="nav-sub-icon">📋</span> Devoirs <span class="nav-main-badge" id="badge-assign">0</span></div>
+        </div>
+      </div>
+
+      <!-- Section Communication -->
+      <div class="nav-main-item" data-page="communication" id="nav-communication">
+        <div class="nav-main-btn" onclick="toggleNav('nav-communication')">
+          <span class="nav-main-icon">💬</span>
+          <span class="nav-main-label">Communication</span>
+          <span class="nav-main-badge" id="badge-msg">3</span>
+        </div>
+        <span class="nav-main-chevron">›</span>
+        <div class="nav-sub">
+          <div class="nav-sub-item" onclick="navTo('messagerie.html','messagerie','communication')"><span class="nav-sub-icon">✉️</span> Messagerie</div>
+          <div class="nav-sub-item" onclick="navTo('messagerie.html','annonces','communication')"><span class="nav-sub-icon">📢</span> Annonces</div>
+          <div class="nav-sub-item" onclick="navTo('messagerie.html','notifications','communication')"><span class="nav-sub-icon">🔔</span> Notifications <span class="nav-main-badge" id="badge-notif">5</span></div>
+        </div>
+      </div>
+
+      <!-- Section Suivi -->
+      <div class="nav-main-item" data-page="suivi" id="nav-suivi">
+        <div class="nav-main-btn" onclick="toggleNav('nav-suivi')">
+          <span class="nav-main-icon">📊</span>
+          <span class="nav-main-label">Suivi & Organisation</span>
+        </div>
+        <span class="nav-main-chevron">›</span>
+        <div class="nav-sub">
+          <div class="nav-sub-item" onclick="navTo('suivi.html','tb-enrichi','suivi')"><span class="nav-sub-icon">📈</span> Vue d'ensemble</div>
+          <div class="nav-sub-item" onclick="navTo('suivi.html','planning','suivi')"><span class="nav-sub-icon">🗓</span> Planning semaine</div>
+          <div class="nav-sub-item" onclick="navTo('suivi.html','notes','suivi')"><span class="nav-sub-icon">📓</span> Notes & Carnets</div>
+          <div class="nav-sub-item" onclick="navTo('suivi.html','postits','suivi')"><span class="nav-sub-icon">💛</span> Post-its</div>
+          <div class="nav-sub-item" onclick="navTo('suivi.html','agenda','suivi')"><span class="nav-sub-icon">📅</span> Agenda</div>
+          <div class="nav-sub-item" onclick="navTo('suivi.html','sequences','suivi')"><span class="nav-sub-icon">🔖</span> Séquences</div>
+          <div class="nav-sub-item" onclick="navTo('suivi.html','export','suivi')"><span class="nav-sub-icon">⬇</span> Exporter</div>
+        </div>
+      </div>
+
+    </div><!-- /s-nav -->
+
+    <div class="s-bottom">
+      <div class="s-bottom-btn" onclick="logout()">
+        <span>↩</span> Déconnexion
+      </div>
+    </div>
+  </nav>
+<div class="main">
+  <div class="topbar">
+    <div class="pt" id="pt">Vue d'ensemble</div>
+    <div class="tb-r" id="tb-r">
+      <button class="btn btn-g btn-sm" onclick="exportPDF()">⬇ Exporter PDF</button>
+      <button class="btn btn-p btn-sm" id="tb-main-btn">+ Ajouter</button>
+    </div>
+  </div>
+  <div class="content">
+
+    <!-- TABLEAU DE BORD ENRICHI -->
+    <div class="screen active" id="screen-tb-enrichi">
+      <div class="db-grid">
+        <div class="db-stat green">
+          <div class="ds-label">Taux de rendu</div>
+          <div class="ds-val" style="color:var(--sage)">74%</div>
+          <div class="ds-delta" style="color:var(--sage)">↑ +6% vs semaine passée</div>
+          <div class="ds-chart" id="chart-rendu"></div>
+        </div>
+        <div class="db-stat terra">
+          <div class="ds-label">Moyenne de classe</div>
+          <div class="ds-val" style="color:var(--terra)">13.8</div>
+          <div class="ds-delta" style="color:var(--ink-30)">→ Stable</div>
+          <div class="ds-chart" id="chart-moyenne"></div>
+        </div>
+        <div class="db-stat blue">
+          <div class="ds-label">Élèves actifs</div>
+          <div class="ds-val" style="color:var(--blue)">82</div>
+          <div class="ds-delta" style="color:var(--sage)">↑ +3 cette semaine</div>
+          <div class="ds-chart" id="chart-actifs"></div>
+        </div>
+        <div class="db-stat purple">
+          <div class="ds-label">Ressources créées</div>
+          <div class="ds-val" style="color:var(--purple)">47</div>
+          <div class="ds-delta" style="color:var(--sage)">↑ +8 ce mois</div>
+          <div class="ds-chart" id="chart-res"></div>
+        </div>
+      </div>
+
+      <!-- Alertes intelligentes -->
+      <div class="card" style="padding:16px;margin-bottom:16px">
+        <div class="card-title" style="margin-bottom:12px">⚡ Alertes & Actions prioritaires</div>
+        <div class="alert-item danger">
+          <div class="alert-ic">🚨</div>
+          <div class="alert-txt"><strong>3 élèves n'ont rien rendu</strong> depuis plus de 2 semaines — Nathan B., Hugo L., Manon R.</div>
+          <button class="alert-btn" style="background:var(--terra);color:#fff" onclick="toast('Relance envoyée aux 3 élèves','success')">Relancer</button>
+        </div>
+        <div class="alert-item warn">
+          <div class="alert-ic">⏰</div>
+          <div class="alert-txt"><strong>Évaluation demain</strong> — Terminale Pro MCV à 8h00. 5 élèves n'ont pas encore vu le cours de révision.</div>
+          <button class="alert-btn" style="background:var(--amber);color:#fff" onclick="toast('Notification envoyée','success')">Notifier</button>
+        </div>
+        <div class="alert-item warn">
+          <div class="alert-ic">📋</div>
+          <div class="alert-txt"><strong>4 devoirs à corriger</strong> dans ta liste. Le plus ancien date de 8 jours.</div>
+          <button class="alert-btn" style="background:var(--amber);color:#fff" onclick="window.location.href='dashboard.html'">Corriger</button>
+        </div>
+        <div class="alert-item success">
+          <div class="alert-ic">🏆</div>
+          <div class="alert-txt"><strong>Léa Moreau a progressé de +3 points</strong> depuis le début du trimestre. Félicite-la !</div>
+          <button class="alert-btn" style="background:var(--sage-l);color:#fff" onclick="toast('Message de félicitations envoyé !','success')">Féliciter</button>
+        </div>
+      </div>
+
+      <!-- Progression par classe -->
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">
+        <div class="card" style="padding:16px">
+          <div class="card-title" style="margin-bottom:12px">Term. Pro MCV</div>
+          <div style="margin-bottom:10px">
+            <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:4px"><span>Taux de rendu</span><span style="font-weight:700;color:var(--sage)">78%</span></div>
+            <div style="height:6px;background:var(--ink-10);border-radius:3px;overflow:hidden"><div style="width:78%;height:100%;background:var(--sage-l);border-radius:3px"></div></div>
+          </div>
+          <div style="margin-bottom:10px">
+            <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:4px"><span>Moyenne classe</span><span style="font-weight:700;color:var(--blue)">14.2/20</span></div>
+            <div style="height:6px;background:var(--ink-10);border-radius:3px;overflow:hidden"><div style="width:71%;height:100%;background:var(--blue);border-radius:3px"></div></div>
+          </div>
+          <div style="font-size:11px;color:var(--ink-30)">27 élèves · 8 devoirs actifs</div>
+        </div>
+        <div class="card" style="padding:16px">
+          <div class="card-title" style="margin-bottom:12px">Seconde Générale</div>
+          <div style="margin-bottom:10px">
+            <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:4px"><span>Taux de rendu</span><span style="font-weight:700;color:var(--amber)">65%</span></div>
+            <div style="height:6px;background:var(--ink-10);border-radius:3px;overflow:hidden"><div style="width:65%;height:100%;background:var(--amber);border-radius:3px"></div></div>
+          </div>
+          <div style="margin-bottom:10px">
+            <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:4px"><span>Moyenne classe</span><span style="font-weight:700;color:var(--blue)">13.5/20</span></div>
+            <div style="height:6px;background:var(--ink-10);border-radius:3px;overflow:hidden"><div style="width:67%;height:100%;background:var(--blue);border-radius:3px"></div></div>
+          </div>
+          <div style="font-size:11px;color:var(--ink-30)">31 élèves · 5 devoirs actifs</div>
+        </div>
+        <div class="card" style="padding:16px">
+          <div class="card-title" style="margin-bottom:12px">Première Pro</div>
+          <div style="margin-bottom:10px">
+            <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:4px"><span>Taux de rendu</span><span style="font-weight:700;color:var(--sage)">85%</span></div>
+            <div style="height:6px;background:var(--ink-10);border-radius:3px;overflow:hidden"><div style="width:85%;height:100%;background:var(--sage-l);border-radius:3px"></div></div>
+          </div>
+          <div style="margin-bottom:10px">
+            <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:4px"><span>Moyenne classe</span><span style="font-weight:700;color:var(--blue)">15.1/20</span></div>
+            <div style="height:6px;background:var(--ink-10);border-radius:3px;overflow:hidden"><div style="width:75%;height:100%;background:var(--blue);border-radius:3px"></div></div>
+          </div>
+          <div style="font-size:11px;color:var(--ink-30)">24 élèves · 6 devoirs actifs</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PLANNING SEMAINE -->
+    <div class="screen" id="screen-planning">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+        <div style="font-size:15px;font-weight:700;font-family:'Lora',serif">Planning de la semaine</div>
+        <div style="display:flex;gap:7px">
+          <button class="btn btn-g btn-sm">← Semaine précédente</button>
+          <button class="btn btn-p btn-sm">Semaine suivante →</button>
+        </div>
+      </div>
+      <div class="card" style="padding:16px;overflow-x:auto">
+        <div class="planning-grid" id="planning-grid"></div>
+      </div>
+    </div>
+
+    <!-- NOTES & CARNETS -->
+    <div class="screen" id="screen-notes">
+      <div class="notes-layout">
+        <div class="notes-sidebar">
+          <button class="btn btn-p" style="width:100%;justify-content:center;margin-bottom:4px" onclick="newNote()">+ Nouvelle note</button>
+          <div class="note-folder active" onclick="filterNotes('all')"><div class="nf-title">📓 Toutes les notes</div><div class="nf-count" id="notes-all-count">0 notes</div></div>
+          <div class="note-folder" onclick="filterNotes('cours')"><div class="nf-title">📚 Cours & Séquences</div><div class="nf-count">Préparation</div></div>
+          <div class="note-folder" onclick="filterNotes('eleves')"><div class="nf-title">👤 Notes sur élèves</div><div class="nf-count">Privé</div></div>
+          <div class="note-folder" onclick="filterNotes('reunion')"><div class="nf-title">🤝 Réunions & Conseils</div><div class="nf-count">Archives</div></div>
+          <div class="note-folder" onclick="filterNotes('idees')"><div class="nf-title">💡 Idées pédago.</div><div class="nf-count">Brouillons</div></div>
+        </div>
+        <div>
+          <div class="notes-list-panel" id="notes-preview-list"></div>
+          <div class="note-editor" id="note-editor" style="display:none">
+            <div class="ne-header">
+              <input class="ne-title" id="ne-title" placeholder="Titre de la note…">
+              <select class="fs" id="ne-cat" style="width:140px;padding:6px 10px;font-size:11px;border-radius:7px;border:1px solid var(--ink-10);background:var(--sand);outline:none">
+                <option value="cours">📚 Cours</option>
+                <option value="eleves">👤 Élèves</option>
+                <option value="reunion">🤝 Réunion</option>
+                <option value="idees">💡 Idée</option>
+              </select>
+              <button class="btn btn-g btn-sm" onclick="saveNote()">💾 Sauvegarder</button>
+              <button class="btn btn-g btn-sm" onclick="closeNoteEditor()">✕</button>
+            </div>
+            <div class="ne-body"><textarea class="ne-content" id="ne-content" placeholder="Écris ta note ici…&#10;&#10;Tu peux noter tes idées pédagogiques, tes observations sur un élève, les points clés d'une réunion…"></textarea></div>
+            <div class="ne-footer">
+              <span style="font-size:10.5px;color:var(--ink-30)">Tags :</span>
+              <input class="ne-tag-input" id="ne-tags" placeholder="cours, révision, élève…">
+              <span style="font-size:10.5px;color:var(--ink-30);margin-left:auto" id="ne-saved-info">Non sauvegardé</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- POST-ITS -->
+    <div class="screen" id="screen-postits">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+        <div style="font-size:15px;font-weight:700;font-family:'Lora',serif">Post-its rapides</div>
+        <button class="btn btn-p" onclick="openModal('new-postit')">+ Nouveau post-it</button>
+      </div>
+      <div class="postits-grid" id="postits-grid"></div>
+    </div>
+
+    <!-- AGENDA AVANCÉ -->
+    <div class="screen" id="screen-agenda">
+      <div class="agenda-layout">
+        <div>
+          <div class="calendar-big">
+            <div class="cal-nav-bar">
+              <button style="background:none;border:1px solid var(--ink-10);border-radius:6px;width:26px;height:26px;cursor:pointer;font-size:14px" onclick="calNav(-1)">‹</button>
+              <div>
+                <span style="font-size:13.5px;font-weight:700" id="cal-title2">Mai 2026</span>
+                <div class="cal-views" style="display:inline-flex;margin-left:10px">
+                  <button class="cv-btn active">Mois</button>
+                  <button class="cv-btn">Semaine</button>
+                  <button class="cv-btn">Agenda</button>
+                </div>
+              </div>
+              <button style="background:none;border:1px solid var(--ink-10);border-radius:6px;width:26px;height:26px;cursor:pointer;font-size:14px" onclick="calNav(1)">›</button>
+            </div>
+            <div class="cal-dnames"><div class="cal-dname">L</div><div class="cal-dname">M</div><div class="cal-dname">M</div><div class="cal-dname">J</div><div class="cal-dname">V</div><div class="cal-dname">S</div><div class="cal-dname">D</div></div>
+            <div class="cal-days-grid" id="cal-grid2"></div>
+          </div>
+        </div>
+        <div>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+            <span style="font-size:13px;font-weight:700">Événements à venir</span>
+            <button class="btn btn-p btn-sm" onclick="openModal('new-event2')">+ Ajouter</button>
+          </div>
+          <div class="event-list-sidebar" id="events-sidebar"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SÉQUENCES PÉDAGOGIQUES -->
+    <div class="screen" id="screen-sequences">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+        <div style="font-size:15px;font-weight:700;font-family:'Lora',serif">Séquences pédagogiques</div>
+        <button class="btn btn-p" onclick="openModal('new-seq')">+ Nouvelle séquence</button>
+      </div>
+      <div id="sequences-list"></div>
+    </div>
+
+    <!-- EXPORT -->
+    <div class="screen" id="screen-export">
+      <div style="font-size:15px;font-weight:700;font-family:'Lora',serif;margin-bottom:16px">Exporter & Partager</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div class="export-card" onclick="exportAction('bulletins')">
+          <div class="export-icon">📊</div>
+          <div><div class="export-title">Bulletins simplifiés</div><div class="export-desc">Exporter les notes de toutes les classes en PDF</div></div>
+        </div>
+        <div class="export-card" onclick="exportAction('planning')">
+          <div class="export-icon">🗓</div>
+          <div><div class="export-title">Planning pédagogique</div><div class="export-desc">Exporter le planning de l'année en PDF ou Excel</div></div>
+        </div>
+        <div class="export-card" onclick="exportAction('sequences')">
+          <div class="export-icon">📚</div>
+          <div><div class="export-title">Séquences & Progressions</div><div class="export-desc">Exporter toutes les séquences avec les ressources</div></div>
+        </div>
+        <div class="export-card" onclick="exportAction('stats')">
+          <div class="export-icon">📈</div>
+          <div><div class="export-title">Statistiques de classe</div><div class="export-desc">Rapport complet : moyennes, taux de rendu, progression</div></div>
+        </div>
+        <div class="export-card" onclick="exportAction('ressources')">
+          <div class="export-icon">💾</div>
+          <div><div class="export-title">Sauvegarde complète</div><div class="export-desc">Exporter l'ensemble des cours, devoirs et ressources</div></div>
+        </div>
+        <div class="export-card" onclick="exportAction('partage')">
+          <div class="export-icon">🔗</div>
+          <div><div class="export-title">Partager avec un collègue</div><div class="export-desc">Générer un lien de partage pour une séquence ou un cours</div></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+</div>
+
+<div class="ov" id="ov" onclick="closeModal(event)"><div class="modal" id="modal-body"></div></div>
+<div class="toast" id="toast"></div>
+
+<script type="module">
+
+
+let currentUser = null;
+let calDate2 = new Date();
+let notes = [];
+let postits = [];
+let currentNoteId = null;
+let sequences = [];
+
+window.logout = async function() {
+  await sb.signOut();
+};
+
+sb.onAuthChange(async (user, event) => {
+  if (!user) { window.location.href='index.html'; return; }
+  currentUser = user;
+  const snap = await getDoc(doc(db,'users',user.uid));
+  if (snap.exists()) {
+    const d = snap;
+    const initials = d.name.split(' ').map(n=>n[0]).join('').toUpperCase().slice(0,2);
+    document.getElementById('s-av').textContent = initials;
+    document.getElementById('s-nm').textContent = d.name;
+  }
+  buildCharts();
+  buildPlanning();
+  loadNotes();
+  loadPostits();
+  buildCalendar2();
+  loadEvents2();
+  loadSequences();
+});
+
+function toast(msg,type=''){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.className='toast '+(type);
+  t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3000);
+}
+window.toast = toast;
+
+// NAVIGATION
+const TITLES={
+  'tb-enrichi':'Vue d\'ensemble & Alertes',
+  planning:'Planning de la semaine',
+  notes:'Mes notes & Carnets',
+  postits:'Post-its rapides',
+  agenda:'Calendrier avancé',
+  sequences:'Séquences pédagogiques',
+  export:'Exporter & Partager'
+};
+const BTN_LABELS={
+  'tb-enrichi':'',planning:'+ Événement',notes:'+ Note',
+  postits:'+ Post-it',agenda:'+ Événement',sequences:'+ Séquence',export:''
+};
+function nav(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('screen-'+id).classList.add('active');
+  document.getElementById('pt').textContent=TITLES[id]||id;
+  document.querySelectorAll('.nav-item[data-screen]').forEach(n=>n.classList.toggle('active',n.dataset.screen===id));
+  const btn=document.getElementById('tb-main-btn');
+  btn.textContent=BTN_LABELS[id]||'+ Ajouter';
+  btn.style.display=BTN_LABELS[id]?'flex':'none';
+  btn.onclick=()=>{
+    if(id==='notes') newNote();
+    else if(id==='postits') openModal('new-postit');
+    else if(id==='agenda'||id==='planning') openModal('new-event2');
+    else if(id==='sequences') openModal('new-seq');
+  };
+}
+document.querySelectorAll('.nav-item[data-screen]').forEach(n=>n.addEventListener('click',()=>nav(n.dataset.screen)));
+
+// GRAPHIQUES MINI
+async function buildCharts(){
+  // Charger les données réelles depuis Firestore
+  try {
+    const [aSnap, subSnap, fSnap] = await Promise.all([
+      getDocs(query(collection(db,'assignments'), where('uid','==',currentUser.uid))),
+      getDocs(collection(db,'submissions')),
+      getDocs(query(collection(db,'files'), where('uid','==',currentUser.uid))),
+    ]);
+    const totalDevoirs = aData.length;
+    const totalSubs = subData.length;
+    const totalFichiers = fData.length;
+    const graded = subData.filter(d => d.score != null);
+    const avgScore = graded.length > 0
+      ? graded.reduce((acc,d) => acc+(d.score||0), 0) / graded.length
+      : 0;
+    // Mettre à jour les stats du tableau
+    document.querySelector('#screen-tb-enrichi .db-stat.green .ds-val').textContent =
+      totalDevoirs > 0 ? Math.round((totalSubs/Math.max(totalDevoirs*5,1))*100)+'%' : '—';
+    document.querySelector('#screen-tb-enrichi .db-stat.terra .ds-val').textContent =
+      avgScore > 0 ? avgScore.toFixed(1) : '—';
+    document.querySelector('#screen-tb-enrichi .db-stat.blue .ds-val').textContent = totalSubs||'—';
+    document.querySelector('#screen-tb-enrichi .db-stat.purple .ds-val').textContent = totalFichiers||'—';
+  } catch(e) { console.warn('Charts Firestore:', e); }
+
+  // Graphiques visuels (tendance simulée)
+  const rendus=[45,55,60,68,72,74,78,74];
+  const moyennes=[12,12.5,13,13.2,13.5,13.8,14,13.8];
+  const actifs=[70,72,75,78,80,82,85,82];
+  const ressources=[20,25,30,35,38,42,45,47];
+  renderChart('chart-rendu',rendus,'var(--sage-l)');
+  renderChart('chart-moyenne',moyennes,'var(--terra)');
+  renderChart('chart-actifs',actifs,'var(--blue)');
+  renderChart('chart-res',ressources,'var(--purple)');
+}
+
+function renderChart(id,data,color){
+  const el=document.getElementById(id);
+  if(!el) return;
+  const max=Math.max(...data);
+  el.innerHTML=data.map(v=>`<div class="ds-bar" style="background:${color};opacity:.7;height:${Math.round((v/max)*36)+4}px"></div>`).join('');
+}
+
+// PLANNING SEMAINE
+async function buildPlanningFromFirestore(){
+  if(!currentUser) return;
+  try {
+    const snap = await getDocs(query(
+      collection(db,'events'),
+      where('uid','==',currentUser.uid),
+      orderBy('date','asc')
+    ));
+    if(snap.size > 0) {
+      // Des événements existent → on pourrait les afficher
+      // Pour l'instant on complète avec les données statiques
+    }
+  } catch(e) {}
+}
+
+function buildPlanning(){
+  const days=['','Lundi 19','Mardi 20','Mercredi 21','Jeudi 22','Vendredi 23'];
+  const times=['8h00','9h00','10h00','11h00','14h00','15h00','16h00'];
+  const events={
+    '8h00-Lundi 19':'<div class="pg-event pg-cours">📗 Relation Client<br><span style="font-size:9px">Term. Pro · B204</span></div>',
+    '10h00-Lundi 19':'<div class="pg-event pg-eval">📊 Évaluation<br><span style="font-size:9px">Term. Pro · B204</span></div>',
+    '8h00-Mardi 20':'<div class="pg-event pg-cours">📘 Communication<br><span style="font-size:9px">Seconde · A102</span></div>',
+    '14h00-Mardi 20':'<div class="pg-event pg-devoir">📋 Rendu devoir<br><span style="font-size:9px">Première Pro</span></div>',
+    '9h00-Mercredi 21':'<div class="pg-event pg-reunion">🤝 Conseil de classe<br><span style="font-size:9px">Toutes classes</span></div>',
+    '10h00-Jeudi 22':'<div class="pg-event pg-cours">📙 Gestion Commerciale<br><span style="font-size:9px">Première Pro · B101</span></div>',
+    '8h00-Vendredi 23':'<div class="pg-event pg-cours">📗 Relation Client<br><span style="font-size:9px">Term. Pro · B204</span></div>',
+    '15h00-Vendredi 23':'<div class="pg-event pg-eval">📝 Correction<br><span style="font-size:9px">Devoirs Term. Pro</span></div>',
+  };
+  const grid=document.getElementById('planning-grid');
+  let html=days.map(d=>`<div class="pg-header" style="${d?'':'background:transparent;border:none'}">${d}</div>`).join('');
+  times.forEach(t=>{
+    html+=`<div class="pg-time">${t}</div>`;
+    days.slice(1).forEach(d=>{
+      const key=`${t}-${d}`;
+      html+=`<div class="pg-cell">${events[key]||''}</div>`;
+    });
+  });
+  grid.innerHTML=html;
+}
+
+// NOTES
+async function loadNotes(){
+  if(!currentUser) return;
+  const snap=await getDocs(query(collection(db,'notes'),where('uid','==',currentUser.uid),orderBy('updatedAt','desc')));
+  notes=snap.docs.map(d=>({id:d.id,...d}));
+  if(!notes.length){
+    notes=[
+      {id:'demo1',title:'Préparation séquence Communication',category:'cours',content:'Séquence 2 — La communication professionnelle\n\n• Objectifs : identifier les types de communication, maîtriser l\'écoute active\n• Durée : 8 séances\n• Ressources : cours magistral + exercices différenciés + évaluation finale',tags:'cours, communication, seconde',updatedAt:{toDate:()=>new Date()}},
+      {id:'demo2',title:'Observations — Lucas Martin',category:'eleves',content:'Lucas est un élève sérieux mais timide. Participation orale à améliorer. Très bon à l\'écrit. Peut-être l\'encourager lors du prochain oral.',tags:'élève, terminale',updatedAt:{toDate:()=>new Date(Date.now()-86400000)}},
+      {id:'demo3',title:'Idée : jeu de rôle vente',category:'idees',content:'Idée d\'activité : simulation d\'entretien de vente en binôme. Un élève joue le vendeur, l\'autre le client difficile. Débriefing collectif après.',tags:'idée, jeu de rôle, vente',updatedAt:{toDate:()=>new Date(Date.now()-172800000)}},
+    ];
+  }
+  renderNotesList();
+  document.getElementById('notes-all-count').textContent=notes.length+' notes';
+}
+
+function renderNotesList(){
+  const el=document.getElementById('notes-preview-list');
+  el.innerHTML=notes.map(n=>`
+    <div class="note-preview ${currentNoteId===n.id?'active':''}" onclick="openNote('${n.id}')">
+      <div class="np-title">${n.title||'Sans titre'}</div>
+      <div class="np-preview">${n.content||'Note vide…'}</div>
+      <div class="np-meta">
+        <span class="tag">${n.category||'général'}</span>
+        <span style="font-size:10px;color:var(--ink-30)">${n.updatedAt?.toDate?timeAgoFn(n.updatedAt.toDate()):''}</span>
+        <button style="margin-left:auto;background:none;border:none;cursor:pointer;font-size:12px;color:var(--ink-30)" onclick="event.stopPropagation();deleteNote('${n.id}')">🗑</button>
+      </div>
+    </div>`).join('');
+}
+
+window.newNote = function(){
+  currentNoteId=null;
+  document.getElementById('ne-title').value='';
+  document.getElementById('ne-content').value='';
+  document.getElementById('ne-tags').value='';
+  document.getElementById('ne-saved-info').textContent='Nouvelle note';
+  document.getElementById('note-editor').style.display='block';
+  document.getElementById('ne-title').focus();
+};
+
+window.openNote = function(id){
+  const n=notes.find(n=>n.id===id);
+  if(!n) return;
+  currentNoteId=id;
+  document.getElementById('ne-title').value=n.title||'';
+  document.getElementById('ne-content').value=n.content||'';
+  document.getElementById('ne-tags').value=n.tags||'';
+  document.getElementById('ne-saved-info').textContent='Dernière modif : '+timeAgoFn(n.updatedAt?.toDate?.()||new Date());
+  document.getElementById('note-editor').style.display='block';
+  renderNotesList();
+};
+
+window.saveNote = async function(){
+  const titleEl = document.getElementById('ne-title');
+  const contentEl = document.getElementById('ne-content');
+  const tagsEl = document.getElementById('ne-tags');
+  const catEl = document.getElementById('ne-cat');
+  if(!titleEl) return;
+  const title = titleEl.value.trim() || 'Sans titre';
+  const content = contentEl?.value || '';
+  const tags = tagsEl?.value || '';
+  const category = catEl?.value || 'général';
+  const data = {uid:currentUser.uid, title, content, tags, category, updatedAt:sb.now()};
+  const isDemo = currentNoteId && ['demo1','demo2','demo3'].includes(currentNoteId);
+  if(currentNoteId && !isDemo) {
+    await setDoc(doc(db,'notes',currentNoteId), {...data,createdAt:sb.now()}, {merge:true});
+  } else {
+    const ref = await addDoc(collection(db,'notes'), {...data, createdAt:sb.now()});
+    currentNoteId = ref.id;
+  }
+  const savedEl = document.getElementById('ne-saved-info');
+  if(savedEl) savedEl.textContent = 'Sauvegardé ✓ — ' + new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+  toast('Note sauvegardée !', 'success');
+  loadNotes();
+};
+
+window.deleteNote = async function(id){
+  if(!confirm('Supprimer cette note ?')) return;
+  if(!id.startsWith('demo')) await deleteDoc(doc(db,'notes',id));
+  notes=notes.filter(n=>n.id!==id);
+  renderNotesList();
+  if(currentNoteId===id) closeNoteEditor();
+  toast('Note supprimée','success');
+};
+
+window.closeNoteEditor = function(){
+  document.getElementById('note-editor').style.display='none';
+  currentNoteId=null;
+  renderNotesList();
+};
+window.filterNotes = function(cat){ toast('Filtre : '+cat); };
+
+// POST-ITS
+const POSTIT_COLORS=['#FEF3C7','#DBEAFE','#F0FDF4','#FDE8F0','#F3EEFF','#FBF0EA'];
+
+async function loadPostits(){
+  if(!currentUser) return;
+  const snap=await getDocs(query(collection(db,'postits'),where('uid','==',currentUser.uid),orderBy('createdAt','desc')));
+  postits=snap.docs.map(d=>({id:d.id,...d}));
+  if(!postits.length){
+    postits=[
+      {id:'p1',text:'Préparer l\'évaluation de vendredi — ne pas oublier les grilles de compétences',color:'#FEF3C7',createdAt:{toDate:()=>new Date()}},
+      {id:'p2',text:'Appeler le parent de Nathan Bernard — absent depuis 3 cours',color:'#DBEAFE',createdAt:{toDate:()=>new Date(Date.now()-86400000)}},
+      {id:'p3',text:'Idée : créer un quiz sur le vocabulaire en utilisant l\'IA — 20 questions max',color:'#F0FDF4',createdAt:{toDate:()=>new Date(Date.now()-172800000)}},
+      {id:'p4',text:'Commander les fiches de révision pour la Term. Pro — avant le 25',color:'#F3EEFF',createdAt:{toDate:()=>new Date(Date.now()-259200000)}},
+    ];
+  }
+  renderPostits();
+}
+
+function renderPostits(){
+  const grid=document.getElementById('postits-grid');
+  grid.innerHTML=postits.map(p=>`
+    <div class="postit" style="background:${p.color||'#FEF3C7'}">
+      <button class="postit-del" onclick="deletePostit('${p.id}')">✕</button>
+      <div class="postit-txt">${p.text}</div>
+      <div class="postit-date">${timeAgoFn(p.createdAt?.toDate?.()||new Date())}</div>
+    </div>`).join('');
+}
+
+window.deletePostit = function(id){
+  postits=postits.filter(p=>p.id!==id);
+  renderPostits();
+  toast('Post-it supprimé','success');
+};
+
+// CALENDRIER
+function buildCalendar2(){
+  const y=calDate2.getFullYear(),m=calDate2.getMonth();
+  const months=['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
+  document.getElementById('cal-title2').textContent=`${months[m]} ${y}`;
+  const first=new Date(y,m,1).getDay();
+  const offset=(first===0?6:first-1);
+  const days=new Date(y,m+1,0).getDate();
+  const today=new Date();
+  const evDays=[8,12,15,19,22,26,28];
+  let html='';
+  for(let i=0;i<offset;i++) html+=`<div class="cday other-month">${new Date(y,m,1-offset+i).getDate()}</div>`;
+  for(let d=1;d<=days;d++){
+    const isT=d===today.getDate()&&m===today.getMonth()&&y===today.getFullYear();
+    const hasEv=evDays.includes(d);
+    html+=`<div class="cday${isT?' today':''}${hasEv?' has-event':''}" onclick="selectDay(${d})">${d}</div>`;
+  }
+  document.getElementById('cal-grid2').innerHTML=html;
+}
+
+window.calNav=function(dir){ calDate2.setMonth(calDate2.getMonth()+dir); buildCalendar2(); };
+window.selectDay=function(d){ toast('Jour sélectionné : '+d+' — fonctionnalité : voir/ajouter événements'); };
+
+async function loadEvents2(){
+  if(!currentUser) return;
+  const snap=await getDocs(query(collection(db,'events'),where('uid','==',currentUser.uid),orderBy('date','asc')));
+  const eventsDB=snap.docs.map(d=>({id:d.id,...d}));
+  const eventsDemo=[
+    {title:'Évaluation Relation client',type:'evaluation',classe:'Term. Pro MCV',date:{toDate:()=>{const d=new Date();d.setDate(d.getDate()+1);return d;}},dotColor:'var(--terra)'},
+    {title:'Rendu — Plan de vente',type:'devoir',classe:'Première Pro',date:{toDate:()=>{const d=new Date();d.setDate(d.getDate()+4);return d;}},dotColor:'var(--amber)'},
+    {title:'Séance Communication pro',type:'cours',classe:'Seconde',date:{toDate:()=>{const d=new Date();d.setDate(d.getDate()+8);return d;}},dotColor:'var(--sage)'},
+    {title:'Conseil de classe',type:'reunion',classe:'Toutes classes',date:{toDate:()=>{const d=new Date();d.setDate(d.getDate()+14);return d;}},dotColor:'var(--blue)'},
+  ];
+  const allEvents=[...eventsDemo,...eventsDB];
+  const months=['Jan','Fév','Mar','Avr','Mai','Juin','Juil','Aoû','Sep','Oct','Nov','Déc'];
+  const typeCols={evaluation:'var(--terra)',devoir:'var(--amber)',cours:'var(--sage)',reunion:'var(--blue)',autre:'var(--ink-30)'};
+  document.getElementById('events-sidebar').innerHTML=allEvents.slice(0,6).map(e=>{
+    const date=e.date?.toDate?.();
+    const col=typeCols[e.type]||typeCols.autre;
+    return `<div class="event-card2">
+      <div class="ec2-header">
+        <div class="ec2-dot" style="background:${col}"></div>
+        <div class="ec2-title">${e.title}</div>
+        <div class="ec2-time">${date?date.getDate()+' '+months[date.getMonth()]:''}</div>
+      </div>
+      <div class="ec2-body">${e.classe||''}</div>
+      <div class="ec2-tags"><span class="badge" style="background:${col}20;color:${col}">${e.type||'cours'}</span></div>
+    </div>`;
+  }).join('');
+}
+
+// SÉQUENCES
+async function loadSequences(){
+  if(!currentUser) return;
+  const snap=await getDocs(query(collection(db,'sequences'),where('uid','==',currentUser.uid)));
+  const seqDB=snap.docs.map(d=>({id:d.id,...d}));
+  sequences=[
+    {id:'s1',title:'La communication professionnelle',classe:'Seconde Générale',periode:'Période 2',duree:'8 séances',progression:75,seances:[
+      {title:'Introduction — types de communication',done:true},
+      {title:'Les canaux de communication',done:true},
+      {title:'L\'écoute active — cours magistral',done:true},
+      {title:'Exercices pratiques en binôme',done:true},
+      {title:'Jeu de rôle — simulation d\'entretien',done:true},
+      {title:'Correction + debriefing collectif',done:true},
+      {title:'Révisions et flashcards',done:false},
+      {title:'Évaluation finale',done:false},
+    ]},
+    {id:'s2',title:'Relation client — Techniques de vente',classe:'Terminale Pro MCV',periode:'Période 3',duree:'10 séances',progression:40,seances:[
+      {title:'Les bases de la relation client',done:true},
+      {title:'Identifier les besoins du client',done:true},
+      {title:'Argumentaire SONCAS',done:true},
+      {title:'Traitement des objections',done:true},
+      {title:'La conclusion de la vente',done:false},
+      {title:'Exercices — mises en situation',done:false},
+      {title:'Étude de cas réels',done:false},
+      {title:'Correction collective',done:false},
+      {title:'Révisions',done:false},
+      {title:'Évaluation certificative',done:false},
+    ]},
+    ...seqDB
+  ];
+  renderSequences();
+}
+
+function renderSequences(){
+  document.getElementById('sequences-list').innerHTML=sequences.map(s=>`
+    <div class="seq-item">
+      <div class="seq-header">
+        <div class="seq-num">${sequences.indexOf(s)+1}</div>
+        <div>
+          <div class="seq-title">${s.title}</div>
+          <div class="seq-meta">${s.classe} · ${s.periode||''} · ${s.duree||''}</div>
+        </div>
+        <div style="margin-left:auto;display:flex;gap:6px">
+          <button class="btn btn-ai btn-sm" onclick="genererSeqIA('${s.id}')">✦ IA</button>
+          <button class="btn btn-g btn-sm">Modifier</button>
+        </div>
+      </div>
+      <div class="seq-progress">
+        <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:4px">
+          <span style="color:var(--ink-60)">Progression</span>
+          <span style="font-weight:700;color:var(--sage)">${s.progression||0}%</span>
+        </div>
+        <div class="seq-prog-bar"><div class="seq-prog-fill" style="width:${s.progression||0}%;background:var(--sage-l)"></div></div>
+      </div>
+      <div class="seq-seances">
+        ${(s.seances||[]).map((sc,i)=>`
+          <div class="seance-item">
+            <div class="seance-check ${sc.done?'done':''}" onclick="toggleSeance('${s.id}',${i})">${sc.done?'✓':''}</div>
+            <span style="font-size:12px;${sc.done?'text-decoration:line-through;color:var(--ink-30)':''}">${i+1}. ${sc.title}</span>
+            ${sc.done?'<span class="badge bg" style="margin-left:auto">Fait</span>':''}
+          </div>`).join('')}
+      </div>
+    </div>`).join('');
+}
+
+window.toggleSeance=async function(seqId,idx){
+  const s=sequences.find(s=>s.id===seqId);
+  if(!s) return;
+  s.seances[idx].done=!s.seances[idx].done;
+  s.progression=Math.round((s.seances.filter(sc=>sc.done).length/s.seances.length)*100);
+  renderSequences();
+  toast(s.seances[idx].done?'Séance validée ✓':'Séance dévalidée','success');
+  // Sauvegarder dans Firestore si ce n'est pas une démo
+  if(!seqId.startsWith('s1')&&!seqId.startsWith('s2')) {
+    try {
+      await setDoc(doc(db,'sequences',seqId), {
+        seances: s.seances,
+        progression: s.progression,
+        updatedAt: sb.now()
+      }, {merge:true});
+    } catch(e) { console.warn('Sauvegarde séance:', e); }
+  }
+};
+
+window.genererSeqIA=async function(id){
+  toast('L\'IA génère du contenu pour cette séquence…');
+  await new Promise(r=>setTimeout(r,1500));
+  toast('Ressources IA générées et ajoutées à la séquence !','success');
+};
+
+// EXPORT
+window.exportAction = async function(type) {
+  if(type === 'stats') {
+    // Générer un rapport statistique réel
+    const [fSnap, aSnap, subSnap] = await Promise.all([
+      getDocs(query(collection(db,'folders'), where('uid','==',currentUser.uid))),
+      getDocs(query(collection(db,'assignments'), where('uid','==',currentUser.uid))),
+      getDocs(collection(db,'submissions'))
+    ]);
+    const snap2 = await getDoc(doc(db,'users',currentUser.uid));
+    const name = snap2.exists() ? snap2.name : 'Enseignant';
+    const rapport = `RAPPORT PÉDAGOGIQUE — ${name}
+Généré le ${new Date().toLocaleDateString('fr-FR')}
+${'─'.repeat(40)}
+RESSOURCES
+  Dossiers créés : ${fData.length}
+  Devoirs actifs : ${aData.length}
+  Rendus reçus   : ${subData.length}
+${'─'.repeat(40)}
+CLASSES
+  Terminale Pro MCV : 27 élèves
+  Seconde Générale  : 31 élèves
+  Première Pro      : 24 élèves
+${'─'.repeat(40)}
+Rapport généré par Pédagogia`;
+
+    const blob = new Blob([rapport], {type:'text/plain'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'rapport_pedagogique.txt'; a.click();
+    URL.revokeObjectURL(url);
+    toast('Rapport téléchargé !', 'success');
+    return;
+  }
+  if(type === 'partage') {
+    const code = Math.random().toString(36).substring(2,10).toUpperCase();
+    await addDoc(collection(db,'shareLinks'), {
+      uid: currentUser.uid, code, type: 'global',
+      createdAt: sb.now()
+    });
+    const link = window.location.origin + '/pedagogia?share=' + code;
+    navigator.clipboard.writeText(link).catch(()=>{});
+    toast('Lien copié : ' + link, 'success');
+    return;
+  }
+  if(type === 'sequences') {
+    const snap3 = await getDocs(query(collection(db,'sequences'), where('uid','==',currentUser.uid)));
+    const lines = ['SÉQUENCES PÉDAGOGIQUES', '─'.repeat(40)];
+    snap3.docs.forEach((d,i) => {
+      const fd = d;
+      lines.push((i+1)+'. '+fd.title+' — '+fd.classe);
+      lines.push('   Progression: '+fd.progression+'% ('+fd.duree+')');
+      (fd.seances||[]).forEach((s,j) => lines.push('   '+(j+1)+'. '+(s.done?'✓':'○')+' '+s.title));
+      lines.push('');
+    });
+    const blob = new Blob([lines.join('
+')], {type:'text/plain'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'sequences.txt'; a.click();
+    URL.revokeObjectURL(url);
+    toast('Séquences exportées !', 'success');
+    return;
+  }
+  const msgs = {
+    bulletins: 'Bulletins générés ! (fonctionnalité complète avec abonnement Pro)',
+    planning: 'Planning exporté en cours de développement',
+    ressources: 'Sauvegarde complète initiée…'
+  };
+  toast(msgs[type]||'Export en cours…', 'success');
+};
+window.exportPDF = function() { window.exportAction('stats'); };
+
+// MODALS
+window.openModal=function(type){
+  const modals={
+    'new-postit':{
+      title:'Nouveau post-it',
+      body:`<div class="fg"><label class="fl">Note rapide</label><textarea class="fta" id="pi-text" placeholder="Écris ta note…" rows="4"></textarea></div>
+<div class="fg"><label class="fl">Couleur</label><div style="display:flex;gap:8px;flex-wrap:wrap" id="pi-colors">
+${POSTIT_COLORS.map((c,i)=>`<div style="width:28px;height:28px;border-radius:6px;background:${c};cursor:pointer;border:2px solid ${i===0?'var(--ink)':'transparent'}" onclick="this.parentElement.querySelectorAll('div').forEach(d=>d.style.borderColor='transparent');this.style.borderColor='var(--ink)';window._piColor='${c}'"></div>`).join('')}
+</div></div>`,
+      action:async()=>{
+        const text=document.getElementById('pi-text').value.trim();
+        if(!text){toast('Écris quelque chose.','error');return;}
+        const color=window._piColor||POSTIT_COLORS[0];
+        await addDoc(collection(db,'postits'),{uid:currentUser.uid,text,color,createdAt:sb.now()});
+        toast('Post-it ajouté !','success');
+        closeModal();
+        loadPostits();
+      }
+    },
+    'new-event2':{
+      title:'Nouvel événement',
+      body:`<div class="fg"><label class="fl">Titre</label><input class="fi" id="ev-title" placeholder="Ex: Évaluation Communication"/></div>
+<div class="fg"><label class="fl">Type</label><select class="fs" id="ev-type"><option value="cours">Cours</option><option value="evaluation">Évaluation</option><option value="devoir">Devoir</option><option value="reunion">Réunion</option></select></div>
+<div class="fg"><label class="fl">Classe</label><select class="fs" id="ev-class"><option>Terminale Pro MCV</option><option>Seconde Générale</option><option>Première Pro</option><option>Toutes les classes</option></select></div>
+<div class="fg"><label class="fl">Date et heure</label><input class="fi" id="ev-date" type="datetime-local"/></div>
+<div class="fg"><label class="fl">Description</label><textarea class="fta" id="ev-desc" placeholder="Détails…" rows="2"></textarea></div>`,
+      action:async()=>{
+        const title=document.getElementById('ev-title').value.trim();
+        const type=document.getElementById('ev-type').value;
+        const classe=document.getElementById('ev-class').value;
+        const dateStr=document.getElementById('ev-date').value;
+        if(!title){toast('Donne un titre.','error');return;}
+        await addDoc(collection(db,'events'),{uid:currentUser.uid,title,type,classe,date:dateStr?new Date(dateStr):new Date(),createdAt:sb.now()});
+        toast('Événement ajouté !','success');
+        closeModal();
+        loadEvents2();
+        buildCalendar2();
+      }
+    },
+    'new-seq':{
+      title:'Nouvelle séquence',
+      body:`<div class="fg"><label class="fl">Titre de la séquence</label><input class="fi" id="sq-title" placeholder="Ex: La relation client"/></div>
+<div class="fg"><label class="fl">Classe</label><select class="fs" id="sq-class"><option>Terminale Pro MCV</option><option>Seconde Générale</option><option>Première Pro</option></select></div>
+<div class="fg"><label class="fl">Période</label><select class="fs" id="sq-per"><option>Période 1</option><option>Période 2</option><option>Période 3</option><option>Période 4</option><option>Période 5</option><option>Période 6</option></select></div>
+<div class="fg"><label class="fl">Nombre de séances</label><input class="fi" id="sq-nb" type="number" value="6" min="1" max="30"/></div>
+<div class="fg"><label class="fl">Objectifs pédagogiques</label><textarea class="fta" id="sq-obj" placeholder="Compétences visées, notions clés…" rows="3"></textarea></div>`,
+      action:async()=>{
+        const title=document.getElementById('sq-title').value.trim();
+        if(!title){toast('Donne un titre.','error');return;}
+        const nb=parseInt(document.getElementById('sq-nb').value)||6;
+        const seances=Array.from({length:nb},(_,i)=>({title:`Séance ${i+1}`,done:false}));
+        await addDoc(collection(db,'sequences'),{
+          uid:currentUser.uid,
+          title,classe:document.getElementById('sq-class').value,
+          periode:document.getElementById('sq-per').value,
+          duree:nb+' séances',progression:0,seances,
+          objectifs:document.getElementById('sq-obj').value,
+          createdAt:sb.now()
+        });
+        toast('Séquence créée !','success');
+        closeModal();
+        loadSequences();
+      }
+    }
+  };
+  const m=modals[type];if(!m)return;
+  document.getElementById('modal-body').innerHTML=`
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px">
+      <div style="font-family:'Lora',serif;font-size:17px;font-weight:700">${m.title}</div>
+      <button style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--ink-30)" onclick="closeModal()">✕</button>
+    </div>
+    ${m.body}
+    <div class="mf">
+      <button class="btn btn-g" onclick="closeModal()">Annuler</button>
+      <button class="btn btn-p" onclick="window._mAction()">Créer</button>
+    </div>`;
+  window._mAction=m.action;
+  document.getElementById('ov').classList.add('open');
+};
+
+window.closeModal=function(e){
+  if(!e||e.target===document.getElementById('ov'))
+    document.getElementById('ov').classList.remove('open');
+};
+window._piColor=POSTIT_COLORS[0];
+
+function timeAgoFn(date){
+  const diff=(Date.now()-date.getTime())/1000;
+  if(diff<60) return 'À l\'instant';
+  if(diff<3600) return `Il y a ${Math.floor(diff/60)} min`;
+  if(diff<86400) return `Il y a ${Math.floor(diff/3600)}h`;
+  return `Il y a ${Math.floor(diff/86400)}j`;
+}
+
+
+// ═══ NAVIGATION GLOBALE ═══
+function navTo(url, screen, section) {
+  // Si même page, juste changer l'écran
+  const currentPage = window.location.pathname.split('/').pop() || 'dashboard.html';
+  if (url === currentPage || url === '') {
+    if (screen && typeof window.nav === 'function') {
+      window.nav(screen);
+    }
+    setActiveNav(section, screen);
+  } else {
+    // Stocker l'écran cible pour la page destination
+    if (screen) sessionStorage.setItem('targetScreen', screen);
+    if (section) sessionStorage.setItem('targetSection', section);
+    window.location.href = url;
+  }
+}
+
+function toggleNav(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const isOpen = el.classList.contains('open');
+  // Fermer tous les autres
+  document.querySelectorAll('.nav-main-item').forEach(n => n.classList.remove('open'));
+  if (!isOpen) el.classList.add('open');
+}
+
+function setActiveNav(section, screen) {
+  document.querySelectorAll('.nav-main-item').forEach(n => n.classList.remove('active'));
+  document.querySelectorAll('.nav-sub-item').forEach(n => n.classList.remove('active'));
+  if (section) {
+    const mainEl = document.querySelector(`[data-page="${section}"]`);
+    if (mainEl) { mainEl.classList.add('active'); mainEl.classList.add('open'); }
+  }
+  if (screen) {
+    document.querySelectorAll('.nav-sub-item').forEach(n => {
+      if (n.getAttribute('onclick') && n.getAttribute('onclick').includes(`'${screen}'`)) {
+        n.classList.add('active');
+      }
+    });
+  }
+}
+
+// Au chargement : restaurer l'écran cible
+document.addEventListener('DOMContentLoaded', () => {
+  const targetScreen = sessionStorage.getItem('targetScreen');
+  const targetSection = sessionStorage.getItem('targetSection');
+  if (targetScreen) {
+    sessionStorage.removeItem('targetScreen');
+    sessionStorage.removeItem('targetSection');
+    if (typeof window.nav === 'function') {
+      setTimeout(() => window.nav(targetScreen), 100);
+    }
+    setActiveNav(targetSection, targetScreen);
+  } else {
+    // Détecter la page courante et ouvrir la bonne section
+    const page = window.location.pathname.split('/').pop() || 'dashboard.html';
+    const pageMap = {
+      'dashboard.html': 'dashboard',
+      'murs.html': 'enseigner',
+      'messagerie.html': 'communication',
+      'suivi.html': 'suivi',
+    };
+    const section = pageMap[page];
+    if (section && section !== 'dashboard') {
+      const el = document.getElementById('nav-' + section);
+      if (el) el.classList.add('open', 'active');
+    } else if (section === 'dashboard') {
+      const el = document.querySelector('[data-page="dashboard"]');
+      if (el) el.classList.add('active');
+    }
+  }
+});
+
+window.navTo = navTo;
+window.toggleNav = toggleNav;
+window.setActiveNav = setActiveNav;
+
+</script>
+</body>
+</html>
