@@ -233,6 +233,11 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--sand);co
 .s-bottom-btn{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:8px;font-size:11px;color:rgba(255,255,255,.4);cursor:pointer;transition:all .12s;width:100%}
 .s-bottom-btn:hover{background:rgba(255,255,255,.07);color:rgba(255,255,255,.7)}
 </style>
+  <!-- Firebase SDK (compat) -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
 </head>
 <body>
 
@@ -583,12 +588,6 @@ if (!window.nav) {
 
 <!-- TOAST -->
 <div class="toast" id="toast"></div>
-
-<!-- Firebase SDK (compat) -->
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
 <script>
 
 
@@ -886,7 +885,7 @@ window.uploadFiles = async function(event) {
 // ── ASSIGNMENTS ───────────────────────────────────────────
 async function loadAssignments() {
   const uid = currentUser.uid;
-  const snap = (await db.collection('assignments'.get().where('uid', '==', uid).orderBy('createdAt', 'desc'));
+  const snap = (await db.collection('assignments').where('uid', '==', uid).orderBy('createdAt', 'desc').get());
   renderAssignments(snap.docs);
   document.getElementById('badge-assign').textContent = snap.size;
 }
@@ -1162,7 +1161,7 @@ window.calNav = function(dir){ calDate.setMonth(calDate.getMonth()+dir); loadCal
 
 async function loadEvents(){
   const uid=currentUser.uid;
-  const snap=(await db.collection('events'.get().where('uid', '==', uid).orderBy('date', 'asc'));
+  const snap=(await db.collection('events').where('uid', '==', uid).orderBy('date', 'asc').get());
   const el=document.getElementById('events-list');
   if(snap.empty){
     el.innerHTML='<div class="empty"><div class="empty-ic">📅</div><div class="empty-txt">Aucun événement à venir.</div></div>';
@@ -1356,7 +1355,7 @@ window.selColor = function(el){
 // ── CLASSES ──────────────────────────────────────────────
 async function loadClasses() {
   const uid = currentUser.uid;
-  const snap = (await db.collection('classes'.get().where('uid', '==', uid).orderBy('createdAt', 'desc'));
+  const snap = (await db.collection('classes').where('uid', '==', uid).orderBy('createdAt', 'desc').get());
   const el = document.getElementById('classes-list');
   if(!el) return;
 

@@ -158,6 +158,11 @@ html,body{min-height:100%;font-family:'DM Sans',sans-serif;background:var(--sand
 .spin{width:16px;height:16px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:rot .7s linear infinite;display:inline-block;vertical-align:middle;margin-right:5px}
 @keyframes rot{to{transform:rotate(360deg)}}
 </style>
+  <!-- Firebase SDK (compat) -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
 </head>
 <body>
 
@@ -377,13 +382,6 @@ if (!window.nav) {
 </div>
 
 <div class="toast" id="toast"></div>
-
-<!-- Firebase SDK (compat) -->
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
-
 <script>
 
 // ─── CONFIG FIREBASE — REMPLACE ICI ───────────────────────
@@ -498,7 +496,7 @@ async function loadSharedResources() {
 // ── DEVOIRS ───────────────────────────────────────────────
 async function loadDevoirs() {
   // Charge tous les devoirs publiés (tous enseignants)
-  const snap = (await db.collection('assignments'.get().where('isPublished', '==', true).orderBy('createdAt', 'desc'));
+  const snap = (await db.collection('assignments').where('isPublished', '==', true).orderBy('createdAt', 'desc').get());
   const list = document.getElementById('devoirs-list');
   if (snap.empty) {
     list.innerHTML = '<div class="empty"><div class="empty-ic">📋</div><div class="empty-txt">Aucun devoir pour le moment.</div></div>';
@@ -651,7 +649,7 @@ window.submitDevoir = async function() {
 
 // ── RÉSULTATS ─────────────────────────────────────────────
 async function loadResults() {
-  const snap = (await db.collection('submissions'.get().where('uid', '==', currentUser.uid).orderBy('submittedAt', 'desc'));
+  const snap = (await db.collection('submissions').where('uid', '==', currentUser.uid).orderBy('submittedAt', 'desc').get());
   const el = document.getElementById('results-list');
   if(snap.empty){
     el.innerHTML='<div class="empty"><div class="empty-ic">📊</div><div class="empty-txt">Pas encore de résultats.</div></div>';

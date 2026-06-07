@@ -330,6 +330,11 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--sand);co
 .ann-txt{font-size:12px;color:var(--ink-60);flex:1}
 .ann-pg{font-size:10px;color:var(--ink-30)}
 </style>
+  <!-- Firebase SDK (compat) -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
 </head>
 <body>
 
@@ -760,13 +765,6 @@ if (!window.nav) {
 </div>
 
 <div class="toast" id="toast"></div>
-
-<!-- Firebase SDK (compat) -->
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
-
 <script>
 
 // ─── CONFIG FIREBASE ───────────────────────────────────────
@@ -868,7 +866,7 @@ const MUR_COLORS = {
 
 async function loadMurs() {
   if(!currentUser) return;
-  const snap = (await db.collection('murs'.get().where('uid', '==', currentUser.uid).orderBy('createdAt', 'desc'));
+  const snap = (await db.collection('murs').where('uid', '==', currentUser.uid).orderBy('createdAt', 'desc').get());
   const grid = document.getElementById('murs-grid');
   if(snap.empty){
     grid.innerHTML=`<div style="grid-column:1/-1"><div class="empty"><div class="empty-ic">🗂</div><div class="empty-txt">Aucun mur encore.<br>Crée ton premier mur collaboratif !</div></div></div>`;
@@ -1003,7 +1001,7 @@ window.saveMur = async function(){
 // ════════════════════════════════════════
 async function loadAnnonces(){
   if(!currentUser) return;
-  const snap = (await db.collection('annonces'.get().where('uid', '==', currentUser.uid).orderBy('createdAt', 'desc'));
+  const snap = (await db.collection('annonces').where('uid', '==', currentUser.uid).orderBy('createdAt', 'desc').get());
   annonces = snap.docs.map(d=>({id:d.id,...d.data()}));
   renderAnnonces();
   document.getElementById('ann-count').textContent = snap.size;
@@ -1087,7 +1085,7 @@ window.likeAnnonce = function(id){
 // ════════════════════════════════════════
 async function loadCours(){
   if(!currentUser) return;
-  const snap = (await db.collection('cours'.get().where('uid', '==', currentUser.uid).orderBy('createdAt', 'desc'));
+  const snap = (await db.collection('cours').where('uid', '==', currentUser.uid).orderBy('createdAt', 'desc').get());
   const el = document.getElementById('cours-list');
   if(snap.empty){
     el.innerHTML='<div class="empty"><div class="empty-ic">✍️</div><div class="empty-txt">Aucun cours encore.<br>Crée ton premier cours !</div></div>';

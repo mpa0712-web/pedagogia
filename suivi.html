@@ -210,6 +210,11 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--sand);co
 .export-title{font-size:13px;font-weight:700}
 .export-desc{font-size:11px;color:var(--ink-30);margin-top:2px}
 </style>
+  <!-- Firebase SDK (compat) -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
 </head>
 <body>
 
@@ -615,13 +620,6 @@ if (!window.nav) {
 
 <div class="ov" id="ov" onclick="closeModal(event)"><div class="modal" id="modal-body"></div></div>
 <div class="toast" id="toast"></div>
-
-<!-- Firebase SDK (compat) -->
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
-
 <script>
 
 const firebaseConfig = {
@@ -793,7 +791,7 @@ function buildPlanning(){
 // NOTES
 async function loadNotes(){
   if(!currentUser) return;
-  const snap=(await db.collection('notes'.get().where('uid', '==', currentUser.uid).orderBy('updatedAt', 'desc'));
+  const snap=(await db.collection('notes').where('uid', '==', currentUser.uid).orderBy('updatedAt', 'desc').get());
   notes=snap.docs.map(d=>({id:d.id,...d.data()}));
   if(!notes.length){
     notes=[
@@ -887,7 +885,7 @@ const POSTIT_COLORS=['#FEF3C7','#DBEAFE','#F0FDF4','#FDE8F0','#F3EEFF','#FBF0EA'
 
 async function loadPostits(){
   if(!currentUser) return;
-  const snap=(await db.collection('postits'.get().where('uid', '==', currentUser.uid).orderBy('createdAt', 'desc'));
+  const snap=(await db.collection('postits').where('uid', '==', currentUser.uid).orderBy('createdAt', 'desc').get());
   postits=snap.docs.map(d=>({id:d.id,...d.data()}));
   if(!postits.length){
     postits=[
@@ -941,7 +939,7 @@ window.selectDay=function(d){ toast('Jour sélectionné : '+d+' — fonctionnali
 
 async function loadEvents2(){
   if(!currentUser) return;
-  const snap=(await db.collection('events'.get().where('uid', '==', currentUser.uid).orderBy('date', 'asc'));
+  const snap=(await db.collection('events').where('uid', '==', currentUser.uid).orderBy('date', 'asc').get());
   const eventsDB=snap.docs.map(d=>({id:d.id,...d.data()}));
   const eventsDemo=[
     {title:'Évaluation Relation client',type:'evaluation',classe:'Term. Pro MCV',date:{toDate:()=>{const d=new Date();d.setDate(d.getDate()+1);return d;}},dotColor:'var(--terra)'},
