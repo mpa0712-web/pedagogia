@@ -262,6 +262,18 @@ function logout() {
   } else { window.location.href = "index.html"; }
 }
 window.logout = logout;
+// nav() alias - sera remplacé par la vraie fonction plus tard
+if (!window.nav) {
+  window.nav = function(id) {
+    // Attendre que la vraie nav soit chargée
+    var t = setInterval(function() {
+      if (window._navReady) {
+        clearInterval(t);
+        window.nav(id);
+      }
+    }, 50);
+  };
+}
 </script>
 
 <div class="app">
@@ -640,7 +652,7 @@ window.logout = async function() {
 auth.onAuthStateChanged( async (user) => {
   if (!user) { window.location.href='index.html'; return; }
   currentUser = user;
-  const snap = (await db.doc('users',user.uid.get()));
+  const snap = (await db.collection('users').doc(user.uid).get());
   if (snap.exists) {
     const d = snap.data();
     const initials = d.name.split(' ').map(n=>n[0]).join('').toUpperCase().slice(0,2);
@@ -843,10 +855,9 @@ window.saveNote = async function(){
   const data = {uid:currentUser.uid, title, content, tags, category, updatedAt:firebase.firestore.FieldValue.serverTimestamp()};
   const isDemo = currentNoteId && ['demo1','demo2','demo3'].includes(currentNoteId);
   if(currentNoteId && !isDemo) {
-    await setDoc(db.doc('notes',currentNoteId), {...data,createdAt:firebase.firestore.FieldValue.serverTimestamp()}, {merge:true});
+    await db.collection('notes').doc(currentNoteId).set( {...data,createdAt:firebase.firestore.FieldValue.serverTimestamp()}, {merge:true});
   } else {
-    const ref = await db.collection('notes').add(
-      {...data, createdAt:firebase.firestore.FieldValue.serverTimestamp()});
+    const ref = await db.collection('notes').add({...data, createdAt:firebase.firestore.FieldValue.serverTimestamp()});
     currentNoteId = ref.id;
   }
   const savedEl = document.getElementById('ne-saved-info');
@@ -857,7 +868,7 @@ window.saveNote = async function(){
 
 window.deleteNote = async function(id){
   if(!confirm('Supprimer cette note ?')) return;
-  if(!id.startsWith('demo')) await db.doc('notes',id.delete());
+  if(!id.startsWith('demo')) await db.collection('notes').doc(id).delete();
   notes=notes.filter(n=>n.id!==id);
   renderNotesList();
   if(currentNoteId===id) closeNoteEditor();
@@ -959,7 +970,7 @@ async function loadEvents2(){
 // SÉQUENCES
 async function loadSequences(){
   if(!currentUser) return;
-  const snap=(await query(db.collection('sequences'.get()),where('uid','==',currentUser.uid)));
+  const snap=(await query(db.collection('sequences'),where('uid','==',currentUser.uid)));
   const seqDB=snap.docs.map(d=>({id:d.id,...d.data()}));
   sequences=[
     {id:'s1',title:'La communication professionnelle',classe:'Seconde Générale',periode:'Période 2',duree:'8 séances',progression:75,seances:[
@@ -1031,7 +1042,7 @@ window.toggleSeance=async function(seqId,idx){
   // Sauvegarder dans Firestore si ce n'est pas une démo
   if(!seqId.startsWith('s1')&&!seqId.startsWith('s2')) {
     try {
-      await setDoc(db.doc('sequences',seqId), {
+      await db.collection('sequences').doc(seqId).set( {
         seances: s.seances,
         progression: s.progression,
         updatedAt: firebase.firestore.FieldValue.serverTimestamp()
@@ -1055,7 +1066,7 @@ window.exportAction = async function(type) {
       getDocs(query(db.collection('assignments'), where('uid','==',currentUser.uid))),
       getDocs(db.collection('submissions'))
     ]);
-    const snap2 = (await db.doc('users',currentUser.uid.get()));
+    const snap2 = (await db.collection('users').doc(currentUser.uid).get());
     const name = snap2.exists ? snap2.data().name : 'Enseignant';
     const rapport = `RAPPORT PÉDAGOGIQUE — ${name}
 Généré le ${new Date().toLocaleDateString('fr-FR')}
@@ -1082,8 +1093,7 @@ Rapport généré par Pédagogia`;
   }
   if(type === 'partage') {
     const code = Math.random().toString(36).substring(2,10).toUpperCase();
-    await db.collection('shareLinks').add(
-      {
+    await db.collection('shareLinks').add({
       uid: currentUser.uid, code, type: 'global',
       createdAt: firebase.firestore.FieldValue.serverTimestamp()
     });
@@ -1093,7 +1103,7 @@ Rapport généré par Pédagogia`;
     return;
   }
   if(type === 'sequences') {
-    const snap3 = (await query(db.collection('sequences'.get()), where('uid','==',currentUser.uid)));
+    const snap3 = (await query(db.collection('sequences'), where('uid','==',currentUser.uid)));
     const lines = ['SÉQUENCES PÉDAGOGIQUES', '─'.repeat(40)];
     snap3.docs.forEach((d,i) => {
       const fd = d.data();
@@ -1133,8 +1143,7 @@ ${POSTIT_COLORS.map((c,i)=>`<div style="width:28px;height:28px;border-radius:6px
         const text=document.getElementById('pi-text').value.trim();
         if(!text){toast('Écris quelque chose.','error');return;}
         const color=window._piColor||POSTIT_COLORS[0];
-        await db.collection('postits').add(
-      {uid:currentUser.uid,text,color,createdAt:firebase.firestore.FieldValue.serverTimestamp()});
+        await db.collection('postits').add({uid:currentUser.uid,text,color,createdAt:firebase.firestore.FieldValue.serverTimestamp()});
         toast('Post-it ajouté !','success');
         closeModal();
         loadPostits();
@@ -1153,8 +1162,7 @@ ${POSTIT_COLORS.map((c,i)=>`<div style="width:28px;height:28px;border-radius:6px
         const classe=document.getElementById('ev-class').value;
         const dateStr=document.getElementById('ev-date').value;
         if(!title){toast('Donne un titre.','error');return;}
-        await db.collection('events').add(
-      {uid:currentUser.uid,title,type,classe,date:dateStr?new Date(dateStr):new Date(),createdAt:firebase.firestore.FieldValue.serverTimestamp()});
+        await db.collection('events').add({uid:currentUser.uid,title,type,classe,date:dateStr?new Date(dateStr):new Date(),createdAt:firebase.firestore.FieldValue.serverTimestamp()});
         toast('Événement ajouté !','success');
         closeModal();
         loadEvents2();
@@ -1173,8 +1181,7 @@ ${POSTIT_COLORS.map((c,i)=>`<div style="width:28px;height:28px;border-radius:6px
         if(!title){toast('Donne un titre.','error');return;}
         const nb=parseInt(document.getElementById('sq-nb').value)||6;
         const seances=Array.from({length:nb},(_,i)=>({title:`Séance ${i+1}`,done:false}));
-        await db.collection('sequences').add(
-      {
+        await db.collection('sequences').add({
           uid:currentUser.uid,
           title,classe:document.getElementById('sq-class').value,
           periode:document.getElementById('sq-per').value,

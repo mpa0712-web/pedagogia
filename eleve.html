@@ -210,6 +210,18 @@ function logout() {
   } else { window.location.href = "index.html"; }
 }
 window.logout = logout;
+// nav() alias - sera remplacé par la vraie fonction plus tard
+if (!window.nav) {
+  window.nav = function(id) {
+    // Attendre que la vraie nav soit chargée
+    var t = setInterval(function() {
+      if (window._navReady) {
+        clearInterval(t);
+        window.nav(id);
+      }
+    }, 50);
+  };
+}
 </script>
 
 <div class="app">
@@ -395,7 +407,7 @@ let currentAssignId = null;
 auth.onAuthStateChanged( async (user) => {
   if (!user) { window.location.href='index.html'; return; }
   currentUser = user;
-  const snap = (await db.doc('users',user.uid.get()));
+  const snap = (await db.collection('users').doc(user.uid).get());
   if (snap.exists) {
     const d = snap.data();
     if (d.role === 'teacher') { window.location.href='dashboard.html'; return; }
@@ -447,12 +459,12 @@ async function loadSharedResources() {
   // Charger les classes de l'élève pour filtrer les ressources
   let classeNames = [];
   try {
-    const memberSnap = (await query(db.collection('classMembers'.get()), where('studentId','==',currentUser.uid)));
+    const memberSnap = (await query(db.collection('classMembers'), where('studentId','==',currentUser.uid)));
     classeNames = memberSnap.docs.map(d => d.data().className);
   } catch(e) {}
 
-  const foldersSnap = (await query(db.collection('folders'.get()),where('visibility','==','public')));
-  const filesSnap = (await query(db.collection('files'.get()),where('visibility','==','public')));
+  const foldersSnap = (await query(db.collection('folders'),where('visibility','==','public')));
+  const filesSnap = (await query(db.collection('files'),where('visibility','==','public')));
 
   const grid = document.getElementById('shared-resources');
   const colors = {sage:'#EAF2ED',terra:'#FBF0EA',amber:'#FDF5E6',blue:'#EBF2FF',purple:'#F3EEFF',pink:'#FDE8F0'};
@@ -516,7 +528,7 @@ async function loadDevoirs() {
 window.checkRendu = async function(assignId) {
   const statusEl = document.getElementById('status-'+assignId);
   try {
-    const snap = (await query(db.collection('submissions'.get()),where('assignmentId','==',assignId),where('uid','==',currentUser.uid)));
+    const snap = (await query(db.collection('submissions'),where('assignmentId','==',assignId),where('uid','==',currentUser.uid)));
     if (snap.empty) {
       statusEl.innerHTML = `<div style="background:var(--amber-p);border:1px solid rgba(156,107,30,.2);border-radius:8px;padding:10px 12px;font-size:12px;color:var(--amber)">
         ⏳ Tu n'as pas encore rendu ce devoir.
@@ -595,8 +607,7 @@ window.submitDevoir = async function() {
       await storageRef.put(file);
       fileUrl = await storageRef.getDownloadURL();
     }
-    await db.collection('submissions').add(
-      {
+    await db.collection('submissions').add({
       uid:currentUser.uid,
       assignmentId:currentAssignId,
       textResponse:text||null,
@@ -607,8 +618,7 @@ window.submitDevoir = async function() {
       createdAt:firebase.firestore.FieldValue.serverTimestamp()
     });
     // Notification pour l'enseignant
-    await db.collection('notifications').add(
-      {
+    await db.collection('notifications').add({
       userId:'teacher_broadcast',
       title:'Nouveau rendu',
       body:'Un élève a rendu son devoir',
@@ -665,7 +675,7 @@ async function loadResults() {
 
 async function loadHomeData() {
   // Devoirs urgents
-  const aSnap = (await query(db.collection('assignments'.get()),where('isPublished','==',true)));
+  const aSnap = (await query(db.collection('assignments'),where('isPublished','==',true)));
   const hd = document.getElementById('home-devoirs-list');
   const now = new Date();
   const upcoming = aSnap.docs.filter(d=>{
@@ -686,7 +696,7 @@ async function loadHomeData() {
   }
 
   // Résultats récents
-  const rSnap = (await query(db.collection('submissions'.get()),where('uid','==',currentUser.uid)));
+  const rSnap = (await query(db.collection('submissions'),where('uid','==',currentUser.uid)));
   const hr = document.getElementById('home-results-list');
   const graded = rSnap.docs.filter(d=>d.data().score!=null).slice(0,3);
   if(!graded.length){
@@ -713,7 +723,7 @@ window.joinClass = async function(){
   }
 
   // Chercher la classe avec ce code
-  const snap = (await query(db.collection('classes'.get()),where('code','==',code)));
+  const snap = (await query(db.collection('classes'),where('code','==',code)));
   if(snap.empty){
     msgEl.style.display='block';
     msgEl.innerHTML='<div style="background:var(--terra-p);color:var(--terra);padding:8px 12px;border-radius:7px;font-size:12px">❌ Code introuvable. Vérifie avec ton enseignant.</div>';
@@ -724,7 +734,7 @@ window.joinClass = async function(){
   const classData = classDoc.data();
 
   // Vérifier si déjà inscrit
-  const already = (await query(db.collection('classMembers'.get()),
+  const already = (await query(db.collection('classMembers'),
     where('classId','==',classDoc.id),
     where('studentId','==',currentUser.uid)
   ));
@@ -735,8 +745,7 @@ window.joinClass = async function(){
   }
 
   // Inscrire l'élève
-  await db.collection('classMembers').add(
-      {
+  await db.collection('classMembers').add({
     classId: classDoc.id,
     studentId: currentUser.uid,
     teacherId: classData.uid,
@@ -751,7 +760,7 @@ window.joinClass = async function(){
 };
 
 async function loadMyClasses(){
-  const snap = (await query(db.collection('classMembers'.get()),where('studentId','==',currentUser.uid)));
+  const snap = (await query(db.collection('classMembers'),where('studentId','==',currentUser.uid)));
   const el = document.getElementById('my-classes-list');
   if(!el) return;
 

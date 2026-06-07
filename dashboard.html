@@ -285,6 +285,18 @@ function logout() {
   } else { window.location.href = "index.html"; }
 }
 window.logout = logout;
+// nav() alias - sera remplacé par la vraie fonction plus tard
+if (!window.nav) {
+  window.nav = function(id) {
+    // Attendre que la vraie nav soit chargée
+    var t = setInterval(function() {
+      if (window._navReady) {
+        clearInterval(t);
+        window.nav(id);
+      }
+    }, 50);
+  };
+}
 </script>
 
 <div class="app">
@@ -610,7 +622,7 @@ let assignFilter = 'all';
 auth.onAuthStateChanged( async (user) => {
   if (!user) { window.location.href='index.html'; return; }
   currentUser = user;
-  const snap = (await db.doc('users',user.uid.get()));
+  const snap = (await db.collection('users').doc(user.uid).get());
   if (snap.exists) {
     const d = snap.data();
     if (d.role === 'student') { window.location.href='eleve.html'; return; }
@@ -762,7 +774,7 @@ async function loadFolders(parentId) {
   if (!parentId) {
     bc.innerHTML = '<span class="bc-cur" onclick="loadFolders(null)">Mes ressources</span>';
   } else {
-    const fd = (await db.doc('folders',parentId.get()));
+    const fd = (await db.collection('folders').doc(parentId).get());
     bc.innerHTML = `<span onclick="loadFolders(null)">Mes ressources</span><span class="bc-sep">/</span><span class="bc-cur">${fd.data()?.name||'Dossier'}</span>`;
   }
 
@@ -821,7 +833,7 @@ window.loadFolders = loadFolders;
 
 async function deleteFolder(id, storagePath) {
   if(!confirm('Supprimer ce dossier ?')) return;
-  await db.doc('folders',id.delete());
+  await db.collection('folders').doc(id).delete();
   toast('Dossier supprimé','success');
   loadFolders(currentFolderId);
   loadDashboard();
@@ -832,7 +844,7 @@ async function deleteFile(id, storagePath) {
   if(!confirm('Supprimer ce fichier ?')) return;
   try {
     if(storagePath) await storage.ref(storagePath.delete());
-    await db.doc('files',id.delete());
+    await db.collection('files').doc(id).delete();
     toast('Fichier supprimé','success');
     loadFolders(currentFolderId);
     loadDashboard();
@@ -851,8 +863,7 @@ window.uploadFiles = async function(event) {
       const storageRef = storage.ref(path);
       await storageRef.put(file);
       const url = await storageRef.getDownloadURL();
-      await db.collection('files').add(
-      {
+      await db.collection('files').add({
         uid:currentUser.uid,
         folderId:currentFolderId||null,
         name:file.name,
@@ -914,7 +925,7 @@ window.filterA = function(el,f){
 };
 // ── VOIR DEVOIR ──────────────────────────────────────────
 window.voirDevoir = async function(id, title) {
-  const subSnap = (await query(db.collection('submissions'.get()), where('assignmentId','==',id)));
+  const subSnap = (await query(db.collection('submissions'), where('assignmentId','==',id)));
   const subs = subSnap.docs.map(d => d.data());
   const modal = document.getElementById('modal-body');
   const now = new Date();
@@ -949,7 +960,7 @@ window.voirDevoir = async function(id, title) {
 
 // ── CORRIGER IA ────────────────────────────────────────
 window.corrigerIA = async function(id, title) {
-  const subSnap = (await query(db.collection('submissions'.get()), where('assignmentId','==',id)));
+  const subSnap = (await query(db.collection('submissions'), where('assignmentId','==',id)));
   const subs = subSnap.docs.filter(d => d.data().textResponse && !d.data().score);
   if(subs.length === 0) {
     toast('Aucun rendu à corriger pour ce devoir.', 'error');
@@ -989,7 +1000,7 @@ window.lancerCorrectionIA = async function(subId, assignId) {
   btn.innerHTML = '<span class="spin"></span>Correction en cours…';
   btn.disabled = true;
   try {
-    const subSnap = (await query(db.collection('submissions'.get()), where('assignmentId','==',assignId)));
+    const subSnap = (await query(db.collection('submissions'), where('assignmentId','==',assignId)));
     const sub = subSnap.docs.find(d=>d.id===subId);
     const text = sub?.data()?.textResponse || '';
     const res = await fetch(\`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=\${GEMINI_KEY}\`, {
@@ -1020,9 +1031,8 @@ window.validerCorrection = async function(subId) {
   const note = parseInt(document.getElementById('ia-note').value);
   const comment = document.getElementById('ia-corr-txt').innerText.slice(0,500);
   if(isNaN(note) || note < 0 || note > 20) { toast('Entre une note valide entre 0 et 20.', 'error'); return; }
-  const subRef = db.doc( 'submissions', subId);
-  await subRef.update(
-      { score: note, teacherComment: comment, status: 'graded', gradedAt: firebase.firestore.FieldValue.serverTimestamp() });
+  const subRef = db.collection('submissions').doc(subId);
+  await subRef.update({ score: note, teacherComment: comment, status: 'graded', gradedAt: firebase.firestore.FieldValue.serverTimestamp() });
   toast('Correction validée et envoyée à l'élève ! ✓', 'success');
   closeModal();
   loadAssignments();
@@ -1030,12 +1040,11 @@ window.validerCorrection = async function(subId) {
 
 // ── RELANCER DEVOIR ───────────────────────────────────
 window.relancerDevoir = async function(id, title) {
-  const subSnap = (await query(db.collection('submissions'.get()), where('assignmentId','==',id)));
+  const subSnap = (await query(db.collection('submissions'), where('assignmentId','==',id)));
   const subIds = subSnap.docs.map(d => d.data().uid);
   toast(\`📢 Relance envoyée pour "\${title}" — \${subIds.length} élève(s) ont déjà rendu\`, 'success');
   // Créer une notification pour les élèves de la classe
-  await db.collection('notifications').add(
-      {
+  await db.collection('notifications').add({
     userId: 'broadcast', // côté élève : filtrer par classe
     title: 'Rappel devoir',
     body: \`N'oublie pas de rendre : "\${title}"\`,
@@ -1047,7 +1056,7 @@ window.relancerDevoir = async function(id, title) {
 
 window.deleteAssign = async function(id){
   if(!confirm('Supprimer ce devoir ?')) return;
-  await db.doc('assignments',id.delete());
+  await db.collection('assignments').doc(id).delete();
   toast('Devoir supprimé','success');
   loadAssignments();
   loadDashboard();
@@ -1108,8 +1117,7 @@ window.runAI = async function() {
     btn.disabled = false;
 
     // Save to Firestore
-    await db.collection('aiContent').add(
-      {
+    await db.collection('aiContent').add({
       uid:currentUser.uid,
       type:aiMode,
       sourceText:text.slice(0,500)+'…',
@@ -1192,8 +1200,7 @@ const modals = {
       const color = document.querySelector('.cdot2.sel')?.dataset.c||'sage';
       const vis = document.getElementById('m-vis').value;
       if(!name){toast('Donne un nom au dossier.','error');return;}
-      await db.collection('folders').add(
-      {
+      await db.collection('folders').add({
         uid:currentUser.uid,name,color,visibility:vis,parentId:currentFolderId||null,fileCount:0,type:'folder',createdAt:firebase.firestore.FieldValue.serverTimestamp()
       });
       toast('Dossier créé !','success');
@@ -1216,8 +1223,7 @@ const modals = {
       const dateStr=document.getElementById('m-date').value;
       const maxScore=parseInt(document.getElementById('m-score').value)||20;
       if(!title){toast('Donne un titre au devoir.','error');return;}
-      await db.collection('assignments').add(
-      {
+      await db.collection('assignments').add({
         uid:currentUser.uid,title,classe,description,maxScore,
         dueDate:dateStr?new Date(dateStr):null,
         isPublished:true,type:'assignment',createdAt:firebase.firestore.FieldValue.serverTimestamp()
@@ -1242,8 +1248,7 @@ const modals = {
       if(!name){toast('Donne un nom à la classe.','error');return;}
       // Générer un code unique 6 caractères
       const code = Math.random().toString(36).substring(2,8).toUpperCase();
-      await db.collection('classes').add(
-      {
+      await db.collection('classes').add({
         uid:currentUser.uid,
         name, level, subject, description,
         code,
@@ -1267,8 +1272,7 @@ const modals = {
       const classe=document.getElementById('m-class').value;
       const dateStr=document.getElementById('m-date').value;
       if(!title){toast('Donne un titre.','error');return;}
-      await db.collection('events').add(
-      {
+      await db.collection('events').add({
         uid:currentUser.uid,title,type,classe,
         date:dateStr?new Date(dateStr):new Date(),
         createdAt:firebase.firestore.FieldValue.serverTimestamp()
@@ -1300,7 +1304,7 @@ window.openModal = function(type){
 // ── APERÇU FICHIER ───────────────────────────────────────
 window.apercuFichier = async function(id) {
   try {
-    const snap = (await db.doc('files',id.get()));
+    const snap = (await db.collection('files').doc(id).get());
     if(!snap.exists) return;
     const fd = snap.data();
     const sizeBytes = fd.size_bytes || fd.size || 0;
@@ -1333,7 +1337,7 @@ window.apercuFichier = async function(id) {
 // ── PARTAGER FICHIER AUX ÉLÈVES ──────────────────────────
 window.partagerFichier = async function(id, name) {
   try {
-    await updateDoc(db.doc('files',id), { visibility: 'public' });
+    await db.collection('files').doc(id).update( { visibility: 'public' });
     toast('✓ "' + name + '" partagé avec tous tes élèves !', 'success');
     loadFolders(currentFolderId);
     closeModal();
@@ -1395,7 +1399,7 @@ window.loadStudents = async function(classId, className){
   el.innerHTML = '<div style="font-size:12px;color:var(--ink-30);padding:8px 0">Chargement…</div>';
   el.style.display = 'block';
 
-  const snap = (await query(db.collection('classMembers'.get()),where('classId','==',classId)));
+  const snap = (await query(db.collection('classMembers'),where('classId','==',classId)));
 
   if(snap.empty){
     el.innerHTML = `<div style="background:var(--sand);border-radius:8px;padding:14px 16px;font-size:12px;color:var(--ink-60)">
@@ -1408,7 +1412,7 @@ window.loadStudents = async function(classId, className){
   // Récupérer les profils des élèves
   const studentRows = await Promise.all(snap.docs.map(async d=>{
     const fd=d.data();
-    const userSnap = (await db.doc('users',fd.studentId.get()));
+    const userSnap = (await db.collection('users').doc(fd.studentId).get());
     const user = userSnap.exists ? userSnap.data() : {name:'Élève inconnu',email:''};
     return `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--ink-10)">
       <div style="width:30px;height:30px;border-radius:50%;background:var(--blue-p);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--blue);flex-shrink:0">
@@ -1430,7 +1434,7 @@ window.loadStudents = async function(classId, className){
 
 window.deleteClass = async function(id){
   if(!confirm('Supprimer cette classe ? Les élèves inscrits seront retirés.')) return;
-  await db.doc('classes',id.delete());
+  await db.collection('classes').doc(id).delete();
   toast('Classe supprimée','success');
   loadClasses();
 };
@@ -1441,15 +1445,15 @@ document.getElementById('srch-input').addEventListener('input', async (e)=>{
   if(q.length < 2) return;
 
   // Chercher dans dossiers
-  const fSnap = (await query(db.collection('folders'.get()), where('uid','==',currentUser.uid)));
+  const fSnap = (await query(db.collection('folders'), where('uid','==',currentUser.uid)));
   const fMatches = fSnap.docs.filter(d => d.data().name?.toLowerCase().includes(q));
 
   // Chercher dans fichiers
-  const fileSnap = (await query(db.collection('files'.get()), where('uid','==',currentUser.uid)));
+  const fileSnap = (await query(db.collection('files'), where('uid','==',currentUser.uid)));
   const fileMatches = fileSnap.docs.filter(d => d.data().name?.toLowerCase().includes(q));
 
   // Chercher dans devoirs
-  const aSnap = (await query(db.collection('assignments'.get()), where('uid','==',currentUser.uid)));
+  const aSnap = (await query(db.collection('assignments'), where('uid','==',currentUser.uid)));
   const aMatches = aSnap.docs.filter(d => d.data().title?.toLowerCase().includes(q));
 
   const total = fMatches.length + fileMatches.length + aMatches.length;

@@ -239,6 +239,18 @@ function logout() {
   } else { window.location.href = "index.html"; }
 }
 window.logout = logout;
+// nav() alias - sera remplacé par la vraie fonction plus tard
+if (!window.nav) {
+  window.nav = function(id) {
+    // Attendre que la vraie nav soit chargée
+    var t = setInterval(function() {
+      if (window._navReady) {
+        clearInterval(t);
+        window.nav(id);
+      }
+    }, 50);
+  };
+}
 </script>
 
 <div class="app">
@@ -500,7 +512,7 @@ window.logout = async function() {
 auth.onAuthStateChanged( async (user) => {
   if (!user) { window.location.href='index.html'; return; }
   currentUser = user;
-  const snap = (await db.doc('users',user.uid.get()));
+  const snap = (await db.collection('users').doc(user.uid).get());
   if (snap.exists) {
     const d = snap.data();
     const initials = d.name.split(' ').map(n=>n[0]).join('').toUpperCase().slice(0,2);
@@ -623,8 +635,7 @@ window.sendMsg = async function() {
   toast('Message envoyé','success');
   // Sauvegarder en Firestore
   try {
-    await db.collection('messages').add(
-      {
+    await db.collection('messages').add({
       fromUid: currentUser.uid,
       toId: currentConv.id,
       text, convName: currentConv.name,
@@ -663,7 +674,7 @@ window.filterConvs = function(q) {
 
 // ── ANNONCES ────────────────────────────────────────────
 async function loadAnnoncesDB() {
-  const snap = (await query(db.collection('annonces'.get()), orderBy('createdAt','desc')));
+  const snap = (await query(db.collection('annonces'), orderBy('createdAt','desc')));
   const dbAnns = snap.docs.map(d=>({id:d.id,...d.data(),
     author: d.data().authorName||'Enseignant',
     initials: (d.data().authorName||'ML').split(' ').map(n=>n[0]).join('').toUpperCase().slice(0,2),
@@ -716,10 +727,9 @@ window.publierAnnonce = async function() {
   const content = document.getElementById('ann-content').value.trim();
   const classe = document.getElementById('ann-class').value;
   if(!content){toast('Écris quelque chose.','error');return;}
-  const snap = (await db.doc('users',currentUser.uid.get()));
+  const snap = (await db.collection('users').doc(currentUser.uid).get());
   const authorName = snap.exists?snap.data().name:'Enseignant';
-  await db.collection('annonces').add(
-      {
+  await db.collection('annonces').add({
     uid:currentUser.uid, content, type:annType,
     authorName, classe:classe==='all'?'Toutes les classes':classe,
     likes:0, comments:0, pinned:false, createdAt:firebase.firestore.FieldValue.serverTimestamp()
@@ -862,7 +872,7 @@ window.markAllRead = async function() {
       where('isRead','==',false)
     ));
     for(const d of snap.docs) {
-      await updateDoc(db.doc('notifications',d.id), {isRead: true});
+      await db.collection('notifications').doc(d.id).update( {isRead: true});
     }
   } catch(e) {}
   toast('Toutes les notifications lues','success');
@@ -904,16 +914,14 @@ window.sendNewMsg = async function() {
   const body = document.getElementById('msg-body').value.trim();
   if(!body){toast('Écris un message.','error');return;}
   try {
-    await db.collection('messages').add(
-      {
+    await db.collection('messages').add({
       fromUid: currentUser.uid,
       toName: to,
       text: body,
       createdAt: firebase.firestore.FieldValue.serverTimestamp()
     });
     // Créer aussi une notification
-    await db.collection('notifications').add(
-      {
+    await db.collection('notifications').add({
       userId: currentUser.uid,
       title: 'Message envoyé',
       body: 'À ' + to + ' : ' + body.slice(0,80),
