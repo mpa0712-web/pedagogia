@@ -3,755 +3,326 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Pédagogia — Murs collaboratifs</title>
+<title>Pédagogia — Murs & Cours</title>
 <link href="https://fonts.googleapis.com/css2?family=Lora:wght@600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 <style>
+*{box-sizing:border-box;margin:0;padding:0}
 :root{
   --sage:#3D6B4F;--sage-l:#5A8C6A;--sage-p:#EAF2ED;
   --terra:#B8623A;--terra-p:#FBF0EA;
   --ink:#1A1714;--ink-60:#5C574F;--ink-30:#A09990;--ink-10:#F0EBE3;
   --sand:#FAF6F0;--white:#fff;
-  --amber:#9C6B1E;--amber-p:#FDF5E6;
   --blue:#1A4F9C;--blue-p:#EBF2FF;
   --purple:#5B2E9C;--purple-p:#F3EEFF;
-  --pink:#9C1A5B;--pink-p:#FDE8F0;
-  --r:12px;--r-sm:8px;
-  --sh:0 1px 3px rgba(26,23,20,.07);--sh-md:0 4px 16px rgba(26,23,20,.10);--sh-lg:0 8px 32px rgba(26,23,20,.13);
+  --amber:#9C6B1E;--amber-p:#FDF5E6;
+  --r:12px;--sh:0 1px 3px rgba(26,23,20,.07);--sh-md:0 4px 16px rgba(26,23,20,.10);
 }
-*{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--sand);color:var(--ink)}
-.app{display:flex;height:100vh}
+.app{display:flex;height:100vh;overflow:hidden}
+
 /* SIDEBAR */
-/* ═══ SIDEBAR GLOBALE ═══ */
-.sidebar{width:220px;flex-shrink:0;background:var(--ink);display:flex;flex-direction:column;overflow:hidden}
-.s-logo{padding:14px 16px 12px;border-bottom:1px solid rgba(255,255,255,.07);display:flex;align-items:center;gap:10px}
-.s-logo-icon{width:32px;height:32px;border-radius:8px;background:var(--sage-l);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
-.s-logo-text .wm{font-family:'Lora',serif;font-size:16px;font-weight:700;color:#fff;line-height:1}
-.s-logo-text .tg{font-size:8.5px;color:rgba(255,255,255,.3);letter-spacing:1px;text-transform:uppercase;margin-top:2px}
-.s-user{padding:8px 12px;display:flex;align-items:center;gap:9px;border-bottom:1px solid rgba(255,255,255,.05);cursor:pointer;transition:background .12s}
-.s-user:hover{background:rgba(255,255,255,.05)}
-.av{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;flex-shrink:0}
-.u-nm{font-size:11.5px;font-weight:500;color:#fff;line-height:1}
-.u-rl{font-size:9px;color:rgba(255,255,255,.3);margin-top:2px}
+.sidebar{width:220px;flex-shrink:0;background:var(--ink);display:flex;flex-direction:column}
+.s-logo{padding:16px;border-bottom:1px solid rgba(255,255,255,.07);display:flex;align-items:center;gap:10px}
+.s-logo-ic{width:32px;height:32px;border-radius:9px;background:var(--sage-l);display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
+.s-logo-wm{font-family:'Lora',serif;font-size:16px;font-weight:700;color:#fff}
+.s-logo-tg{font-size:9px;color:rgba(255,255,255,.3);text-transform:uppercase;letter-spacing:1px}
 .s-nav{flex:1;overflow-y:auto;padding:8px 0}
+.nav-item{display:flex;align-items:center;gap:9px;padding:8px 14px;font-size:12px;color:rgba(255,255,255,.5);cursor:pointer;border-radius:9px;margin:2px 6px;transition:all .1s}
+.nav-item:hover{background:rgba(255,255,255,.07);color:rgba(255,255,255,.85)}
+.nav-item.active{background:var(--sage-l);color:#fff}
+.nav-sep{height:1px;background:rgba(255,255,255,.06);margin:6px 14px}
+.nav-label{font-size:9px;text-transform:uppercase;letter-spacing:1px;color:rgba(255,255,255,.2);padding:6px 14px 2px}
+.s-bottom{padding:10px 8px;border-top:1px solid rgba(255,255,255,.06)}
+.s-logout{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;font-size:11px;color:rgba(255,255,255,.4);cursor:pointer;transition:all .1s;width:100%;border:none;background:transparent;font-family:'DM Sans',sans-serif}
+.s-logout:hover{background:rgba(255,255,255,.06);color:rgba(255,255,255,.7)}
 
-/* NAV PRINCIPALE — grandes sections */
-.nav-main-item{display:flex;align-items:center;gap:0;margin:2px 8px;border-radius:9px;overflow:hidden;cursor:pointer;transition:all .12s}
-.nav-main-item:hover{background:rgba(255,255,255,.06)}
-.nav-main-item.active{background:rgba(255,255,255,.1)}
-.nav-main-btn{display:flex;align-items:center;gap:9px;padding:8px 10px;flex:1;min-width:0}
-.nav-main-icon{font-size:15px;width:20px;text-align:center;flex-shrink:0}
-.nav-main-label{font-size:12px;font-weight:600;color:rgba(255,255,255,.7);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.nav-main-item.active .nav-main-label{color:#fff}
-.nav-main-chevron{padding:8px 8px 8px 0;font-size:10px;color:rgba(255,255,255,.3);transition:transform .2s;flex-shrink:0}
-.nav-main-item.open .nav-main-chevron{transform:rotate(90deg)}
-.nav-main-badge{background:var(--terra);color:#fff;font-size:8px;padding:1px 5px;border-radius:6px;font-weight:700;margin-left:auto;margin-right:4px}
-
-/* NAV SOUS-ITEMS */
-.nav-sub{display:none;padding:2px 0 4px}
-.nav-main-item.open .nav-sub{display:block}
-.nav-sub-item{display:flex;align-items:center;gap:8px;padding:5px 10px 5px 38px;font-size:11px;color:rgba(255,255,255,.45);cursor:pointer;border-radius:7px;margin:1px 8px;transition:all .12s}
-.nav-sub-item:hover{background:rgba(255,255,255,.07);color:rgba(255,255,255,.85)}
-.nav-sub-item.active{color:rgba(255,255,255,.9);background:rgba(255,255,255,.08)}
-.nav-sub-icon{font-size:12px;width:16px;text-align:center;flex-shrink:0}
-
-/* NAV PILL — couleur par section */
-.nav-main-item[data-page="dashboard"] .nav-main-icon{color:#7BAF8E}
-.nav-main-item[data-page="enseigner"] .nav-main-icon{color:#6B9FD4}
-.nav-main-item[data-page="maclasse"] .nav-main-icon{color:#D48C6B}
-.nav-main-item[data-page="communication"] .nav-main-icon{color:#9B7FD4}
-.nav-main-item[data-page="suivi"] .nav-main-icon{color:#D4B86B}
-
-/* SÉPARATEUR */
-.nav-sep{height:1px;background:rgba(255,255,255,.05);margin:6px 12px}
-
-/* COMPTE EN BAS */
-.s-bottom{padding:10px;border-top:1px solid rgba(255,255,255,.07)}
-.s-bottom-btn{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:8px;font-size:11px;color:rgba(255,255,255,.4);cursor:pointer;transition:all .12s;width:100%}
-.s-bottom-btn:hover{background:rgba(255,255,255,.07);color:rgba(255,255,255,.7)}
 /* MAIN */
 .main{flex:1;display:flex;flex-direction:column;overflow:hidden}
-.topbar{height:54px;flex-shrink:0;background:var(--white);border-bottom:1px solid var(--ink-10);display:flex;align-items:center;padding:0 20px;gap:10px;z-index:10}
-.pt{font-size:15px;font-weight:600}
-.tb-r{margin-left:auto;display:flex;align-items:center;gap:7px}
-.btn{display:inline-flex;align-items:center;gap:5px;padding:6px 13px;border-radius:7px;font-size:11.5px;font-weight:600;cursor:pointer;border:none;transition:all .12s;font-family:'DM Sans',sans-serif;white-space:nowrap}
-.btn-p{background:var(--sage-l);color:#fff}.btn-p:hover{background:var(--sage)}
-.btn-g{background:transparent;color:var(--ink-60);border:1px solid var(--ink-10)}.btn-g:hover{background:var(--ink-10)}
-.btn-ai{background:linear-gradient(135deg,#5B2E9C,#3D6B4F);color:#fff}
-.btn-sm{padding:4px 10px;font-size:10.5px}
-.btn-danger{background:transparent;color:var(--terra);border:1px solid rgba(184,98,58,.3)}
-.content{flex:1;overflow-y:auto;padding:22px}
+.topbar{height:52px;flex-shrink:0;background:var(--white);border-bottom:1px solid var(--ink-10);display:flex;align-items:center;padding:0 18px;gap:10px}
+.topbar-title{font-size:15px;font-weight:600;font-family:'Lora',serif}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:7px}
+.content{flex:1;overflow-y:auto;padding:20px}
 .screen{display:none;animation:fi .2s ease}.screen.active{display:block}
-@keyframes fi{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
-/* CARDS */
-.card{background:var(--white);border-radius:var(--r);box-shadow:var(--sh);border:1px solid var(--ink-10);overflow:hidden}
-.card-hd{padding:14px 18px 11px;border-bottom:1px solid var(--ink-10);display:flex;align-items:center;justify-content:space-between}
-.card-title{font-size:13.5px;font-weight:600}
-.badge{display:inline-flex;align-items:center;padding:2px 7px;border-radius:8px;font-size:9.5px;font-weight:700}
-.bg{background:var(--sage-p);color:var(--sage)}.bt{background:var(--terra-p);color:var(--terra)}.ba{background:var(--amber-p);color:var(--amber)}.bb{background:var(--blue-p);color:var(--blue)}.bp{background:var(--purple-p);color:var(--purple)}
-.tag{background:var(--ink-10);color:var(--ink-60);font-size:9.5px;padding:2px 7px;border-radius:7px}
-.ibt{width:27px;height:27px;border-radius:6px;border:none;background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:13px;color:var(--ink-30);transition:all .12s}
+@keyframes fi{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:5px;padding:7px 13px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;border:none;font-family:'DM Sans',sans-serif;transition:all .12s;white-space:nowrap}
+.btn-p{background:var(--sage-l);color:#fff}.btn-p:hover{background:var(--sage)}
+.btn-g{background:transparent;color:var(--ink-60);border:1.5px solid var(--ink-10)}.btn-g:hover{background:var(--ink-10)}
+.btn-ai{background:linear-gradient(135deg,var(--purple),var(--sage-l));color:#fff}
+.btn-danger{background:transparent;color:var(--terra);border:1.5px solid rgba(184,98,58,.3)}.btn-danger:hover{background:var(--terra-p)}
+.btn-sm{padding:4px 9px;font-size:10.5px}
+.ibt{width:26px;height:26px;border-radius:6px;border:none;background:transparent;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;font-size:13px;color:var(--ink-30);transition:all .1s}
 .ibt:hover{background:var(--ink-10);color:var(--ink)}
+
+/* CARDS */
+.card{background:var(--white);border-radius:var(--r);box-shadow:var(--sh);border:1px solid var(--ink-10)}
+.card-hd{padding:13px 16px;border-bottom:1px solid var(--ink-10);display:flex;align-items:center;justify-content:space-between}
+.card-title{font-size:13px;font-weight:600}
+.empty{padding:32px;text-align:center;color:var(--ink-30)}
+.empty-ic{font-size:32px;margin-bottom:8px}
+.tag{background:var(--ink-10);color:var(--ink-60);font-size:9.5px;padding:2px 7px;border-radius:6px}
+.badge{padding:2px 7px;border-radius:7px;font-size:9.5px;font-weight:700}
+.bg{background:var(--sage-p);color:var(--sage)}.bt{background:var(--terra-p);color:var(--terra)}
+
+/* ═══ MURS ═══ */
+.murs-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+.murs-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px;margin-bottom:20px}
+.mur-card{background:var(--white);border:1px solid var(--ink-10);border-radius:var(--r);overflow:hidden;cursor:pointer;transition:all .15s;box-shadow:var(--sh)}
+.mur-card:hover{box-shadow:var(--sh-md);transform:translateY(-2px)}
+.mur-banner{height:70px;display:flex;align-items:center;justify-content:center;font-size:28px;position:relative}
+.mur-body{padding:12px 14px}
+.mur-name{font-size:13px;font-weight:700;margin-bottom:3px}
+.mur-meta{font-size:10.5px;color:var(--ink-30)}
+.mur-footer{padding:8px 14px;border-top:1px solid var(--ink-10);display:flex;gap:5px;justify-content:flex-end}
+
+/* Kanban board */
+.board-wrap{display:flex;gap:14px;overflow-x:auto;padding-bottom:16px;min-height:400px}
+.board-wrap::-webkit-scrollbar{height:6px}.board-wrap::-webkit-scrollbar-thumb{background:var(--ink-10);border-radius:3px}
+.board-col{width:260px;flex-shrink:0;display:flex;flex-direction:column;gap:8px}
+.col-hd{display:flex;align-items:center;justify-content:space-between;padding:8px 10px;background:var(--ink-10);border-radius:9px;margin-bottom:4px}
+.col-name{font-size:12px;font-weight:700}
+.col-count{font-size:10px;color:var(--ink-30);background:var(--white);padding:1px 6px;border-radius:5px}
+.kard{background:var(--white);border:1px solid var(--ink-10);border-radius:9px;padding:11px 13px;box-shadow:var(--sh);cursor:grab;transition:all .12s;position:relative}
+.kard:hover{box-shadow:var(--sh-md)}
+.kard.dragging{opacity:.4;cursor:grabbing}
+.kard-type{font-size:9px;text-transform:uppercase;letter-spacing:.5px;color:var(--ink-30);margin-bottom:4px}
+.kard-text{font-size:12.5px;line-height:1.6;color:var(--ink-60)}
+.kard-link{font-size:11px;color:var(--blue);margin-top:5px;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.kard-del{position:absolute;top:6px;right:6px;width:20px;height:20px;border-radius:5px;border:none;background:transparent;cursor:pointer;font-size:11px;color:var(--ink-30);opacity:0;transition:opacity .1s;display:flex;align-items:center;justify-content:center}
+.kard:hover .kard-del{opacity:1}.kard-del:hover{background:var(--terra-p);color:var(--terra)}
+.add-kard{border:2px dashed var(--ink-10);border-radius:9px;padding:10px;text-align:center;font-size:11.5px;color:var(--ink-30);cursor:pointer;transition:all .1s}
+.add-kard:hover{border-color:var(--sage-l);color:var(--sage-l);background:var(--sage-p)}
+.add-col-btn{width:200px;flex-shrink:0;border:2px dashed var(--ink-10);border-radius:var(--r);padding:16px;text-align:center;font-size:12px;color:var(--ink-30);cursor:pointer;transition:all .1s;align-self:flex-start}
+.add-col-btn:hover{border-color:var(--sage-l);color:var(--sage-l)}
+
+/* ═══ COURS ═══ */
+.cours-layout{display:grid;grid-template-columns:220px 1fr;gap:16px}
+.cours-list{display:flex;flex-direction:column;gap:6px}
+.cours-item{padding:10px 12px;background:var(--white);border:1px solid var(--ink-10);border-radius:9px;cursor:pointer;transition:all .1s;box-shadow:var(--sh)}
+.cours-item:hover{box-shadow:var(--sh-md)}
+.cours-item.active{border-color:var(--sage-l);background:var(--sage-p)}
+.ci-title{font-size:12.5px;font-weight:600}
+.ci-meta{font-size:10px;color:var(--ink-30);margin-top:2px}
+
+.editeur{background:var(--white);border:1px solid var(--ink-10);border-radius:var(--r);padding:18px;min-height:400px}
+.blocs-area{min-height:200px;margin-bottom:16px}
+.bloc{margin-bottom:10px;position:relative;group:true}
+.bloc-h1{font-family:'Lora',serif;font-size:22px;font-weight:700;padding:8px 0;border:none;outline:none;width:100%;background:transparent;color:var(--ink);border-bottom:2px solid var(--ink-10)}
+.bloc-h2{font-family:'Lora',serif;font-size:16px;font-weight:700;padding:6px 0;border:none;outline:none;width:100%;background:transparent;color:var(--ink);border-bottom:1px solid var(--ink-10)}
+.bloc-p{font-size:13.5px;line-height:1.8;padding:4px 0;border:none;outline:none;width:100%;background:transparent;color:var(--ink-60);resize:none;font-family:'DM Sans',sans-serif;min-height:36px}
+.bloc-callout{background:var(--sage-p);border-left:3px solid var(--sage-l);border-radius:0 8px 8px 0;padding:10px 14px;font-size:13px;line-height:1.6;color:var(--sage);border:none;outline:none;width:100%;font-family:'DM Sans',sans-serif;resize:none}
+.bloc-code{font-family:monospace;font-size:12.5px;background:#1a1714;color:#a8cc8c;padding:12px 14px;border-radius:8px;border:none;outline:none;width:100%;resize:none;min-height:60px}
+.bloc-sep{border:none;border-top:1px solid var(--ink-10);margin:8px 0;height:1px;background:var(--ink-10)}
+.bloc-toolbar{display:none;position:absolute;right:0;top:0;background:var(--white);border:1px solid var(--ink-10);border-radius:7px;padding:2px;box-shadow:var(--sh);z-index:10;gap:2px}
+.bloc:hover .bloc-toolbar{display:flex}
+.bt-btn{width:22px;height:22px;border:none;border-radius:5px;cursor:pointer;background:transparent;font-size:12px;display:flex;align-items:center;justify-content:center;color:var(--ink-60)}
+.bt-btn:hover{background:var(--sand)}
+.bloc-btns{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
+
+/* ═══ QUIZ ═══ */
+.quiz-setup{max-width:560px}
+.quiz-running{max-width:680px;margin:0 auto}
+.q-card{background:var(--white);border:1px solid var(--ink-10);border-radius:var(--r);padding:24px;box-shadow:var(--sh);text-align:center}
+.q-num{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--ink-30);margin-bottom:12px}
+.q-text{font-size:17px;font-weight:700;font-family:'Lora',serif;margin-bottom:20px;line-height:1.5}
+.q-opts{display:flex;flex-direction:column;gap:8px}
+.q-opt{padding:12px 16px;border:1.5px solid var(--ink-10);border-radius:10px;cursor:pointer;transition:all .12s;font-size:13px;text-align:left;background:var(--sand);font-family:'DM Sans',sans-serif}
+.q-opt:hover{border-color:var(--sage-l);background:var(--sage-p)}
+.q-opt.correct{background:var(--sage-p);border-color:var(--sage-l);color:var(--sage)}
+.q-opt.wrong{background:var(--terra-p);border-color:var(--terra);color:var(--terra)}
+.timer-bar{height:5px;background:var(--ink-10);border-radius:3px;overflow:hidden;margin-bottom:16px}
+.timer-fill{height:100%;background:var(--sage-l);border-radius:3px;transition:width 1s linear}
+.quiz-score{font-size:36px;font-weight:700;font-family:'Lora',serif;color:var(--sage)}
+
 /* MODAL */
-.ov{display:none;position:fixed;inset:0;background:rgba(26,23,20,.5);z-index:200;align-items:center;justify-content:center;backdrop-filter:blur(3px)}
-.ov.open{display:flex}
-.modal{background:var(--white);border-radius:16px;width:480px;max-height:88vh;overflow-y:auto;padding:22px;box-shadow:var(--sh-lg)}
-.modal-title{font-family:'Lora',serif;font-size:17px;font-weight:700}
-.modal-sub{font-size:11.5px;color:var(--ink-60);margin-top:3px;margin-bottom:18px}
-.mc{float:right;background:none;border:none;font-size:20px;cursor:pointer;color:var(--ink-30)}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(26,23,20,.5);z-index:200;align-items:center;justify-content:center;backdrop-filter:blur(3px)}
+.modal-overlay.open{display:flex}
+.modal{background:var(--white);border-radius:16px;width:480px;max-height:88vh;overflow-y:auto;padding:22px;box-shadow:0 20px 60px rgba(26,23,20,.2)}
+.modal-title{font-family:'Lora',serif;font-size:17px;font-weight:700;margin-bottom:3px}
+.modal-sub{font-size:11.5px;color:var(--ink-60);margin-bottom:18px}
+.modal-close{float:right;background:none;border:none;font-size:20px;cursor:pointer;color:var(--ink-30)}
+.modal-close:hover{color:var(--ink)}
+.modal-footer{display:flex;justify-content:flex-end;gap:7px;margin-top:18px;padding-top:14px;border-top:1px solid var(--ink-10)}
 .fg{margin-bottom:12px}
-.fl{font-size:10.5px;font-weight:700;color:var(--ink-60);margin-bottom:4px;display:block;text-transform:uppercase;letter-spacing:.3px}
-.fi,.fs,.fta{width:100%;padding:8px 11px;border-radius:7px;border:1px solid var(--ink-10);font-size:12.5px;color:var(--ink);background:var(--sand);outline:none;font-family:'DM Sans',sans-serif;transition:border .12s}
-.fi:focus,.fs:focus,.fta:focus{border-color:var(--sage-l)}
-.fta{min-height:70px;resize:vertical}
-.mf{display:flex;justify-content:flex-end;gap:7px;margin-top:18px;padding-top:14px;border-top:1px solid var(--ink-10)}
+.fg label{display:block;font-size:10.5px;font-weight:700;color:var(--ink-60);text-transform:uppercase;letter-spacing:.3px;margin-bottom:4px}
+.fg input,.fg select,.fg textarea{width:100%;padding:8px 11px;border-radius:8px;border:1.5px solid var(--ink-10);font-size:12.5px;color:var(--ink);background:var(--sand);outline:none;font-family:'DM Sans',sans-serif;transition:border .15s}
+.fg input:focus,.fg select:focus,.fg textarea:focus{border-color:var(--sage-l)}
+.fg textarea{resize:vertical;min-height:70px}
+
 /* TOAST */
-.toast{position:fixed;bottom:24px;right:24px;background:var(--ink);color:#fff;padding:12px 18px;border-radius:10px;font-size:12.5px;font-weight:500;z-index:999;transform:translateY(80px);opacity:0;transition:all .3s;pointer-events:none;max-width:320px}
+.toast{position:fixed;bottom:22px;right:22px;background:var(--ink);color:#fff;padding:11px 16px;border-radius:10px;font-size:12.5px;font-weight:500;z-index:999;transform:translateY(60px);opacity:0;transition:all .3s;pointer-events:none}
 .toast.show{transform:translateY(0);opacity:1}
 .toast.success{background:var(--sage-l)}.toast.error{background:var(--terra)}
-.empty{padding:36px 20px;text-align:center;color:var(--ink-30)}
-.empty-ic{font-size:36px;margin-bottom:10px}.empty-txt{font-size:12.5px;line-height:1.6}
-.spin{width:16px;height:16px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:rot .7s linear infinite;display:inline-block;vertical-align:middle;margin-right:5px}
+.spin{width:14px;height:14px;border:2px solid rgba(255,255,255,.35);border-top-color:#fff;border-radius:50%;animation:rot .6s linear infinite;display:inline-block;vertical-align:middle;margin-right:5px}
 @keyframes rot{to{transform:rotate(360deg)}}
-
-/* ══════════════════════════════════════
-   PRIORITÉ 1 — MURS COLLABORATIFS
-══════════════════════════════════════ */
-.murs-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px;margin-bottom:20px}
-.mur-card{background:var(--white);border-radius:14px;overflow:hidden;box-shadow:var(--sh);border:1px solid var(--ink-10);cursor:pointer;transition:all .2s}
-.mur-card:hover{box-shadow:var(--sh-md);transform:translateY(-3px)}
-.mur-cover{height:100px;display:flex;align-items:center;justify-content:center;font-size:36px;position:relative}
-.mur-cover-badge{position:absolute;top:8px;right:8px;background:rgba(0,0,0,.3);color:#fff;font-size:9px;padding:2px 7px;border-radius:8px;font-weight:600}
-.mur-body{padding:12px 14px}
-.mur-title{font-size:13px;font-weight:700}
-.mur-meta{font-size:10.5px;color:var(--ink-30);margin-top:3px}
-.mur-footer{display:flex;gap:5px;margin-top:10px;flex-wrap:wrap}
-
-/* MUR DÉTAIL — CARTES DRAG AND DROP */
-.mur-detail{display:none}
-.mur-detail.active{display:block}
-.mur-topbar{display:flex;align-items:center;gap:10px;margin-bottom:18px;flex-wrap:wrap}
-.mur-back{background:none;border:none;font-size:20px;cursor:pointer;color:var(--ink-60);padding:4px}
-.mur-back:hover{color:var(--ink)}
-.mur-name{font-family:'Lora',serif;font-size:18px;font-weight:700}
-.mur-columns{display:flex;gap:14px;overflow-x:auto;padding-bottom:10px;min-height:60vh;align-items:flex-start}
-.mur-col{background:var(--ink-10);border-radius:12px;padding:12px;min-width:240px;width:240px;flex-shrink:0}
-.col-title{font-size:12px;font-weight:700;color:var(--ink-60);margin-bottom:10px;display:flex;align-items:center;justify-content:space-between}
-.col-cards{min-height:60px;display:flex;flex-direction:column;gap:8px}
-.col-add{width:100%;padding:7px;background:rgba(26,23,20,.06);border:none;border-radius:8px;font-size:11.5px;color:var(--ink-60);cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .12s;margin-top:8px}
-.col-add:hover{background:rgba(26,23,20,.1)}
-.add-col-btn{background:rgba(255,255,255,.6);border:2px dashed var(--ink-30);border-radius:12px;padding:16px;min-width:200px;cursor:pointer;text-align:center;font-size:12px;color:var(--ink-30);font-family:'DM Sans',sans-serif;transition:all .12s;flex-shrink:0}
-.add-col-btn:hover{background:var(--white);border-color:var(--sage-l);color:var(--sage)}
-
-/* CARTE MUR */
-.mur-carte{background:var(--white);border-radius:9px;padding:12px;box-shadow:var(--sh);cursor:grab;transition:all .15s;border:1px solid transparent;position:relative;user-select:none}
-.mur-carte:hover{box-shadow:var(--sh-md);border-color:var(--ink-10)}
-.mur-carte.dragging{opacity:.5;transform:rotate(2deg);cursor:grabbing}
-.mur-carte.drag-over{border-color:var(--sage-l);background:var(--sage-p)}
-.carte-type-badge{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;display:inline-block;padding:2px 6px;border-radius:5px}
-.ct-texte{background:var(--blue-p);color:var(--blue)}
-.ct-image{background:var(--sage-p);color:var(--sage)}
-.ct-lien{background:var(--amber-p);color:var(--amber)}
-.ct-video{background:var(--terra-p);color:var(--terra)}
-.ct-pdf{background:var(--purple-p);color:var(--purple)}
-.carte-title{font-size:12.5px;font-weight:600;margin-bottom:4px}
-.carte-body{font-size:11.5px;color:var(--ink-60);line-height:1.5}
-.carte-img{width:100%;height:100px;object-fit:cover;border-radius:6px;margin-top:6px}
-.carte-actions{display:flex;gap:3px;position:absolute;top:6px;right:6px;opacity:0;transition:opacity .12s}
-.mur-carte:hover .carte-actions{opacity:1}
-.color-selector{display:flex;gap:6px;flex-wrap:wrap}
-.cs-dot{width:24px;height:24px;border-radius:50%;cursor:pointer;border:2px solid transparent;transition:all .12s}
-.cs-dot:hover,.cs-dot.sel{border-color:var(--ink);transform:scale(1.1)}
-
-/* ══════════════════════════════════════
-   PRIORITÉ 2 — ANNONCES & FIL D'ACTU
-══════════════════════════════════════ */
-.annonces-layout{display:grid;grid-template-columns:1fr 280px;gap:16px}
-.annonce-card{background:var(--white);border:1px solid var(--ink-10);border-radius:var(--r);padding:16px;margin-bottom:10px;box-shadow:var(--sh);cursor:pointer;transition:box-shadow .12s}
-.annonce-card:hover{box-shadow:var(--sh-md)}
-.annonce-card.pinned{border-left:3px solid var(--amber)}
-.ann-header{display:flex;align-items:flex-start;gap:10px;margin-bottom:8px}
-.ann-av{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;flex-shrink:0;background:var(--sage-l)}
-.ann-meta{flex:1}
-.ann-author{font-size:12.5px;font-weight:600}
-.ann-date{font-size:10px;color:var(--ink-30);margin-top:1px}
-.ann-body{font-size:12.5px;color:var(--ink-60);line-height:1.7}
-.ann-footer{display:flex;align-items:center;gap:8px;margin-top:10px;padding-top:8px;border-top:1px solid var(--ink-10)}
-.ann-like{background:none;border:1px solid var(--ink-10);border-radius:6px;padding:3px 8px;font-size:11px;cursor:pointer;color:var(--ink-60);transition:all .12s}
-.ann-like:hover{background:var(--terra-p);border-color:var(--terra);color:var(--terra)}
-.ann-like.liked{background:var(--terra-p);border-color:var(--terra);color:var(--terra)}
-.ann-comment-count{font-size:10.5px;color:var(--ink-30)}
-.compose-box{background:var(--white);border:1px solid var(--ink-10);border-radius:var(--r);padding:14px;margin-bottom:14px;box-shadow:var(--sh)}
-.compose-input{width:100%;padding:10px 12px;border-radius:8px;border:1px solid var(--ink-10);font-size:12.5px;background:var(--sand);outline:none;font-family:'DM Sans',sans-serif;resize:none;min-height:60px;transition:border .12s}
-.compose-input:focus{border-color:var(--sage-l);min-height:100px}
-.compose-footer{display:flex;justify-content:space-between;align-items:center;margin-top:8px}
-.compose-opts{display:flex;gap:6px}
-.compose-opt{background:none;border:1px solid var(--ink-10);border-radius:6px;padding:4px 8px;font-size:10.5px;cursor:pointer;color:var(--ink-60);transition:all .12s}
-.compose-opt:hover{background:var(--ink-10)}
-/* Stats sidebar */
-.stat-mini{background:var(--white);border:1px solid var(--ink-10);border-radius:var(--r);padding:14px;margin-bottom:10px;box-shadow:var(--sh)}
-.sm-title{font-size:11px;font-weight:700;color:var(--ink-60);text-transform:uppercase;letter-spacing:.3px;margin-bottom:10px}
-.sm-row{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid var(--ink-10);font-size:12px}
-.sm-row:last-child{border:none}
-.sm-val{font-weight:700;color:var(--sage)}
-
-/* ══════════════════════════════════════
-   PRIORITÉ 3 — ÉDITEUR DE COURS
-══════════════════════════════════════ */
-.cours-list{display:flex;flex-direction:column;gap:8px}
-.cours-item{background:var(--white);border:1px solid var(--ink-10);border-radius:var(--r);padding:14px 16px;display:flex;align-items:center;gap:12px;cursor:pointer;transition:all .12s;box-shadow:var(--sh)}
-.cours-item:hover{box-shadow:var(--sh-md);transform:translateX(3px)}
-.ci-icon{width:40px;height:40px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
-.ci-title{font-size:13px;font-weight:600}
-.ci-meta{font-size:10.5px;color:var(--ink-30);margin-top:2px}
-.ci-tags{display:flex;gap:4px;margin-left:auto;flex-wrap:wrap}
-
-/* ÉDITEUR BLOCS */
-.editeur{background:var(--white);border-radius:14px;border:1px solid var(--ink-10);overflow:hidden;box-shadow:var(--sh-md)}
-.edit-topbar{padding:14px 20px;border-bottom:1px solid var(--ink-10);display:flex;align-items:center;gap:10px}
-.edit-title-input{flex:1;border:none;font-size:18px;font-weight:700;font-family:'Lora',serif;color:var(--ink);outline:none;background:transparent}
-.edit-title-input::placeholder{color:var(--ink-30)}
-.edit-toolbar{padding:8px 16px;border-bottom:1px solid var(--ink-10);display:flex;gap:4px;flex-wrap:wrap;background:var(--sand)}
-.tb-btn{padding:5px 9px;border-radius:6px;border:none;background:transparent;font-size:12px;cursor:pointer;color:var(--ink-60);transition:all .12s;font-family:'DM Sans',sans-serif}
-.tb-btn:hover{background:var(--ink-10);color:var(--ink)}
-.tb-sep{width:1px;background:var(--ink-10);margin:0 3px}
-.blocs-area{padding:20px;min-height:400px}
-.bloc{padding:10px 14px;border-radius:8px;border:1px solid transparent;margin-bottom:8px;transition:all .12s;position:relative;cursor:text}
-.bloc:hover,.bloc:focus-within{border-color:var(--ink-10);background:var(--sand)}
-.bloc-handle{position:absolute;left:-20px;top:50%;transform:translateY(-50%);color:var(--ink-30);font-size:14px;opacity:0;cursor:grab;transition:opacity .12s}
-.bloc:hover .bloc-handle{opacity:1}
-.bloc-del{position:absolute;right:6px;top:6px;width:22px;height:22px;border-radius:5px;border:none;background:transparent;font-size:12px;cursor:pointer;color:var(--ink-30);opacity:0;transition:all .12s}
-.bloc:hover .bloc-del{opacity:1}
-.bloc-del:hover{background:var(--terra-p);color:var(--terra)}
-.bloc-texte-input{width:100%;border:none;outline:none;font-size:13.5px;line-height:1.8;color:var(--ink-60);background:transparent;font-family:'DM Sans',sans-serif;resize:none;min-height:40px}
-.bloc-titre-input{width:100%;border:none;outline:none;font-size:18px;font-weight:700;font-family:'Lora',serif;color:var(--ink);background:transparent}
-.bloc-titre2-input{width:100%;border:none;outline:none;font-size:15px;font-weight:700;color:var(--ink);background:transparent;font-family:'DM Sans',sans-serif}
-.bloc-sep-line{height:2px;background:var(--ink-10);border-radius:1px;margin:6px 0}
-.bloc-callout{background:var(--sage-p);border-left:3px solid var(--sage-l);border-radius:0 8px 8px 0;padding:10px 14px}
-.bloc-callout-input{width:100%;border:none;outline:none;font-size:13px;line-height:1.7;color:var(--sage);background:transparent;font-family:'DM Sans',sans-serif;resize:none;min-height:36px}
-.bloc-code{background:#1A1714;border-radius:8px;padding:12px 14px}
-.bloc-code-input{width:100%;border:none;outline:none;font-size:12px;line-height:1.6;color:#7BAF8E;background:transparent;font-family:monospace;resize:none;min-height:60px}
-.add-bloc-bar{display:flex;gap:6px;flex-wrap:wrap;padding:10px 14px;border-top:1px solid var(--ink-10);background:var(--sand)}
-.add-bloc-btn{padding:5px 10px;border-radius:7px;border:1px solid var(--ink-10);background:var(--white);font-size:10.5px;cursor:pointer;color:var(--ink-60);font-family:'DM Sans',sans-serif;transition:all .12s}
-.add-bloc-btn:hover{border-color:var(--sage-l);color:var(--sage);background:var(--sage-p)}
-
-/* ══════════════════════════════════════
-   PRIORITÉ 4 — FICHE ÉLÈVE
-══════════════════════════════════════ */
-.eleves-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;margin-bottom:16px}
-.eleve-card{background:var(--white);border:1px solid var(--ink-10);border-radius:var(--r);padding:16px;text-align:center;cursor:pointer;transition:all .15s;box-shadow:var(--sh)}
-.eleve-card:hover{box-shadow:var(--sh-md);transform:translateY(-2px)}
-.ec-av{width:48px;height:48px;border-radius:50%;margin:0 auto 8px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:#fff}
-.ec-name{font-size:13px;font-weight:600}
-.ec-class{font-size:10.5px;color:var(--ink-30);margin-top:2px}
-.ec-stats{display:flex;gap:8px;justify-content:center;margin-top:10px}
-.ec-stat{text-align:center}
-.ec-stat-val{font-size:16px;font-weight:700;font-family:'Lora',serif}
-.ec-stat-lbl{font-size:9px;color:var(--ink-30);text-transform:uppercase;letter-spacing:.3px}
-/* Fiche détail */
-.fiche-layout{display:grid;grid-template-columns:280px 1fr;gap:16px}
-.fiche-side{display:flex;flex-direction:column;gap:12px}
-.fiche-profil{background:var(--white);border:1px solid var(--ink-10);border-radius:var(--r);padding:20px;text-align:center;box-shadow:var(--sh)}
-.fp-av{width:64px;height:64px;border-radius:50%;margin:0 auto 10px;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700;color:#fff}
-.fp-name{font-size:16px;font-weight:700;font-family:'Lora',serif}
-.fp-class{font-size:11.5px;color:var(--ink-30);margin-top:3px}
-.prog-comp{margin-top:14px}
-.comp-row{display:flex;align-items:center;gap:8px;margin-bottom:8px}
-.comp-name{font-size:11px;color:var(--ink-60);width:120px;flex-shrink:0}
-.comp-bar{flex:1;height:6px;background:var(--ink-10);border-radius:3px;overflow:hidden}
-.comp-fill{height:100%;border-radius:3px;transition:width .5s ease}
-.comp-pct{font-size:10px;color:var(--ink-30);width:30px;text-align:right}
-.note-rapide{background:var(--white);border:1px solid var(--ink-10);border-radius:var(--r);padding:14px;box-shadow:var(--sh)}
-.notes-list{display:flex;flex-direction:column;gap:8px}
-.note-item{background:var(--sand);border-radius:8px;padding:10px 12px}
-.note-date{font-size:9.5px;color:var(--ink-30);margin-bottom:4px}
-.note-txt{font-size:12px;color:var(--ink-60);line-height:1.5}
-.note-input{width:100%;border:none;border-radius:7px;padding:8px;background:var(--sand);font-size:12px;font-family:'DM Sans',sans-serif;outline:none;resize:none;min-height:60px;border:1px solid var(--ink-10)}
-.note-input:focus{border-color:var(--sage-l)}
-.resultats-table{width:100%;border-collapse:collapse}
-.resultats-table th{text-align:left;font-size:9.5px;color:var(--ink-30);text-transform:uppercase;letter-spacing:.5px;padding:8px 12px;border-bottom:1px solid var(--ink-10)}
-.resultats-table td{padding:10px 12px;border-bottom:1px solid rgba(26,23,20,.04);font-size:12px}
-.resultats-table tr:hover td{background:var(--sand)}
-.score-chip{font-family:'Lora',serif;font-size:18px;font-weight:700}
-
-/* ══════════════════════════════════════
-   PRIORITÉ 5 — QUIZ TEMPS RÉEL
-══════════════════════════════════════ */
-.quiz-session{background:var(--white);border-radius:14px;border:1px solid var(--ink-10);overflow:hidden;box-shadow:var(--sh-md)}
-.qs-header{padding:16px 20px;background:linear-gradient(135deg,var(--ink),#1A2D20);display:flex;align-items:center;justify-content:space-between}
-.qs-title{font-family:'Lora',serif;font-size:16px;color:#fff;font-weight:700}
-.qs-timer{font-size:24px;font-weight:700;color:#fff;font-family:'Lora',serif;background:rgba(255,255,255,.1);padding:6px 14px;border-radius:8px}
-.qs-progress{height:4px;background:rgba(255,255,255,.1)}
-.qs-prog-fill{height:100%;background:var(--sage-l);transition:width .3s}
-.qs-body{padding:20px}
-.qs-question{font-size:16px;font-weight:600;margin-bottom:16px;line-height:1.5}
-.qs-options{display:flex;flex-direction:column;gap:8px;margin-bottom:16px}
-.qs-opt{padding:12px 16px;border:2px solid var(--ink-10);border-radius:10px;font-size:13px;cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:10px}
-.qs-opt:hover{border-color:var(--blue);background:var(--blue-p)}
-.qs-opt.selected{border-color:var(--blue);background:var(--blue-p)}
-.qs-opt.correct{border-color:var(--sage);background:var(--sage-p);color:var(--sage)}
-.qs-opt.wrong{border-color:var(--terra);background:var(--terra-p);color:var(--terra)}
-.qs-opt-letter{width:24px;height:24px;border-radius:50%;background:var(--ink-10);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0}
-.qs-opt.selected .qs-opt-letter{background:var(--blue);color:#fff}
-.qs-opt.correct .qs-opt-letter{background:var(--sage);color:#fff}
-.qs-opt.wrong .qs-opt-letter{background:var(--terra);color:#fff}
-/* Live results */
-.live-results{background:var(--sand);border-radius:10px;padding:14px;margin-top:12px}
-.lr-title{font-size:10.5px;font-weight:700;color:var(--ink-60);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px}
-.lr-row{display:flex;align-items:center;gap:8px;margin-bottom:6px}
-.lr-label{font-size:11.5px;color:var(--ink-60);width:80px;flex-shrink:0}
-.lr-bar{flex:1;height:18px;background:var(--ink-10);border-radius:4px;overflow:hidden;position:relative}
-.lr-fill{height:100%;border-radius:4px;transition:width .5s ease;display:flex;align-items:center;padding-left:6px}
-.lr-pct{font-size:10px;font-weight:700;color:#fff;position:relative;z-index:1}
-.lr-count{font-size:10.5px;color:var(--ink-30);width:30px;text-align:right}
-.participants-list{display:flex;gap:4px;flex-wrap:wrap;margin-top:8px}
-.participant-chip{background:var(--sage-p);color:var(--sage);font-size:10px;padding:2px 8px;border-radius:8px;font-weight:600}
-.participant-chip.answered{background:var(--blue-p);color:var(--blue)}
-
-/* ══════════════════════════════════════
-   PRIORITÉ 6 — APERÇU PDF
-══════════════════════════════════════ */
-.pdf-viewer{background:var(--white);border-radius:14px;border:1px solid var(--ink-10);overflow:hidden;box-shadow:var(--sh-md)}
-.pdf-topbar{padding:10px 16px;border-bottom:1px solid var(--ink-10);display:flex;align-items:center;gap:8px;background:var(--sand)}
-.pdf-title{font-size:13px;font-weight:600;flex:1}
-.pdf-nav{display:flex;align-items:center;gap:6px;margin:0 auto}
-.pdf-nav-btn{width:28px;height:28px;border-radius:6px;border:1px solid var(--ink-10);background:var(--white);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;color:var(--ink-60)}
-.pdf-page-info{font-size:12px;color:var(--ink-60)}
-.pdf-content{background:#525659;min-height:400px;display:flex;align-items:center;justify-content:center;padding:20px}
-.pdf-page{background:white;width:100%;max-width:500px;min-height:360px;border-radius:4px;box-shadow:0 4px 20px rgba(0,0,0,.3);padding:40px;font-size:13px;line-height:1.8;color:var(--ink)}
-.pdf-page h2{font-family:'Lora',serif;font-size:18px;margin-bottom:14px;color:var(--ink)}
-.pdf-page h3{font-size:14px;font-weight:700;margin:14px 0 8px}
-.pdf-page p{margin-bottom:10px;color:var(--ink-60)}
-.pdf-page ul{margin-left:20px;margin-bottom:10px;color:var(--ink-60)}
-.pdf-page li{margin-bottom:4px}
-.pdf-annotations{border-top:1px solid var(--ink-10);padding:14px 16px}
-.annotation-item{display:flex;gap:8px;padding:8px 0;border-bottom:1px solid var(--ink-10)}
-.ann-color{width:4px;border-radius:2px;flex-shrink:0}
-.ann-txt{font-size:12px;color:var(--ink-60);flex:1}
-.ann-pg{font-size:10px;color:var(--ink-30)}
 </style>
-  <!-- Firebase SDK (compat) -->
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
 </head>
 <body>
-
-<script>
-// ═══ NAVIGATION GLOBALE — disponible immédiatement ═══
-function navTo(url, screen, section) {
-  var currentPage = window.location.pathname.split('/').pop() || 'dashboard.html';
-  if (!url || url === currentPage) {
-    if (screen && typeof window.nav === 'function') {
-      window.nav(screen);
-    } else if (screen) {
-      // nav pas encore chargé — attendre
-      document.addEventListener('DOMContentLoaded', function() {
-        if (typeof window.nav === 'function') window.nav(screen);
-      });
-    }
-    setActiveNav(section, screen);
-  } else {
-    if (screen) sessionStorage.setItem('targetScreen', screen);
-    if (section) sessionStorage.setItem('targetSection', section);
-    window.location.href = url;
-  }
-}
-
-function toggleNav(id) {
-  var el = document.getElementById(id);
-  if (!el) return;
-  var isOpen = el.classList.contains('open');
-  document.querySelectorAll('.nav-main-item').forEach(function(n) { n.classList.remove('open'); });
-  if (!isOpen) el.classList.add('open');
-}
-
-function setActiveNav(section, screen) {
-  document.querySelectorAll('.nav-main-item').forEach(function(n) { n.classList.remove('active'); });
-  document.querySelectorAll('.nav-sub-item').forEach(function(n) { n.classList.remove('active'); });
-  if (section) {
-    var mainEl = document.querySelector('[data-page="' + section + '"]');
-    if (mainEl) { mainEl.classList.add('active'); mainEl.classList.add('open'); }
-  }
-}
-
-window.navTo = navTo;
-window.toggleNav = toggleNav;
-window.setActiveNav = setActiveNav;
-
-// Logout disponible immédiatement
-function logout() {
-  if (typeof firebase !== "undefined" && firebase.auth) {
-    firebase.auth().signOut().then(function() { window.location.href = "index.html"; });
-  } else { window.location.href = "index.html"; }
-}
-window.logout = logout;
-// nav() alias - sera remplacé par la vraie fonction plus tard
-if (!window.nav) {
-  window.nav = function(id) {
-    // Attendre que la vraie nav soit chargée
-    var t = setInterval(function() {
-      if (window._navReady) {
-        clearInterval(t);
-        window.nav(id);
-      }
-    }, 50);
-  };
-}
-</script>
-
 <div class="app">
 
 <!-- SIDEBAR -->
-<!-- SIDEBAR PÉDAGOGIA -->
-  <nav class="sidebar" id="main-sidebar">
-    <div class="s-logo">
-      <div class="s-logo-icon">🎓</div>
-      <div class="s-logo-text">
-        <div class="wm">Pédagogia</div>
-        <div class="tg">Enseignant</div>
-      </div>
-    </div>
-    <div class="s-user" onclick="window.location.href='suivi.html'">
-      <div class="av" id="s-av" style="background:var(--sage-l)">ML</div>
-      <div>
-        <div class="u-nm" id="s-nm">Chargement…</div>
-        <div class="u-rl">Voir mon profil →</div>
-      </div>
-    </div>
-    <div class="s-nav" id="s-nav">
-      <!-- Section Accueil -->
-      <div class="nav-main-item" data-page="dashboard" onclick="navTo('dashboard.html','','dashboard')">
-        <div class="nav-main-btn">
-          <span class="nav-main-icon">⌂</span>
-          <span class="nav-main-label">Accueil</span>
-        </div>
-      </div>
+<nav class="sidebar">
+  <div class="s-logo">
+    <div class="s-logo-ic">🎓</div>
+    <div><div class="s-logo-wm">Pédagogia</div><div class="s-logo-tg">Créer</div></div>
+  </div>
+  <div class="s-nav">
+    <div class="nav-item" onclick="window.location.href='dashboard.html'">⌂ Accueil</div>
+    <div class="nav-sep"></div>
+    <div class="nav-label">Espaces</div>
+    <div class="nav-item active" id="nav-murs" onclick="showScreen('murs')">🗂 Murs collaboratifs</div>
+    <div class="nav-item" id="nav-cours" onclick="showScreen('cours')">✍️ Cours</div>
+    <div class="nav-item" id="nav-quiz" onclick="showScreen('quiz')">⚡ Quiz</div>
+    <div class="nav-item" id="nav-eleves" onclick="showScreen('eleves')">👥 Fiches élèves</div>
+    <div class="nav-sep"></div>
+    <div class="nav-item" onclick="window.location.href='messagerie.html'">✉️ Messagerie</div>
+    <div class="nav-item" onclick="window.location.href='suivi.html'">📊 Suivi</div>
+  </div>
+  <div class="s-bottom">
+    <button class="s-logout" onclick="logout()">↩ Déconnexion</button>
+  </div>
+</nav>
 
-      <!-- Section Enseigner -->
-      <div class="nav-main-item" data-page="enseigner" id="nav-enseigner">
-        <div class="nav-main-btn" onclick="toggleNav('nav-enseigner')">
-          <span class="nav-main-icon">📚</span>
-          <span class="nav-main-label">Enseigner</span>
-        </div>
-        <span class="nav-main-chevron">›</span>
-        <div class="nav-sub">
-          <div class="nav-sub-item" onclick="navTo('murs.html','editeur','enseigner')"><span class="nav-sub-icon">✍️</span> Créer un cours</div>
-          <div class="nav-sub-item" onclick="navTo('murs.html','murs','enseigner')"><span class="nav-sub-icon">🗂</span> Murs collaboratifs</div>
-          <div class="nav-sub-item" onclick="navTo('murs.html','quiz-live','enseigner')"><span class="nav-sub-icon">⚡</span> Quiz temps réel</div>
-          <div class="nav-sub-item" onclick="navTo('dashboard.html','ai','enseigner')"><span class="nav-sub-icon">✦</span> Assistant IA</div>
-          <div class="nav-sub-item" onclick="navTo('murs.html','pdf-viewer','enseigner')"><span class="nav-sub-icon">📄</span> Aperçu documents</div>
-        </div>
-      </div>
-
-      <!-- Section Ma Classe -->
-      <div class="nav-main-item" data-page="maclasse" id="nav-maclasse">
-        <div class="nav-main-btn" onclick="toggleNav('nav-maclasse')">
-          <span class="nav-main-icon">👥</span>
-          <span class="nav-main-label">Ma classe</span>
-        </div>
-        <span class="nav-main-chevron">›</span>
-        <div class="nav-sub">
-          <div class="nav-sub-item" onclick="navTo('dashboard.html','classes','maclasse')"><span class="nav-sub-icon">🏫</span> Mes classes</div>
-          <div class="nav-sub-item" onclick="navTo('murs.html','eleves','maclasse')"><span class="nav-sub-icon">👤</span> Fiches élèves</div>
-          <div class="nav-sub-item" onclick="navTo('dashboard.html','resources','maclasse')"><span class="nav-sub-icon">📁</span> Ressources</div>
-          <div class="nav-sub-item" onclick="navTo('dashboard.html','assignments','maclasse')"><span class="nav-sub-icon">📋</span> Devoirs <span class="nav-main-badge" id="badge-assign">0</span></div>
-        </div>
-      </div>
-
-      <!-- Section Communication -->
-      <div class="nav-main-item" data-page="communication" id="nav-communication">
-        <div class="nav-main-btn" onclick="toggleNav('nav-communication')">
-          <span class="nav-main-icon">💬</span>
-          <span class="nav-main-label">Communication</span>
-          <span class="nav-main-badge" id="badge-msg">3</span>
-        </div>
-        <span class="nav-main-chevron">›</span>
-        <div class="nav-sub">
-          <div class="nav-sub-item" onclick="navTo('messagerie.html','messagerie','communication')"><span class="nav-sub-icon">✉️</span> Messagerie</div>
-          <div class="nav-sub-item" onclick="navTo('messagerie.html','annonces','communication')"><span class="nav-sub-icon">📢</span> Annonces</div>
-          <div class="nav-sub-item" onclick="navTo('messagerie.html','notifications','communication')"><span class="nav-sub-icon">🔔</span> Notifications <span class="nav-main-badge" id="badge-notif">5</span></div>
-        </div>
-      </div>
-
-      <!-- Section Suivi -->
-      <div class="nav-main-item" data-page="suivi" id="nav-suivi">
-        <div class="nav-main-btn" onclick="toggleNav('nav-suivi')">
-          <span class="nav-main-icon">📊</span>
-          <span class="nav-main-label">Suivi & Organisation</span>
-        </div>
-        <span class="nav-main-chevron">›</span>
-        <div class="nav-sub">
-          <div class="nav-sub-item" onclick="navTo('suivi.html','tb-enrichi','suivi')"><span class="nav-sub-icon">📈</span> Vue d'ensemble</div>
-          <div class="nav-sub-item" onclick="navTo('suivi.html','planning','suivi')"><span class="nav-sub-icon">🗓</span> Planning semaine</div>
-          <div class="nav-sub-item" onclick="navTo('suivi.html','notes','suivi')"><span class="nav-sub-icon">📓</span> Notes & Carnets</div>
-          <div class="nav-sub-item" onclick="navTo('suivi.html','postits','suivi')"><span class="nav-sub-icon">💛</span> Post-its</div>
-          <div class="nav-sub-item" onclick="navTo('suivi.html','agenda','suivi')"><span class="nav-sub-icon">📅</span> Agenda</div>
-          <div class="nav-sub-item" onclick="navTo('suivi.html','sequences','suivi')"><span class="nav-sub-icon">🔖</span> Séquences</div>
-          <div class="nav-sub-item" onclick="navTo('suivi.html','export','suivi')"><span class="nav-sub-icon">⬇</span> Exporter</div>
-        </div>
-      </div>
-
-    </div><!-- /s-nav -->
-
-    <div class="s-bottom">
-      <div class="s-bottom-btn" onclick="logout()">
-        <span>↩</span> Déconnexion
-      </div>
-    </div>
-  </nav>
-
+<!-- MAIN -->
 <div class="main">
   <div class="topbar">
-    <div class="pt" id="pt">Murs collaboratifs</div>
-    <div class="tb-r">
-      <button class="btn btn-g btn-sm" id="tb-action-btn">+ Nouveau mur</button>
-      <button class="btn btn-ai btn-sm" onclick="nav('editeur')">✍️ Créer un cours</button>
+    <div class="topbar-title" id="page-title">Murs collaboratifs</div>
+    <div class="topbar-right" id="topbar-right">
+      <button class="btn btn-g btn-sm" onclick="showScreen('murs')">← Retour aux murs</button>
+      <button class="btn btn-p btn-sm" id="topbar-new" onclick="openNewMur()">+ Nouveau mur</button>
+      <button class="btn btn-ai btn-sm" onclick="showScreen('cours')">✍️ Créer un cours</button>
     </div>
   </div>
-
   <div class="content">
 
-    <!-- ═══ MURS COLLABORATIFS ═══ -->
-    <div class="screen active" id="screen-murs">
-      <div id="murs-liste">
-        <div class="murs-grid" id="murs-grid"></div>
+    <!-- ═ MURS ═ -->
+    <div id="screen-murs" class="screen active">
+      <div class="murs-header">
+        <div>
+          <div style="font-size:15px;font-weight:700;font-family:'Lora',serif">Murs collaboratifs</div>
+          <div style="font-size:11.5px;color:var(--ink-30);margin-top:2px">Organise tes idées par colonnes Kanban</div>
+        </div>
+        <button class="btn btn-p" onclick="openNewMur()">+ Nouveau mur</button>
       </div>
-      <div class="mur-detail" id="mur-detail">
-        <div class="mur-topbar">
-          <button class="mur-back" onclick="backToMurs()">←</button>
-          <div class="mur-name" id="mur-detail-name">Mon mur</div>
+      <div id="murs-grid" class="murs-grid">
+        <div class="empty"><div class="empty-ic">🗂</div><div class="empty-txt">Aucun mur. Crée le premier !</div></div>
+      </div>
+    </div>
+
+    <!-- ═ BOARD ═ -->
+    <div id="screen-board" class="screen">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap">
+        <button class="btn btn-g btn-sm" onclick="showScreen('murs')">← Retour</button>
+        <div style="font-size:15px;font-weight:700;font-family:'Lora',serif" id="board-title">Mur</div>
+        <div style="margin-left:auto;display:flex;gap:7px">
           <button class="btn btn-g btn-sm" onclick="addColumn()">+ Colonne</button>
-          <button class="btn btn-p btn-sm" onclick="openModal('share-mur')">👁 Partager</button>
-          <button class="btn btn-g btn-sm" onclick="saveMur()">💾 Sauvegarder</button>
+          <button class="btn btn-p btn-sm" onclick="openNewCard()">+ Carte</button>
         </div>
-        <div class="mur-columns" id="mur-columns"></div>
       </div>
+      <div id="board-wrap" class="board-wrap"></div>
     </div>
 
-    <!-- ═══ ANNONCES ═══ -->
-    <div class="screen" id="screen-annonces">
-      <div class="annonces-layout">
+    <!-- ═ COURS ═ -->
+    <div id="screen-cours" class="screen">
+      <div class="cours-layout">
+        <!-- Liste des cours -->
         <div>
-          <!-- Composer -->
-          <div class="compose-box">
-            <textarea class="compose-input" id="compose-text" placeholder="Écrire une annonce à vos élèves…"></textarea>
-            <div class="compose-footer">
-              <div class="compose-opts">
-                <button class="compose-opt" onclick="setAnnType('info')">ℹ Info</button>
-                <button class="compose-opt" onclick="setAnnType('urgent')">⚠ Urgent</button>
-                <button class="compose-opt" onclick="setAnnType('devoir')">📋 Devoir</button>
-                <button class="compose-opt" onclick="setAnnType('cours')">📚 Cours</button>
-              </div>
-              <button class="btn btn-p btn-sm" onclick="publierAnnonce()">Publier</button>
-            </div>
+          <div style="font-size:12px;font-weight:700;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center">
+            Mes cours <button class="btn btn-p btn-sm" onclick="newCours()">+</button>
           </div>
-          <!-- Fil -->
-          <div id="annonces-fil"></div>
+          <div id="cours-list" class="cours-list">
+            <div class="empty" style="padding:20px"><div class="empty-txt">Aucun cours.</div></div>
+          </div>
         </div>
-        <!-- Sidebar stats -->
+        <!-- Éditeur -->
         <div>
-          <div class="stat-mini">
-            <div class="sm-title">📊 Mes classes</div>
-            <div class="sm-row"><span>Terminale Pro MCV</span><span class="sm-val">27 élèves</span></div>
-            <div class="sm-row"><span>Seconde Générale</span><span class="sm-val">31 élèves</span></div>
-            <div class="sm-row"><span>Première Pro</span><span class="sm-val">24 élèves</span></div>
-          </div>
-          <div class="stat-mini">
-            <div class="sm-title">📈 Cette semaine</div>
-            <div class="sm-row"><span>Annonces publiées</span><span class="sm-val" id="ann-count">0</span></div>
-            <div class="sm-row"><span>Devoirs rendus</span><span class="sm-val">18</span></div>
-            <div class="sm-row"><span>Ressources vues</span><span class="sm-val">142</span></div>
-          </div>
-          <button class="btn btn-p" style="width:100%;justify-content:center;margin-top:4px" onclick="openModal('new-annonce-class')">
-            📢 Cibler une classe
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <!-- ═══ ÉDITEUR DE COURS ═══ -->
-    <div class="screen" id="screen-editeur">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
-        <div>
-          <div style="font-size:15px;font-weight:700;font-family:'Lora',serif">Mes cours</div>
-          <div style="font-size:11.5px;color:var(--ink-30);margin-top:2px">Crée et organise tes cours par blocs</div>
-        </div>
-        <button class="btn btn-p" onclick="ouvrirEditeur()">+ Nouveau cours</button>
-      </div>
-
-      <!-- Liste des cours -->
-      <div id="cours-liste-view">
-        <div class="cours-list" id="cours-list"></div>
-      </div>
-
-      <!-- Éditeur -->
-      <div id="editeur-view" style="display:none">
-        <div class="editeur">
-          <div class="edit-topbar">
-            <button class="btn btn-g btn-sm" onclick="fermerEditeur()">← Mes cours</button>
-            <input class="edit-title-input" id="edit-title" placeholder="Titre du cours…">
-            <select class="fs" id="edit-class" style="width:160px;padding:6px 10px;font-size:11.5px;border-radius:7px;border:1px solid var(--ink-10);background:var(--sand);outline:none">
-              <option>Terminale Pro MCV</option>
-              <option>Seconde Générale</option>
-              <option>Première Pro</option>
-            </select>
-            <button class="btn btn-g btn-sm" onclick="sauvegarderCours()">💾 Sauvegarder</button>
-            <button class="btn btn-p btn-sm" onclick="publierCours()">🚀 Publier</button>
-          </div>
-          <div class="edit-toolbar">
-            <button class="tb-btn" onclick="addBloc('titre')">T Titre</button>
-            <button class="tb-btn" onclick="addBloc('titre2')">t Sous-titre</button>
-            <div class="tb-sep"></div>
-            <button class="tb-btn" onclick="addBloc('texte')">¶ Texte</button>
-            <button class="tb-btn" onclick="addBloc('callout')">💡 Encadré</button>
-            <button class="tb-btn" onclick="addBloc('code')">{ } Code</button>
-            <div class="tb-sep"></div>
-            <button class="tb-btn" onclick="addBloc('sep')">— Séparateur</button>
-            <button class="tb-btn" onclick="addBloc('liste')">• Liste</button>
-            <div class="tb-sep"></div>
-            <button class="tb-btn btn-ai" onclick="genererAvecIA()">✦ IA</button>
-          </div>
-          <div class="blocs-area" id="blocs-area"></div>
-          <div class="add-bloc-bar">
-            <span style="font-size:10.5px;color:var(--ink-30);margin-right:4px">Ajouter :</span>
-            <button class="add-bloc-btn" onclick="addBloc('titre')">T Titre</button>
-            <button class="add-bloc-btn" onclick="addBloc('texte')">¶ Texte</button>
-            <button class="add-bloc-btn" onclick="addBloc('callout')">💡 Encadré</button>
-            <button class="add-bloc-btn" onclick="addBloc('liste')">• Liste</button>
-            <button class="add-bloc-btn" onclick="addBloc('sep')">— Séparateur</button>
-            <button class="add-bloc-btn" onclick="addBloc('code')">{ } Code</button>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ═══ FICHES ÉLÈVES ═══ -->
-    <div class="screen" id="screen-eleves">
-      <div id="eleves-liste-view">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
-          <div style="font-size:15px;font-weight:700;font-family:'Lora',serif">Fiches élèves</div>
-          <div style="display:flex;gap:7px">
-            <select class="fs" id="filter-class" style="padding:6px 10px;font-size:11.5px;border-radius:7px;border:1px solid var(--ink-10);background:var(--white);outline:none" onchange="filterEleves()">
-              <option value="">Toutes les classes</option>
-              <option>Terminale Pro MCV</option>
-              <option>Seconde Générale</option>
-              <option>Première Pro</option>
-            </select>
-          </div>
-        </div>
-        <div class="eleves-grid" id="eleves-grid"></div>
-      </div>
-
-      <div id="fiche-view" style="display:none">
-        <button class="btn btn-g btn-sm" style="margin-bottom:14px" onclick="fermerFiche()">← Fiches élèves</button>
-        <div class="fiche-layout" id="fiche-content"></div>
-      </div>
-    </div>
-
-    <!-- ═══ QUIZ TEMPS RÉEL ═══ -->
-    <div class="screen" id="screen-quiz-live">
-      <div style="display:grid;grid-template-columns:1fr 300px;gap:16px">
-        <div>
-          <div class="quiz-session">
-            <div class="qs-header">
-              <div>
-                <div style="font-size:10px;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px">Question <span id="q-num">1</span> / <span id="q-total">5</span></div>
-                <div class="qs-title" id="q-title">Quiz — Vocabulaire professionnel</div>
-              </div>
-              <div class="qs-timer" id="q-timer">45</div>
-            </div>
-            <div class="qs-progress"><div class="qs-prog-fill" id="q-prog" style="width:20%"></div></div>
-            <div class="qs-body">
-              <div class="qs-question" id="q-question">Chargement de la question…</div>
-              <div class="qs-options" id="q-options"></div>
-              <div class="live-results" id="live-results" style="display:none">
-                <div class="lr-title">📊 Résultats en direct</div>
-                <div id="lr-bars"></div>
-                <div style="margin-top:10px">
-                  <div style="font-size:10.5px;color:var(--ink-30);margin-bottom:6px">Participants ayant répondu :</div>
-                  <div class="participants-list" id="participants-list"></div>
-                </div>
-              </div>
-              <div style="display:flex;gap:8px;margin-top:14px" id="q-nav-btns">
-                <button class="btn btn-g" onclick="showResults()" id="btn-show-results">📊 Voir les résultats</button>
-                <button class="btn btn-p" onclick="nextQuestion()" id="btn-next-q">Question suivante →</button>
+          <div class="editeur">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+              <input id="cours-title" placeholder="Titre du cours…" style="font-family:'Lora',serif;font-size:20px;font-weight:700;border:none;outline:none;background:transparent;flex:1;color:var(--ink)">
+              <div style="display:flex;gap:6px">
+                <button class="btn btn-ai btn-sm" onclick="genCoursIA()">✦ Générer avec IA</button>
+                <button class="btn btn-p btn-sm" onclick="saveCours()">💾 Sauvegarder</button>
               </div>
             </div>
-          </div>
-        </div>
-
-        <div>
-          <div class="card" style="padding:16px;margin-bottom:12px">
-            <div class="card-title" style="margin-bottom:12px">⚡ Lancer un quiz</div>
-            <div class="fg">
-              <label class="fl">Quiz</label>
-              <select class="fs" id="quiz-select">
-                <option>Vocabulaire professionnel</option>
-                <option>Communication pro — Chap.3</option>
-                <option>Relation client — P3</option>
-              </select>
+            <div class="bloc-btns">
+              <button class="btn btn-g btn-sm" onclick="addBloc('h1')">H1</button>
+              <button class="btn btn-g btn-sm" onclick="addBloc('h2')">H2</button>
+              <button class="btn btn-g btn-sm" onclick="addBloc('p')">¶ Texte</button>
+              <button class="btn btn-g btn-sm" onclick="addBloc('callout')">💡 Callout</button>
+              <button class="btn btn-g btn-sm" onclick="addBloc('code')">{'<>'} Code</button>
+              <button class="btn btn-g btn-sm" onclick="addBloc('sep')">— Séparation</button>
             </div>
-            <div class="fg">
-              <label class="fl">Classe</label>
-              <select class="fs">
-                <option>Terminale Pro MCV</option>
-                <option>Seconde Générale</option>
-                <option>Première Pro</option>
-              </select>
-            </div>
-            <div class="fg">
-              <label class="fl">Temps par question</label>
-              <select class="fs" id="timer-select">
-                <option value="30">30 secondes</option>
-                <option value="45" selected>45 secondes</option>
-                <option value="60">1 minute</option>
-                <option value="90">1m30</option>
-              </select>
-            </div>
-            <button class="btn btn-p" style="width:100%;justify-content:center;margin-top:4px" onclick="lancerQuiz()">⚡ Lancer le quiz</button>
-          </div>
-          <div class="card" style="padding:16px">
-            <div class="card-title" style="margin-bottom:10px">👥 Élèves connectés</div>
-            <div id="eleves-connectes">
-              <div style="font-size:12px;color:var(--ink-30)">Aucun élève connecté</div>
+            <div id="blocs-area" class="blocs-area">
+              <div class="empty" style="padding:20px;border:2px dashed var(--ink-10);border-radius:9px"><div class="empty-txt">Ajoute des blocs pour commencer.</div></div>
             </div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- ═══ APERÇU PDF ═══ -->
-    <div class="screen" id="screen-pdf-viewer">
-      <div style="display:grid;grid-template-columns:200px 1fr;gap:14px">
-        <!-- Liste fichiers -->
-        <div>
-          <div style="font-size:12px;font-weight:700;margin-bottom:10px;color:var(--ink-60)">MES FICHIERS</div>
-          <div id="pdf-file-list"></div>
-        </div>
-        <!-- Viewer -->
-        <div>
-          <div class="pdf-viewer">
-            <div class="pdf-topbar">
-              <div class="pdf-title" id="pdf-name">Cours_Relation_Client_Chap3.pdf</div>
-              <div class="pdf-nav">
-                <button class="pdf-nav-btn" onclick="pdfNav(-1)">‹</button>
-                <span class="pdf-page-info">Page <span id="pdf-pg">1</span> / <span id="pdf-total">4</span></span>
-                <button class="pdf-nav-btn" onclick="pdfNav(1)">›</button>
-              </div>
-              <div style="display:flex;gap:5px">
-                <button class="btn btn-g btn-sm" onclick="openModal('annotate')">✏️ Annoter</button>
-                <button class="btn btn-p btn-sm">📤 Partager</button>
-              </div>
-            </div>
-            <div class="pdf-content" id="pdf-content"></div>
-            <div class="pdf-annotations">
-              <div style="font-size:11px;font-weight:700;color:var(--ink-60);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">Annotations</div>
-              <div id="annotations-list"></div>
-            </div>
+    <!-- ═ QUIZ ═ -->
+    <div id="screen-quiz" class="screen">
+      <div id="quiz-setup" class="quiz-setup">
+        <div style="font-size:15px;font-weight:700;font-family:'Lora',serif;margin-bottom:4px">⚡ Créer un quiz</div>
+        <div style="font-size:12px;color:var(--ink-30);margin-bottom:16px">Génère un quiz depuis ton cours avec l'IA</div>
+        <div class="card" style="padding:16px;margin-bottom:12px">
+          <div class="fg">
+            <label>Titre du quiz</label>
+            <input id="quiz-name" placeholder="Ex: Quiz chapitre 3 — Communication">
+          </div>
+          <div class="fg">
+            <label>Contenu du cours (pour génération IA)</label>
+            <textarea id="quiz-source" placeholder="Colle ton cours ici…" style="min-height:120px;width:100%;padding:9px 11px;border-radius:8px;border:1.5px solid var(--ink-10);font-size:12.5px;background:var(--sand);outline:none;font-family:'DM Sans',sans-serif;resize:vertical;transition:border .15s"></textarea>
+          </div>
+          <div class="fg">
+            <label>Durée par question (secondes)</label>
+            <input id="quiz-timer" type="number" value="30" min="5" max="120">
+          </div>
+          <div style="display:flex;gap:7px;flex-wrap:wrap">
+            <button class="btn btn-ai" onclick="genQuizIA()">✦ Générer avec IA</button>
+            <button class="btn btn-p" onclick="startQuiz()">▶ Lancer le quiz</button>
           </div>
         </div>
+        <div id="quiz-questions-preview" style="display:none">
+          <div style="font-size:12px;font-weight:700;margin-bottom:8px">Questions générées :</div>
+          <div id="quiz-q-list"></div>
+        </div>
+      </div>
+
+      <!-- Quiz en cours -->
+      <div id="quiz-running" class="quiz-running" style="display:none">
+        <div class="timer-bar"><div class="timer-fill" id="timer-fill"></div></div>
+        <div class="q-card">
+          <div class="q-num" id="q-num"></div>
+          <div class="q-text" id="q-text"></div>
+          <div class="q-opts" id="q-opts"></div>
+          <div id="q-feedback" style="display:none;margin-top:14px;font-size:13px;font-weight:600;padding:10px;border-radius:9px"></div>
+        </div>
+        <div style="display:flex;justify-content:center;margin-top:14px">
+          <button class="btn btn-g" onclick="stopQuiz()">⏹ Arrêter</button>
+        </div>
+      </div>
+
+      <!-- Résultats -->
+      <div id="quiz-results" style="display:none;text-align:center;padding:40px 20px">
+        <div style="font-size:28px;margin-bottom:10px">🎉</div>
+        <div style="font-size:14px;font-weight:700;margin-bottom:8px">Quiz terminé !</div>
+        <div class="quiz-score" id="q-score"></div>
+        <div style="font-size:13px;color:var(--ink-60);margin:8px 0 20px" id="q-sub"></div>
+        <button class="btn btn-p" onclick="resetQuiz()">↻ Recommencer</button>
+      </div>
+    </div>
+
+    <!-- ═ FICHES ÉLÈVES ═ -->
+    <div id="screen-eleves" class="screen">
+      <div style="font-size:15px;font-weight:700;font-family:'Lora',serif;margin-bottom:4px">👥 Fiches élèves</div>
+      <div style="font-size:12px;color:var(--ink-30);margin-bottom:16px">Élèves inscrits dans tes classes</div>
+      <div id="eleves-list">
+        <div class="empty"><div class="empty-ic">👥</div><div class="empty-txt">Chargement des élèves…</div></div>
       </div>
     </div>
 
@@ -760,15 +331,16 @@ if (!window.nav) {
 </div>
 
 <!-- MODAL -->
-<div class="ov" id="ov" onclick="closeModal(event)">
-  <div class="modal" id="modal-body"></div>
+<div class="modal-overlay" id="modal-overlay" onclick="if(event.target===this)closeModal()">
+  <div class="modal" id="modal-content"></div>
 </div>
-
 <div class="toast" id="toast"></div>
-<script>
 
-// ─── CONFIG FIREBASE ───────────────────────────────────────
-const firebaseConfig = {
+<script>
+// ════════════════════════════════════════════════════════════
+// PÉDAGOGIA — Murs & Cours — Firebase Compat
+// ════════════════════════════════════════════════════════════
+var firebaseConfig = {
   apiKey: "AIzaSyBYOQopUVm5vcjUur74ErhvehWC-UNiaz0",
   authDomain: "pedagogia-18dda.firebaseapp.com",
   projectId: "pedagogia-18dda",
@@ -776,987 +348,536 @@ const firebaseConfig = {
   messagingSenderId: "465869483173",
   appId: "1:465869483173:web:5874b245342c020127b14c"
 };
-const GEMINI_KEY = "AIzaSyB5WHwnUCVMxm0D4a9JZLhjQxqHnF8nGkY";
-// ──────────────────────────────────────────────────────────
+var GEMINI_KEY = "AIzaSyB5WHwnUCVMxm0D4a9JZLhjQxqHnF8nGkY";
+var GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=" + GEMINI_KEY;
+var TS = firebase.firestore.FieldValue.serverTimestamp;
 
-const app = firebase.initializeApp(firebaseConfig);
-const auth = firebase.auth();
-const db = firebase.firestore();
-let currentUser = null;
-let currentMurId = null;
-let currentMurData = null;
-let currentCoursId = null;
-let blocsData = [];
-let annonces = [];
-let annType = 'info';
-let quizRunning = false;
-let quizTimer = null;
-let currentQ = 0;
-let timerVal = 45;
-let pdfPage = 1;
-let pdfPages = [];
-let annotations = [];
-let draggedCard = null;
+firebase.initializeApp(firebaseConfig);
+var auth = firebase.auth();
+var db   = firebase.firestore();
 
-window.logout = async function() {
-  await auth.signOut();
-  window.location.href = 'index.html';
-};
+// ── ÉTAT ─────────────────────────────────────────────────
+var currentUser   = null;
+var currentMurId  = null;
+var currentMurData = null;
+var currentCoursId = null;
+var coursBlocs    = [];
+var quizQuestions = [];
+var quizIdx       = 0;
+var quizScore     = 0;
+var quizTimer     = null;
+var quizTimerSec  = 30;
+var quizRunning   = false;
+var dragSrc       = null;
+var dragColIdx    = null;
+var dragCardIdx   = null;
 
-auth.onAuthStateChanged( async (user) => {
-  if (!user) { window.location.href='index.html'; return; }
+// ── AUTH ──────────────────────────────────────────────────
+auth.onAuthStateChanged(function(user) {
+  if (!user) { window.location.href = 'index.html'; return; }
   currentUser = user;
-  const snap = (await db.collection('users').doc(user.uid).get());
-  if (snap.exists) {
-    const d = snap.data();
-    const initials = d.name.split(' ').map(n=>n[0]).join('').toUpperCase().slice(0,2);
-    document.getElementById('s-av').textContent = initials;
-    document.getElementById('s-nm').textContent = d.name;
-  }
   loadMurs();
-  loadAnnonces();
-  loadCours();
+  loadCoursList();
   loadEleves();
-  loadPdfFiles();
-  initQuiz();
 });
 
+function logout() {
+  auth.signOut().then(function() { window.location.href = 'index.html'; });
+}
+
 // ── NAVIGATION ────────────────────────────────────────────
-const TITLES = {
-  murs:'Murs collaboratifs', annonces:'Annonces & Fil d\'actualité',
-  editeur:'Créer un cours', eleves:'Fiches élèves',
-  'quiz-live':'Quiz temps réel', 'pdf-viewer':'Aperçu documents'
-};
-const ACTIONS = {
-  murs:'+ Nouveau mur', annonces:'', editeur:'+ Nouveau cours',
-  eleves:'', 'quiz-live':'', 'pdf-viewer':''
-};
-function nav(id) {
-  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
-  document.getElementById('screen-'+id).classList.add('active');
-  document.getElementById('pt').textContent = TITLES[id]||id;
-  document.querySelectorAll('.nav-item[data-screen]').forEach(n=>n.classList.toggle('active',n.dataset.screen===id));
-  const ab = document.getElementById('tb-action-btn');
-  ab.textContent = ACTIONS[id]||'';
-  ab.style.display = ACTIONS[id] ? 'flex' : 'none';
-  ab.onclick = ()=>{
-    if(id==='murs') openModal('new-mur');
-    if(id==='editeur') ouvrirEditeur();
-  };
-}
-document.querySelectorAll('.nav-item[data-screen]').forEach(n=>n.addEventListener('click',()=>nav(n.dataset.screen)));
-
-function toast(msg,type=''){
-  const t=document.getElementById('toast');
-  t.textContent=msg;t.className='toast '+(type);
-  t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3200);
+function showScreen(name) {
+  document.querySelectorAll('.screen').forEach(function(s) { s.classList.remove('active'); });
+  document.getElementById('screen-' + name).classList.add('active');
+  var titles = { murs:'Murs collaboratifs', cours:'Éditeur de cours', quiz:'Quiz', eleves:'Fiches élèves', board:'Mur' };
+  document.getElementById('page-title').textContent = titles[name] || name;
+  document.querySelectorAll('.nav-item').forEach(function(n) { n.classList.remove('active'); });
+  var navEl = document.getElementById('nav-' + name);
+  if (navEl) navEl.classList.add('active');
 }
 
-// ════════════════════════════════════════
-// PRIORITÉ 1 — MURS COLLABORATIFS
-// ════════════════════════════════════════
-const MUR_COLORS = {
-  sage:{bg:'#EAF2ED',text:'var(--sage)'},
-  terra:{bg:'#FBF0EA',text:'var(--terra)'},
-  blue:{bg:'#EBF2FF',text:'var(--blue)'},
-  purple:{bg:'#F3EEFF',text:'var(--purple)'},
-  amber:{bg:'#FDF5E6',text:'var(--amber)'},
-  pink:{bg:'#FDE8F0',text:'var(--pink)'},
-};
+// ── TOAST / MODAL ─────────────────────────────────────────
+function toast(msg, type) {
+  var t = document.getElementById('toast');
+  t.textContent = msg; t.className = 'toast ' + (type || ''); t.classList.add('show');
+  setTimeout(function() { t.classList.remove('show'); }, 3200);
+}
+function openModal(html) {
+  document.getElementById('modal-content').innerHTML = html;
+  document.getElementById('modal-overlay').classList.add('open');
+}
+function closeModal() { document.getElementById('modal-overlay').classList.remove('open'); }
 
-async function loadMurs() {
-  if(!currentUser) return;
-  const snap = (await db.collection('murs').where('uid', '==', currentUser.uid).orderBy('createdAt', 'desc').get());
-  const grid = document.getElementById('murs-grid');
-  if(snap.empty){
-    grid.innerHTML=`<div style="grid-column:1/-1"><div class="empty"><div class="empty-ic">🗂</div><div class="empty-txt">Aucun mur encore.<br>Crée ton premier mur collaboratif !</div></div></div>`;
-    return;
-  }
-  grid.innerHTML = snap.docs.map(d=>{
-    const fd=d.data();
-    const col = MUR_COLORS[fd.color]||MUR_COLORS.sage;
-    const carteCount = (fd.columns||[]).reduce((acc,c)=>(acc+(c.cards||[]).length),0);
-    return `<div class="mur-card" onclick="ouvrirMur('${d.id}')">
-      <div class="mur-cover" style="background:${col.bg}">
-        <span style="font-size:40px">${fd.emoji||'🗂'}</span>
-        <span class="mur-cover-badge">${fd.visibility==='public'?'Partagé':'Privé'}</span>
-      </div>
-      <div class="mur-body">
-        <div class="mur-title">${fd.name}</div>
-        <div class="mur-meta">${fd.classe||'Toutes classes'} · ${(fd.columns||[]).length} colonnes · ${carteCount} cartes</div>
-        <div class="mur-footer">
-          <span class="tag">${fd.theme||'Général'}</span>
-          ${fd.visibility==='public'?'<span class="badge bg">Partagé</span>':'<span class="badge ba">Privé</span>'}
-        </div>
-      </div>
-    </div>`;
-  }).join('');
+// ────────────────────────────────────────────────────────────
+// ═══ MURS COLLABORATIFS ═══
+// ────────────────────────────────────────────────────────────
+function loadMurs() {
+  db.collection('murs').where('uid', '==', currentUser.uid).orderBy('createdAt', 'desc').get()
+  .then(function(snap) {
+    var el = document.getElementById('murs-grid');
+    if (snap.empty) {
+      el.innerHTML = '<div class="empty"><div class="empty-ic">🗂</div><div class="empty-txt">Aucun mur. Crée le premier !</div></div>';
+      return;
+    }
+    var emojis = ['🗂','📌','💡','🎯','🚀','📚','🌟','🔬'];
+    var colors = ['#EAF2ED','#EBF2FF','#F3EEFF','#FDF5E6','#FBF0EA'];
+    el.innerHTML = snap.docs.map(function(d, i) {
+      var fd = d.data();
+      var emoji = emojis[i % emojis.length];
+      var color = colors[i % colors.length];
+      return '<div class="mur-card">' +
+        '<div class="mur-banner" style="background:' + color + '">' + emoji + '</div>' +
+        '<div class="mur-body">' +
+          '<div class="mur-name">' + fd.name + '</div>' +
+          '<div class="mur-meta">' + (fd.columns ? fd.columns.length : 0) + ' colonnes · ' + timeAgo(fd.createdAt) + '</div>' +
+        '</div>' +
+        '<div class="mur-footer">' +
+          '<button class="btn btn-p btn-sm" onclick="openBoard(\'' + d.id + '\')">▶ Ouvrir</button>' +
+          '<button class="btn btn-danger btn-sm" onclick="deleteMur(\'' + d.id + '\')">🗑</button>' +
+        '</div>' +
+      '</div>';
+    }).join('');
+  });
 }
 
-window.ouvrirMur = async function(murId) {
-  const snap = (await db.collection('murs').doc(murId).get());
-  if(!snap.exists) return;
+function openNewMur() {
+  openModal(
+    '<button class="modal-close" onclick="closeModal()">✕</button>' +
+    '<div class="modal-title">Nouveau mur</div>' +
+    '<div class="modal-sub">Crée un espace Kanban pour tes idées</div>' +
+    '<div class="fg"><label>Nom du mur</label><input id="m-murname" placeholder="Ex: Séquence Communication" autofocus></div>' +
+    '<div class="fg"><label>Classe (optionnel)</label><input id="m-murclass" placeholder="Ex: Terminale Pro MCV"></div>' +
+    '<div class="modal-footer"><button class="btn btn-g" onclick="closeModal()">Annuler</button><button class="btn btn-p" onclick="createMur()">Créer</button></div>'
+  );
+}
+
+function createMur() {
+  var name   = document.getElementById('m-murname').value.trim();
+  var classe = document.getElementById('m-murclass').value.trim();
+  if (!name) { toast('Entre un nom.', 'error'); return; }
+  var defaultCols = [
+    { name: 'À faire', cards: [] },
+    { name: 'En cours', cards: [] },
+    { name: 'Terminé', cards: [] }
+  ];
+  db.collection('murs').add({
+    uid: currentUser.uid, name: name, classe: classe,
+    columns: defaultCols, visibility: 'private', createdAt: TS()
+  }).then(function(ref) {
+    toast('Mur créé !', 'success');
+    closeModal();
+    openBoard(ref.id);
+  });
+}
+
+function deleteMur(id) {
+  if (!confirm('Supprimer ce mur ?')) return;
+  db.collection('murs').doc(id).delete().then(function() {
+    toast('Mur supprimé.', 'success'); loadMurs();
+  });
+}
+
+function openBoard(murId) {
   currentMurId = murId;
-  currentMurData = {id:murId, ...snap.data()};
-  document.getElementById('mur-detail-name').textContent = currentMurData.name;
-  document.getElementById('murs-liste').style.display='none';
-  document.getElementById('mur-detail').classList.add('active');
-  renderMurColumns(currentMurData.columns||[]);
-};
-
-window.backToMurs = function(){
-  document.getElementById('murs-liste').style.display='block';
-  document.getElementById('mur-detail').classList.remove('active');
-  currentMurId=null; currentMurData=null;
-};
-
-function renderMurColumns(cols){
-  const container = document.getElementById('mur-columns');
-  container.innerHTML = cols.map((col,ci)=>`
-    <div class="mur-col" data-col="${ci}" ondragover="dragOver(event)" ondrop="dropCard(event,${ci})">
-      <div class="col-title">
-        <span>${col.title}</span>
-        <div style="display:flex;gap:3px">
-          <button class="ibt" onclick="addCarteModal(${ci})">+</button>
-          <button class="ibt" onclick="deleteColumn(${ci})">🗑</button>
-        </div>
-      </div>
-      <div class="col-cards" id="col-${ci}">
-        ${(col.cards||[]).map((card,ki)=>renderCarte(card,ci,ki)).join('')}
-      </div>
-      <button class="col-add" onclick="addCarteModal(${ci})">+ Ajouter une carte</button>
-    </div>
-  `).join('') + `<button class="add-col-btn" onclick="addColumn()">+ Ajouter une colonne</button>`;
+  db.collection('murs').doc(murId).get().then(function(snap) {
+    if (!snap.exists) return;
+    currentMurData = snap.data();
+    document.getElementById('board-title').textContent = currentMurData.name;
+    renderBoard();
+    showScreen('board');
+  });
 }
 
-function renderCarte(card,ci,ki){
-  const typeColors = {texte:'ct-texte',image:'ct-image',lien:'ct-lien',video:'ct-video',pdf:'ct-pdf'};
-  const typeLabels = {texte:'📝 Texte',image:'🖼 Image',lien:'🔗 Lien',video:'▶ Vidéo',pdf:'📄 PDF'};
-  return `<div class="mur-carte" draggable="true" data-col="${ci}" data-card="${ki}"
-    ondragstart="dragStart(event,${ci},${ki})"
-    ondragover="event.preventDefault()"
-    ondrop="dropCard(event,${ci})">
-    <div class="carte-actions">
-      <button class="ibt" onclick="deleteCard(${ci},${ki})">🗑</button>
-    </div>
-    <div class="carte-type-badge ${typeColors[card.type]||'ct-texte'}">${typeLabels[card.type]||'📝 Texte'}</div>
-    <div class="carte-title">${card.title||''}</div>
-    <div class="carte-body">${card.content||''}</div>
-    ${card.type==='lien'&&card.url?`<a href="${card.url}" target="_blank" style="font-size:10.5px;color:var(--blue);display:block;margin-top:5px;word-break:break-all">${card.url}</a>`:''}
-    ${card.color?`<div style="height:4px;background:${card.color};border-radius:2px;margin-top:8px"></div>`:''}
-  </div>`;
+function renderBoard() {
+  var cols = (currentMurData && currentMurData.columns) || [];
+  var wrap = document.getElementById('board-wrap');
+  wrap.innerHTML = cols.map(function(col, ci) {
+    var cards = col.cards || [];
+    return '<div class="board-col" id="col-' + ci + '" ondragover="event.preventDefault()" ondrop="dropCard(event,' + ci + ')">' +
+      '<div class="col-hd">' +
+        '<span class="col-name">' + col.name + '</span>' +
+        '<span class="col-count">' + cards.length + '</span>' +
+      '</div>' +
+      cards.map(function(card, ki) {
+        return '<div class="kard" draggable="true" ondragstart="dragStart(event,' + ci + ',' + ki + ')" id="card-' + ci + '-' + ki + '">' +
+          '<div class="kard-type">' + (card.type || 'texte') + '</div>' +
+          '<div class="kard-text">' + (card.text || '') + '</div>' +
+          (card.link ? '<a class="kard-link" href="' + card.link + '" target="_blank">' + card.link + '</a>' : '') +
+          '<button class="kard-del" onclick="deleteCard(' + ci + ',' + ki + ')">✕</button>' +
+        '</div>';
+      }).join('') +
+      '<div class="add-kard" onclick="openNewCard(' + ci + ')">+ Ajouter une carte</div>' +
+    '</div>';
+  }).join('') +
+  '<div class="add-col-btn" onclick="addColumn()">+ Nouvelle colonne</div>';
 }
 
-// Drag and drop
-window.dragStart = function(e,ci,ki){
-  draggedCard = {ci,ki};
-  e.dataTransfer.effectAllowed='move';
-  setTimeout(()=>e.target.classList.add('dragging'),0);
-};
-window.dragOver = function(e){ e.preventDefault(); e.dataTransfer.dropEffect='move'; };
-window.dropCard = function(e,targetCol){
+function addColumn() {
+  openModal(
+    '<button class="modal-close" onclick="closeModal()">✕</button>' +
+    '<div class="modal-title">Nouvelle colonne</div>' +
+    '<div class="fg"><label>Nom</label><input id="m-colname" placeholder="Ex: En révision" autofocus></div>' +
+    '<div class="modal-footer"><button class="btn btn-g" onclick="closeModal()">Annuler</button><button class="btn btn-p" onclick="createColumn()">Ajouter</button></div>'
+  );
+}
+
+function createColumn() {
+  var name = document.getElementById('m-colname').value.trim();
+  if (!name) { toast('Entre un nom.', 'error'); return; }
+  if (!currentMurData.columns) currentMurData.columns = [];
+  currentMurData.columns.push({ name: name, cards: [] });
+  saveMur(); closeModal(); renderBoard();
+}
+
+function openNewCard(colIdx) {
+  var colDefault = colIdx !== undefined ? colIdx : 0;
+  var colOpts = (currentMurData.columns || []).map(function(c, i) {
+    return '<option value="' + i + '"' + (i === colDefault ? ' selected' : '') + '>' + c.name + '</option>';
+  }).join('');
+  openModal(
+    '<button class="modal-close" onclick="closeModal()">✕</button>' +
+    '<div class="modal-title">Nouvelle carte</div>' +
+    '<div class="fg"><label>Type</label><select id="m-cardtype"><option value="texte">Texte</option><option value="lien">Lien</option><option value="info">Info</option><option value="ressource">Ressource</option></select></div>' +
+    '<div class="fg"><label>Contenu</label><textarea id="m-cardtext" placeholder="Ton idée, note, contenu…" rows="3"></textarea></div>' +
+    '<div class="fg"><label>Lien (optionnel)</label><input id="m-cardlink" placeholder="https://…"></div>' +
+    '<div class="fg"><label>Colonne</label><select id="m-cardcol">' + colOpts + '</select></div>' +
+    '<div class="modal-footer"><button class="btn btn-g" onclick="closeModal()">Annuler</button><button class="btn btn-p" onclick="createCard()">Ajouter</button></div>'
+  );
+}
+
+function createCard() {
+  var type = document.getElementById('m-cardtype').value;
+  var text = document.getElementById('m-cardtext').value.trim();
+  var link = document.getElementById('m-cardlink').value.trim();
+  var col  = parseInt(document.getElementById('m-cardcol').value);
+  if (!text) { toast('Entre un contenu.', 'error'); return; }
+  if (!currentMurData.columns[col].cards) currentMurData.columns[col].cards = [];
+  currentMurData.columns[col].cards.push({ type: type, text: text, link: link || null });
+  saveMur(); closeModal(); renderBoard();
+}
+
+function deleteCard(ci, ki) {
+  currentMurData.columns[ci].cards.splice(ki, 1);
+  saveMur(); renderBoard();
+}
+
+function dragStart(e, ci, ki) {
+  dragColIdx = ci; dragCardIdx = ki;
+  e.dataTransfer.effectAllowed = 'move';
+}
+
+function dropCard(e, targetCol) {
   e.preventDefault();
-  if(!draggedCard||!currentMurData) return;
-  const {ci,ki} = draggedCard;
-  if(ci===targetCol) return;
-  const cols = currentMurData.columns;
-  const card = cols[ci].cards.splice(ki,1)[0];
-  if(!cols[targetCol].cards) cols[targetCol].cards=[];
-  cols[targetCol].cards.push(card);
-  renderMurColumns(cols);
-  draggedCard=null;
-  toast('Carte déplacée !','success');
-};
-
-window.addColumn = function(){
-  if(!currentMurData) return;
-  const name = prompt('Nom de la colonne :','Nouvelle colonne');
-  if(!name) return;
-  if(!currentMurData.columns) currentMurData.columns=[];
-  currentMurData.columns.push({title:name,cards:[]});
-  renderMurColumns(currentMurData.columns);
-};
-
-window.addCarteModal = function(ci){ openModal('new-carte', {ci}); };
-
-window.deleteColumn = function(ci){
-  if(!confirm('Supprimer cette colonne ?')) return;
-  currentMurData.columns.splice(ci,1);
-  renderMurColumns(currentMurData.columns);
-};
-
-window.deleteCard = function(ci,ki){
-  currentMurData.columns[ci].cards.splice(ki,1);
-  renderMurColumns(currentMurData.columns);
-};
-
-window.saveMur = async function(){
-  if(!currentMurId||!currentMurData) return;
-  await db.collection('murs').doc(currentMurId).set( {...currentMurData, updatedAt:firebase.firestore.FieldValue.serverTimestamp()});
-  toast('Mur sauvegardé !','success');
-};
-
-// ════════════════════════════════════════
-// PRIORITÉ 2 — ANNONCES
-// ════════════════════════════════════════
-async function loadAnnonces(){
-  if(!currentUser) return;
-  const snap = (await db.collection('annonces').where('uid', '==', currentUser.uid).orderBy('createdAt', 'desc').get());
-  annonces = snap.docs.map(d=>({id:d.id,...d.data()}));
-  renderAnnonces();
-  document.getElementById('ann-count').textContent = snap.size;
+  if (dragColIdx === null || dragCardIdx === null) return;
+  var card = currentMurData.columns[dragColIdx].cards.splice(dragCardIdx, 1)[0];
+  if (!currentMurData.columns[targetCol].cards) currentMurData.columns[targetCol].cards = [];
+  currentMurData.columns[targetCol].cards.push(card);
+  dragColIdx = null; dragCardIdx = null;
+  saveMur(); renderBoard();
 }
 
-function renderAnnonces(){
-  const el = document.getElementById('annonces-fil');
-  if(!annonces.length){
-    el.innerHTML='<div class="empty"><div class="empty-ic">📢</div><div class="empty-txt">Aucune annonce publiée.<br>Écris ta première annonce !</div></div>';
-    return;
-  }
-  const typeIcons={info:'ℹ️',urgent:'⚠️',devoir:'📋',cours:'📚'};
-  const typeCols={info:'bb',urgent:'bt',devoir:'ba',cours:'bg'};
-  el.innerHTML = annonces.map(a=>{
-    const date = a.createdAt?.toDate?.()||new Date();
-    const timeStr = timeAgo(date);
-    return `<div class="annonce-card ${a.pinned?'pinned':''}">
-      <div class="ann-header">
-        <div class="ann-av">${a.authorName?.slice(0,2).toUpperCase()||'ML'}</div>
-        <div class="ann-meta">
-          <div class="ann-author">${a.authorName||'Enseignant'} <span class="badge ${typeCols[a.type]||'bb'}" style="margin-left:5px">${typeIcons[a.type]||'ℹ️'} ${a.type||'info'}</span></div>
-          <div class="ann-date">${timeStr} · ${a.classe||'Toutes les classes'}</div>
-        </div>
-        <button class="ibt" onclick="deleteAnnonce('${a.id}')">🗑</button>
-      </div>
-      <div class="ann-body">${a.content}</div>
-      <div class="ann-footer">
-        <button class="ann-like ${a.liked?'liked':''}" onclick="likeAnnonce('${a.id}')">❤️ ${a.likes||0}</button>
-        <span class="ann-comment-count">💬 ${a.comments||0} commentaire(s)</span>
-        ${a.pinned?'<span class="badge ba">📌 Épinglé</span>':''}
-      </div>
-    </div>`;
-  }).join('');
+function saveMur() {
+  if (!currentMurId) return;
+  db.collection('murs').doc(currentMurId).update({ columns: currentMurData.columns });
 }
 
-function timeAgo(date){
-  const diff=(Date.now()-date.getTime())/1000;
-  if(diff<60) return 'À l\'instant';
-  if(diff<3600) return `Il y a ${Math.floor(diff/60)} min`;
-  if(diff<86400) return `Il y a ${Math.floor(diff/3600)}h`;
-  return `Il y a ${Math.floor(diff/86400)}j`;
-}
-
-window.setAnnType = function(type){
-  annType=type;
-  document.querySelectorAll('.compose-opt').forEach(b=>b.style.background='');
-  event.target.style.background='var(--sage-p)';
-  event.target.style.borderColor='var(--sage-l)';
-  event.target.style.color='var(--sage)';
-};
-
-window.publierAnnonce = async function(){
-  const content = document.getElementById('compose-text').value.trim();
-  if(!content){ toast('Écris quelque chose avant de publier.','error'); return; }
-  const snap = (await db.collection('users').doc(currentUser.uid).get());
-  const authorName = snap.exists?snap.data().name:'Enseignant';
-  await db.collection('annonces').add({
-    uid:currentUser.uid, content, type:annType,
-    authorName, classe:'Toutes les classes',
-    likes:0, comments:0, pinned:false,
-    createdAt:firebase.firestore.FieldValue.serverTimestamp()
+// ────────────────────────────────────────────────────────────
+// ═══ ÉDITEUR DE COURS ═══
+// ────────────────────────────────────────────────────────────
+function loadCoursList() {
+  db.collection('cours').where('uid', '==', currentUser.uid).orderBy('createdAt', 'desc').get()
+  .then(function(snap) {
+    var el = document.getElementById('cours-list');
+    if (snap.empty) {
+      el.innerHTML = '<div class="empty" style="padding:16px"><div class="empty-txt">Aucun cours.</div></div>';
+      return;
+    }
+    el.innerHTML = snap.docs.map(function(d) {
+      var fd = d.data();
+      return '<div class="cours-item" id="ci-' + d.id + '" onclick="openCours(\'' + d.id + '\')">' +
+        '<div class="ci-title">' + (fd.title || 'Sans titre') + '</div>' +
+        '<div class="ci-meta">' + timeAgo(fd.createdAt) + ' · ' + (fd.blocs ? fd.blocs.length : 0) + ' blocs' +
+          ' <button class="ibt" style="margin-left:4px" onclick="event.stopPropagation();deleteCours(\'' + d.id + '\')">🗑</button></div>' +
+      '</div>';
+    }).join('');
   });
-  document.getElementById('compose-text').value='';
-  toast('Annonce publiée !','success');
-  loadAnnonces();
-};
+}
 
-window.deleteAnnonce = async function(id){
-  if(!confirm('Supprimer cette annonce ?')) return;
-  await db.collection('annonces').doc(id).delete();
-  toast('Annonce supprimée','success');
-  loadAnnonces();
-};
+function newCours() {
+  currentCoursId = null;
+  coursBlocs = [];
+  document.getElementById('cours-title').value = '';
+  document.getElementById('blocs-area').innerHTML = '<div class="empty" style="padding:20px;border:2px dashed var(--ink-10);border-radius:9px"><div class="empty-txt">Ajoute des blocs pour commencer.</div></div>';
+  document.querySelectorAll('.cours-item').forEach(function(i) { i.classList.remove('active'); });
+  showScreen('cours');
+}
 
-window.likeAnnonce = function(id){
-  toast('Réaction ajoutée !');
-};
+function openCours(id) {
+  db.collection('cours').doc(id).get().then(function(snap) {
+    if (!snap.exists) return;
+    currentCoursId = id;
+    var fd = snap.data();
+    coursBlocs = fd.blocs || [];
+    document.getElementById('cours-title').value = fd.title || '';
+    renderBlocs();
+    document.querySelectorAll('.cours-item').forEach(function(i) { i.classList.remove('active'); });
+    var ci = document.getElementById('ci-' + id);
+    if (ci) ci.classList.add('active');
+    showScreen('cours');
+  });
+}
 
-// ════════════════════════════════════════
-// PRIORITÉ 3 — ÉDITEUR DE COURS
-// ════════════════════════════════════════
-async function loadCours(){
-  if(!currentUser) return;
-  const snap = (await db.collection('cours').where('uid', '==', currentUser.uid).orderBy('createdAt', 'desc').get());
-  const el = document.getElementById('cours-list');
-  if(snap.empty){
-    el.innerHTML='<div class="empty"><div class="empty-ic">✍️</div><div class="empty-txt">Aucun cours encore.<br>Crée ton premier cours !</div></div>';
+function addBloc(type) {
+  coursBlocs.push({ type: type, content: '' });
+  renderBlocs();
+}
+
+function renderBlocs() {
+  var el = document.getElementById('blocs-area');
+  if (!coursBlocs.length) {
+    el.innerHTML = '<div class="empty" style="padding:20px;border:2px dashed var(--ink-10);border-radius:9px"><div class="empty-txt">Ajoute des blocs pour commencer.</div></div>';
     return;
   }
-  const colors={sage:'#EAF2ED',terra:'#FBF0EA',blue:'#EBF2FF',purple:'#F3EEFF'};
-  const icons=['📗','📘','📙','📒','📕'];
-  el.innerHTML = snap.docs.map((d,i)=>{
-    const fd=d.data();
-    const bg=colors[['sage','terra','blue','purple'][i%4]];
-    return `<div class="cours-item" onclick="ouvrirCours('${d.id}')">
-      <div class="ci-icon" style="background:${bg}">${icons[i%5]}</div>
-      <div>
-        <div class="ci-title">${fd.title||'Sans titre'}</div>
-        <div class="ci-meta">${fd.classe||''} · ${fd.blocs?.length||0} blocs · ${fd.published?'Publié':'Brouillon'}</div>
-      </div>
-      <div class="ci-tags">
-        <span class="badge ${fd.published?'bg':'ba'}">${fd.published?'Publié':'Brouillon'}</span>
-      </div>
-    </div>`;
+  el.innerHTML = coursBlocs.map(function(b, i) {
+    if (b.type === 'sep') {
+      return '<div class="bloc"><hr class="bloc-sep"><div class="bloc-toolbar">' +
+        '<button class="bt-btn" onclick="removeBloc(' + i + ')">🗑</button>' +
+      '</div></div>';
+    }
+    var tag = b.type === 'code' ? 'textarea' : 'textarea';
+    var cls = 'bloc-' + b.type;
+    return '<div class="bloc">' +
+      '<textarea class="' + cls + '" rows="' + (b.type === 'p' ? 3 : 1) + '" placeholder="' + blocPlaceholder(b.type) + '" onchange="updateBloc(' + i + ',this.value)">' + (b.content || '') + '</textarea>' +
+      '<div class="bloc-toolbar">' +
+        '<button class="bt-btn" onclick="moveBloc(' + i + ',-1)">↑</button>' +
+        '<button class="bt-btn" onclick="moveBloc(' + i + ',1)">↓</button>' +
+        '<button class="bt-btn" onclick="removeBloc(' + i + ')">🗑</button>' +
+      '</div>' +
+    '</div>';
   }).join('');
 }
 
-window.ouvrirEditeur = function(coursId=null){
-  currentCoursId = coursId;
-  blocsData = [];
-  document.getElementById('edit-title').value = '';
-  document.getElementById('blocs-area').innerHTML = '';
-  document.getElementById('cours-liste-view').style.display='none';
-  document.getElementById('editeur-view').style.display='block';
-  if(!coursId){
-    addBloc('titre');
-    addBloc('texte');
-  }
-};
-
-window.ouvrirCours = async function(id){
-  const snap = (await db.collection('cours').doc(id).get());
-  if(!snap.exists) return;
-  const fd = snap.data();
-  currentCoursId = id;
-  blocsData = fd.blocs||[];
-  document.getElementById('edit-title').value = fd.title||'';
-  document.getElementById('cours-liste-view').style.display='none';
-  document.getElementById('editeur-view').style.display='block';
-  renderBlocs();
-};
-
-window.fermerEditeur = function(){
-  document.getElementById('cours-liste-view').style.display='block';
-  document.getElementById('editeur-view').style.display='none';
-  loadCours();
-};
-
-window.addBloc = function(type){
-  const id = Date.now()+'_'+Math.random().toString(36).slice(2,6);
-  blocsData.push({id,type,content:'',title:''});
-  renderBlocs();
-  // Focus sur le dernier bloc
-  setTimeout(()=>{
-    const inputs = document.querySelectorAll(`[data-bloc-id="${id}"] input, [data-bloc-id="${id}"] textarea`);
-    if(inputs.length) inputs[0].focus();
-  },100);
-};
-
-function renderBlocs(){
-  const area = document.getElementById('blocs-area');
-  area.innerHTML = blocsData.map((b,i)=>{
-    let inner='';
-    if(b.type==='titre')      inner=`<input class="bloc-titre-input" placeholder="Titre…" value="${b.content||''}" oninput="updateBloc('${b.id}','content',this.value)">`;
-    else if(b.type==='titre2') inner=`<input class="bloc-titre2-input" placeholder="Sous-titre…" value="${b.content||''}" oninput="updateBloc('${b.id}','content',this.value)">`;
-    else if(b.type==='texte')  inner=`<textarea class="bloc-texte-input" placeholder="Écris ton texte ici…" oninput="updateBloc('${b.id}','content',this.value);autoResize(this)">${b.content||''}</textarea>`;
-    else if(b.type==='callout') inner=`<div class="bloc-callout"><textarea class="bloc-callout-input" placeholder="Encadré important…" oninput="updateBloc('${b.id}','content',this.value);autoResize(this)">${b.content||''}</textarea></div>`;
-    else if(b.type==='code')   inner=`<div class="bloc-code"><textarea class="bloc-code-input" placeholder="// Code ici…" oninput="updateBloc('${b.id}','content',this.value);autoResize(this)">${b.content||''}</textarea></div>`;
-    else if(b.type==='sep')    inner=`<div class="bloc-sep-line"></div>`;
-    else if(b.type==='liste')  inner=`<textarea class="bloc-texte-input" placeholder="• Élément 1&#10;• Élément 2&#10;• Élément 3" oninput="updateBloc('${b.id}','content',this.value);autoResize(this)">${b.content||''}</textarea>`;
-    return `<div class="bloc" data-bloc-id="${b.id}">
-      <span class="bloc-handle">⠿</span>
-      <button class="bloc-del" onclick="deleteBloc('${b.id}')">✕</button>
-      ${inner}
-    </div>`;
-  }).join('');
+function blocPlaceholder(type) {
+  var ph = { h1:'Titre principal…', h2:'Sous-titre…', p:'Paragraphe de texte…', callout:'Note importante…', code:'Code…' };
+  return ph[type] || '…';
 }
 
-window.updateBloc = function(id,field,val){
-  const b = blocsData.find(b=>b.id===id);
-  if(b) b[field]=val;
-};
-window.deleteBloc = function(id){ blocsData=blocsData.filter(b=>b.id!==id); renderBlocs(); };
-window.autoResize = function(el){ el.style.height='auto'; el.style.height=el.scrollHeight+'px'; };
+function updateBloc(i, val) { coursBlocs[i].content = val; }
+function removeBloc(i) { coursBlocs.splice(i, 1); renderBlocs(); }
+function moveBloc(i, dir) {
+  var j = i + dir;
+  if (j < 0 || j >= coursBlocs.length) return;
+  var tmp = coursBlocs[i]; coursBlocs[i] = coursBlocs[j]; coursBlocs[j] = tmp;
+  renderBlocs();
+}
 
-window.sauvegarderCours = async function(){
-  const title = document.getElementById('edit-title').value.trim()||'Sans titre';
-  const classe = document.getElementById('edit-class').value;
-  const data = { uid:currentUser.uid, title, classe, blocs:blocsData, published:false, updatedAt:firebase.firestore.FieldValue.serverTimestamp() };
-  if(currentCoursId){
-    await db.collection('cours').doc(currentCoursId).set({...data,createdAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});
+function saveCours() {
+  var title = document.getElementById('cours-title').value.trim() || 'Sans titre';
+  var data  = { uid: currentUser.uid, title: title, blocs: coursBlocs, createdAt: TS() };
+  if (currentCoursId) {
+    db.collection('cours').doc(currentCoursId).update({ title: title, blocs: coursBlocs })
+    .then(function() { toast('Cours mis à jour !', 'success'); loadCoursList(); });
   } else {
-    const ref = await db.collection('cours').add({...data,createdAt:firebase.firestore.FieldValue.serverTimestamp()});
-    currentCoursId=ref.id;
-  }
-  toast('Cours sauvegardé !','success');
-};
-
-window.publierCours = async function(){
-  await window.sauvegarderCours();
-  if(currentCoursId){
-    await db.collection('cours').doc(currentCoursId).set({published:true},{merge:true});
-    toast('Cours publié aux élèves !','success');
-  }
-};
-
-window.genererAvecIA = async function(){
-  const title = document.getElementById('edit-title').value.trim();
-  if(!title){ toast('Donne d\'abord un titre au cours.','error'); return; }
-  toast('L\'IA génère le contenu…');
-  try{
-    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_KEY}`,{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({
-        contents:[{role:'user',parts:[{text:`Génère un plan de cours structuré sur le sujet : "${title}". 
-Format : 1 titre principal, 3-4 sous-titres avec paragraphe de texte pour chaque, 1 encadré important, 1 liste de points clés. 
-Réponds en JSON avec ce format exact : {"blocs":[{"type":"titre","content":"..."},{"type":"titre2","content":"..."},{"type":"texte","content":"..."},{"type":"callout","content":"..."},{"type":"liste","content":"..."}]}`}]}],
-        generationConfig:{maxOutputTokens:2000,temperature:0.7}
-      })
+    db.collection('cours').add(data).then(function(ref) {
+      currentCoursId = ref.id;
+      toast('Cours sauvegardé !', 'success'); loadCoursList();
     });
-    const data = await res.json();
-    const text = data.candidates[0].content.parts[0].text;
-    const jsonMatch = text.match(/\{[\s\S]*\}/);
-    if(jsonMatch){
-      const parsed = JSON.parse(jsonMatch[0]);
-      if(parsed.blocs) {
-        blocsData = parsed.blocs.map(b=>({...b,id:Date.now()+'_'+Math.random().toString(36).slice(2,6)}));
-        renderBlocs();
-        toast('Cours généré par l\'IA !','success');
-      }
-    }
-  } catch(e){ toast('Erreur IA : '+e.message,'error'); }
-};
-
-// ════════════════════════════════════════
-// PRIORITÉ 4 — FICHES ÉLÈVES
-// ════════════════════════════════════════
-const elevesDemo = [
-  {name:'Lucas Martin',   class:'Terminale Pro MCV', avg:14.2, done:8,  total:10, color:'#5A8C6A'},
-  {name:'Emma Dubois',    class:'Terminale Pro MCV', avg:16.5, done:10, total:10, color:'#B8623A'},
-  {name:'Nathan Bernard', class:'Terminale Pro MCV', avg:11.0, done:6,  total:10, color:'#1A4F9C'},
-  {name:'Léa Moreau',     class:'Seconde Générale',  avg:17.2, done:9,  total:9,  color:'#5B2E9C'},
-  {name:'Thomas Petit',   class:'Seconde Générale',  avg:13.5, done:7,  total:9,  color:'#9C6B1E'},
-  {name:'Camille Simon',  class:'Première Pro',      avg:15.8, done:8,  total:8,  color:'#9C1A5B'},
-];
-
-async function loadEleves(){
-  if(!currentUser) return;
-  try {
-    // Charger les membres des classes de l'enseignant
-    const classSnap = (await query(db.collection('classes'), where('uid','==',currentUser.uid)));
-    const classIds = classSnap.docs.map(d => d.id);
-    if(classIds.length === 0) {
-      renderElevesList(elevesDemo); // fallback démo
-      return;
-    }
-    const memberSnap = (await query(db.collection('classMembers'), where('teacherId','==',currentUser.uid)));
-    if(memberSnap.empty) {
-      renderElevesList(elevesDemo); // fallback démo
-      return;
-    }
-    const eleveIds = [...new Set(memberSnap.docs.map(d => d.data().studentId))];
-    const elevesFirestore = await Promise.all(eleveIds.map(async (uid, i) => {
-      try {
-        const userSnap = (await db.collection('users').doc(uid).get());
-        const userData = userSnap.exists ? userSnap.data() : {};
-        const memberData = memberSnap.docs.find(d => d.data().studentId === uid)?.data() || {};
-        const subSnap = (await query(db.collection('submissions'), where('uid','==',uid)));
-        const graded = subSnap.docs.filter(d => d.data().score != null);
-        const avg = graded.length > 0
-          ? (graded.reduce((acc,d) => acc + (d.data().score||0), 0) / graded.length).toFixed(1)
-          : '—';
-        const colors = ['#5A8C6A','#B8623A','#1A4F9C','#5B2E9C','#9C6B1E','#9C1A5B'];
-        return {
-          name: userData.name || 'Élève '+uid.slice(0,4),
-          class: memberData.className || 'Classe',
-          avg: avg,
-          done: subSnap.size,
-          total: 10,
-          color: colors[i % colors.length],
-          uid
-        };
-      } catch(e) { return null; }
-    }));
-    const validEleves = elevesFirestore.filter(Boolean);
-    renderElevesList(validEleves.length > 0 ? validEleves : elevesDemo);
-  } catch(e) {
-    console.error(e);
-    renderElevesList(elevesDemo);
   }
 }
 
-function renderElevesList(eleves){
-  const grid = document.getElementById('eleves-grid');
-  grid.innerHTML = eleves.map((e,i)=>{
-    const initials = e.name.split(' ').map(n=>n[0]).join('').toUpperCase();
-    const pct = Math.round((e.done/e.total)*100);
-    return `<div class="eleve-card" onclick="ouvrirFiche(${i})">
-      <div class="ec-av" style="background:${e.color}">${initials}</div>
-      <div class="ec-name">${e.name}</div>
-      <div class="ec-class">${e.class}</div>
-      <div class="ec-stats">
-        <div class="ec-stat"><div class="ec-stat-val" style="color:var(--sage)">${e.avg}</div><div class="ec-stat-lbl">Moy.</div></div>
-        <div class="ec-stat"><div class="ec-stat-val" style="color:var(--blue)">${pct}%</div><div class="ec-stat-lbl">Rendus</div></div>
-        <div class="ec-stat"><div class="ec-stat-val" style="color:var(--amber)">${e.done}</div><div class="ec-stat-lbl">Devoirs</div></div>
-      </div>
-    </div>`;
-  }).join('');
-}
-
-window.filterEleves = function(){
-  const f = document.getElementById('filter-class').value;
-  renderElevesList(f ? elevesDemo.filter(e=>e.class===f) : elevesDemo);
-};
-
-window.ouvrirFiche = function(i){
-  const e = elevesDemo[i];
-  const initials = e.name.split(' ').map(n=>n[0]).join('').toUpperCase();
-  document.getElementById('eleves-liste-view').style.display='none';
-  document.getElementById('fiche-view').style.display='block';
-  const comps = [
-    {name:'Vocabulaire',    pct:80, color:'var(--sage-l)'},
-    {name:'Expression',     pct:70, color:'var(--blue)'},
-    {name:'Argumentation',  pct:55, color:'var(--amber)'},
-    {name:'Rigueur',        pct:90, color:'var(--purple)'},
-    {name:'Présentation',   pct:65, color:'var(--terra)'},
-  ];
-  const notes = [
-    {date:'15 mai 2026', txt:'Bon travail sur le dernier devoir. Doit approfondir la partie argumentation.'},
-    {date:'2 mai 2026',  txt:'Élève sérieux, participation active en classe.'},
-  ];
-  document.getElementById('fiche-content').innerHTML = `
-    <div class="fiche-side">
-      <div class="fiche-profil">
-        <div class="fp-av" style="background:${e.color}">${initials}</div>
-        <div class="fp-name">${e.name}</div>
-        <div class="fp-class">${e.class}</div>
-        <div style="display:flex;gap:14px;justify-content:center;margin-top:14px">
-          <div style="text-align:center"><div style="font-size:22px;font-weight:700;font-family:'Lora',serif;color:var(--sage)">${e.avg}</div><div style="font-size:9px;color:var(--ink-30);text-transform:uppercase">Moyenne</div></div>
-          <div style="text-align:center"><div style="font-size:22px;font-weight:700;font-family:'Lora',serif;color:var(--blue)">${e.done}/${e.total}</div><div style="font-size:9px;color:var(--ink-30);text-transform:uppercase">Devoirs</div></div>
-        </div>
-        <div class="prog-comp" style="margin-top:14px">
-          <div style="font-size:10.5px;font-weight:700;color:var(--ink-60);text-transform:uppercase;letter-spacing:.3px;margin-bottom:8px">Compétences</div>
-          ${comps.map(c=>`<div class="comp-row">
-            <span class="comp-name">${c.name}</span>
-            <div class="comp-bar"><div class="comp-fill" style="width:${c.pct}%;background:${c.color}"></div></div>
-            <span class="comp-pct">${c.pct}%</span>
-          </div>`).join('')}
-        </div>
-      </div>
-      <div class="note-rapide">
-        <div style="font-size:11px;font-weight:700;color:var(--ink-60);text-transform:uppercase;letter-spacing:.3px;margin-bottom:8px">Notes privées</div>
-        <div class="notes-list" style="margin-bottom:10px">
-          ${notes.map(n=>`<div class="note-item"><div class="note-date">${n.date}</div><div class="note-txt">${n.txt}</div></div>`).join('')}
-        </div>
-        <textarea class="note-input" placeholder="Ajouter une note privée…"></textarea>
-        <button class="btn btn-p btn-sm" style="margin-top:6px;width:100%;justify-content:center" onclick="toast('Note sauvegardée !','success')">Sauvegarder</button>
-      </div>
-    </div>
-    <div>
-      <div class="card">
-        <div class="card-hd"><span class="card-title">Résultats de ${e.name.split(' ')[0]}</span></div>
-        <table class="resultats-table">
-          <thead><tr><th>Devoir</th><th>Classe</th><th>Date</th><th>Note</th><th>Statut</th></tr></thead>
-          <tbody>
-            <tr><td>Analyse document commercial</td><td><span class="tag">${e.class}</span></td><td style="font-size:11px;color:var(--ink-60)">12 mai</td><td><span class="score-chip" style="color:var(--sage)">14/20</span></td><td><span class="badge bg">Corrigé</span></td></tr>
-            <tr><td>Fiche de révision</td><td><span class="tag">${e.class}</span></td><td style="font-size:11px;color:var(--ink-60)">28 avr.</td><td><span class="score-chip" style="color:var(--blue)">17/20</span></td><td><span class="badge bg">Corrigé</span></td></tr>
-            <tr><td>Quiz vocabulaire</td><td><span class="tag">${e.class}</span></td><td style="font-size:11px;color:var(--ink-60)">15 avr.</td><td><span class="score-chip" style="color:var(--amber)">8/10</span></td><td><span class="badge bg">Corrigé</span></td></tr>
-            <tr><td>Plan de vente</td><td><span class="tag">${e.class}</span></td><td style="font-size:11px;color:var(--ink-60)">5 avr.</td><td><span class="score-chip" style="color:var(--ink-30)">—</span></td><td><span class="badge ba">En attente</span></td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>`;
-};
-
-window.fermerFiche = function(){
-  document.getElementById('eleves-liste-view').style.display='block';
-  document.getElementById('fiche-view').style.display='none';
-};
-
-// ════════════════════════════════════════
-// PRIORITÉ 5 — QUIZ TEMPS RÉEL
-// ════════════════════════════════════════
-const quizQuestions = [
-  {q:"Qu'est-ce que la communication externe ?", opts:["Échanges entre collègues","Échanges avec clients et partenaires","Communication par email","Réunions internes"], correct:1},
-  {q:"L'écoute active est une technique passive.", opts:["Vrai","Faux — elle implique reformulation et questionnement"], correct:1},
-  {q:"Combien de piliers composent une communication efficace ?", opts:["2","3","4","5"], correct:2},
-  {q:"Quel est le rôle du canal de communication ?", opts:["Décoder le message","Transmettre le message","Créer le message","Recevoir le feedback"], correct:1},
-  {q:"La reformulation est une technique de :", opts:["Communication externe","Écoute active","Rédaction professionnelle","Négociation commerciale"], correct:1},
-];
-const participants = ["Lucas M.","Emma D.","Nathan B.","Léa M.","Thomas P.","Camille S.","Hugo L.","Manon R."];
-
-function initQuiz(){
-  currentQ=0;
-  renderQuestion();
-}
-
-function renderQuestion(){
-  const q = quizQuestions[currentQ];
-  document.getElementById('q-num').textContent = currentQ+1;
-  document.getElementById('q-total').textContent = quizQuestions.length;
-  document.getElementById('q-question').textContent = q.q;
-  document.getElementById('q-prog').style.width = ((currentQ+1)/quizQuestions.length*100)+'%';
-  const letters = ['A','B','C','D'];
-  document.getElementById('q-options').innerHTML = q.opts.map((o,i)=>`
-    <div class="qs-opt" onclick="selectOpt(this,${i},${q.correct})">
-      <div class="qs-opt-letter">${letters[i]}</div>
-      <span>${o}</span>
-    </div>`).join('');
-  document.getElementById('live-results').style.display='none';
-  document.getElementById('q-timer').textContent = timerVal;
-}
-
-window.lancerQuiz = function(){
-  timerVal = parseInt(document.getElementById('timer-select').value)||45;
-  quizRunning=true;
-  currentQ=0;
-  renderQuestion();
-  startTimer();
-  // Simuler des élèves connectés
-  document.getElementById('eleves-connectes').innerHTML = participants.slice(0,6).map(p=>
-    `<div style="display:flex;align-items:center;gap:7px;padding:5px 0;border-bottom:1px solid var(--ink-10)">
-      <div style="width:24px;height:24px;border-radius:50%;background:var(--sage-p);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:var(--sage)">${p.split(' ').map(n=>n[0]).join('')}</div>
-      <span style="font-size:12px">${p}</span>
-      <span class="badge bg" style="margin-left:auto">✓ Connecté</span>
-    </div>`
-  ).join('');
-  toast('Quiz lancé ! Les élèves peuvent répondre.','success');
-};
-
-function startTimer(){
-  if(quizTimer) clearInterval(quizTimer);
-  let t = timerVal;
-  quizTimer = setInterval(()=>{
-    t--;
-    document.getElementById('q-timer').textContent=t;
-    if(t<=0){ clearInterval(quizTimer); showResults(); }
-  },1000);
-}
-
-window.selectOpt = function(el,idx,correct){
-  document.querySelectorAll('.qs-opt').forEach(o=>o.classList.remove('selected'));
-  el.classList.add('selected');
-};
-
-window.showResults = function(){
-  if(quizTimer) clearInterval(quizTimer);
-  const q = quizQuestions[currentQ];
-  document.querySelectorAll('.qs-opt').forEach((o,i)=>{
-    if(i===q.correct) o.classList.add('correct');
-    else o.classList.add('wrong');
+function deleteCours(id) {
+  if (!confirm('Supprimer ce cours ?')) return;
+  db.collection('cours').doc(id).delete().then(function() {
+    toast('Cours supprimé.', 'success'); loadCoursList();
+    if (currentCoursId === id) newCours();
   });
-  const pcts = q.opts.map((_,i)=> i===q.correct ? Math.floor(Math.random()*30)+55 : Math.floor(Math.random()*25)+5);
-  const colors=['var(--blue)','var(--sage)','var(--amber)','var(--terra)'];
-  document.getElementById('lr-bars').innerHTML = q.opts.map((o,i)=>`
-    <div class="lr-row">
-      <span class="lr-label">${['A','B','C','D'][i]}</span>
-      <div class="lr-bar"><div class="lr-fill" style="width:${pcts[i]}%;background:${i===q.correct?'var(--sage)':colors[i%4]}"><span class="lr-pct">${pcts[i]}%</span></div></div>
-      <span class="lr-count">${Math.floor(pcts[i]/100*6)}</span>
-    </div>`).join('');
-  document.getElementById('participants-list').innerHTML = participants.slice(0,6).map((p,i)=>
-    `<span class="participant-chip answered">${p} ✓</span>`).join('');
-  document.getElementById('live-results').style.display='block';
-};
+}
 
-window.nextQuestion = function(){
-  if(currentQ<quizQuestions.length-1){
-    currentQ++;
-    renderQuestion();
-    if(quizRunning) startTimer();
+function genCoursIA() {
+  var title = document.getElementById('cours-title').value.trim();
+  if (!title) { toast('Entre d\'abord un titre.', 'error'); return; }
+  var prompt = 'Génère un cours pédagogique structuré sur le sujet : "' + title + '". Retourne le contenu sous ce format JSON strict (sans markdown, juste le JSON brut) :\n{"blocs":[{"type":"h1","content":"..."},{"type":"p","content":"..."},{"type":"h2","content":"..."},{"type":"callout","content":"..."},{"type":"p","content":"..."}]}';
+  toast('Génération en cours…');
+  fetch(GEMINI_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ contents: [{ role: 'user', parts: [{ text: prompt }] }], generationConfig: { maxOutputTokens: 4096 } })
+  }).then(function(r) { return r.json(); })
+  .then(function(data) {
+    var text = data.candidates[0].content.parts[0].text.replace(/```json|```/g, '').trim();
+    var parsed = JSON.parse(text);
+    coursBlocs = parsed.blocs || [];
+    renderBlocs();
+    toast('Cours généré !', 'success');
+  }).catch(function(e) { toast('Erreur IA : ' + e.message, 'error'); });
+}
+
+// ────────────────────────────────────────────────────────────
+// ═══ QUIZ ═══
+// ────────────────────────────────────────────────────────────
+function genQuizIA() {
+  var source = document.getElementById('quiz-source').value.trim();
+  if (!source) { toast('Colle ton cours d\'abord.', 'error'); return; }
+  var prompt = 'Génère 5 questions QCM en français sur ce cours. Retourne uniquement ce JSON strict (sans markdown) :\n[{"question":"...","options":["A...","B...","C...","D..."],"answer":0}]\n(answer = index de la bonne réponse)\n\nCours :\n' + source.slice(0, 2000);
+  toast('Génération du quiz…');
+  fetch(GEMINI_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ contents: [{ role: 'user', parts: [{ text: prompt }] }], generationConfig: { maxOutputTokens: 2048 } })
+  }).then(function(r) { return r.json(); })
+  .then(function(data) {
+    var text = data.candidates[0].content.parts[0].text.replace(/```json|```/g, '').trim();
+    quizQuestions = JSON.parse(text);
+    document.getElementById('quiz-questions-preview').style.display = 'block';
+    document.getElementById('quiz-q-list').innerHTML = quizQuestions.map(function(q, i) {
+      return '<div style="background:var(--white);border:1px solid var(--ink-10);border-radius:9px;padding:10px 13px;margin-bottom:7px"><div style="font-size:12.5px;font-weight:600;margin-bottom:5px">' + (i+1) + '. ' + q.question + '</div><div style="font-size:11px;color:var(--ink-30)">' + q.options.map(function(o,j){ return (j===q.answer?'✓ ':'') + o; }).join(' · ') + '</div></div>';
+    }).join('');
+    toast(quizQuestions.length + ' questions générées !', 'success');
+  }).catch(function(e) { toast('Erreur IA : ' + e.message, 'error'); });
+}
+
+function startQuiz() {
+  if (!quizQuestions.length) { toast('Génère d\'abord les questions.', 'error'); return; }
+  quizIdx = 0; quizScore = 0; quizRunning = true;
+  quizTimerSec = parseInt(document.getElementById('quiz-timer').value) || 30;
+  document.getElementById('quiz-setup').style.display = 'none';
+  document.getElementById('quiz-running').style.display = 'block';
+  document.getElementById('quiz-results').style.display = 'none';
+  showQuestion();
+}
+
+function showQuestion() {
+  if (quizIdx >= quizQuestions.length) { endQuiz(); return; }
+  var q = quizQuestions[quizIdx];
+  document.getElementById('q-num').textContent = 'Question ' + (quizIdx+1) + ' / ' + quizQuestions.length;
+  document.getElementById('q-text').textContent = q.question;
+  document.getElementById('q-feedback').style.display = 'none';
+  document.getElementById('q-opts').innerHTML = q.options.map(function(opt, i) {
+    return '<button class="q-opt" onclick="answerQuiz(' + i + ')">' + opt + '</button>';
+  }).join('');
+  startTimer();
+}
+
+function startTimer() {
+  clearInterval(quizTimer);
+  var sec = quizTimerSec;
+  document.getElementById('timer-fill').style.width = '100%';
+  document.getElementById('timer-fill').style.transition = 'width ' + sec + 's linear';
+  setTimeout(function() { document.getElementById('timer-fill').style.width = '0%'; }, 50);
+  quizTimer = setInterval(function() {
+    sec--;
+    if (sec <= 0) { clearInterval(quizTimer); answerQuiz(-1); }
+  }, 1000);
+}
+
+function answerQuiz(idx) {
+  clearInterval(quizTimer);
+  var q    = quizQuestions[quizIdx];
+  var opts = document.getElementById('q-opts').querySelectorAll('.q-opt');
+  var fb   = document.getElementById('q-feedback');
+  opts.forEach(function(o) { o.disabled = true; });
+  if (idx === q.answer) {
+    quizScore++;
+    opts[idx].classList.add('correct');
+    fb.style.display = 'block'; fb.style.background = 'var(--sage-p)'; fb.style.color = 'var(--sage)';
+    fb.textContent = '✓ Bonne réponse !';
   } else {
-    toast('Quiz terminé ! 🎉','success');
-    quizRunning=false;
+    if (idx >= 0) opts[idx].classList.add('wrong');
+    opts[q.answer].classList.add('correct');
+    fb.style.display = 'block'; fb.style.background = 'var(--terra-p)'; fb.style.color = 'var(--terra)';
+    fb.textContent = idx === -1 ? '⏱ Temps écoulé ! La bonne réponse était : ' + q.options[q.answer] : '✕ La bonne réponse était : ' + q.options[q.answer];
   }
-};
-
-// ════════════════════════════════════════
-// PRIORITÉ 6 — APERÇU PDF
-// ════════════════════════════════════════
-pdfPages = [
-  {title:"Introduction", content:`<h2>La Communication Professionnelle</h2><h3>Définition</h3><p>La communication professionnelle désigne l'ensemble des échanges verbaux et non verbaux qui ont lieu dans un contexte de travail.</p><h3>Les deux types</h3><ul><li><strong>Communication interne</strong> : échanges au sein de l'entreprise</li><li><strong>Communication externe</strong> : échanges avec clients et partenaires</li></ul>`},
-  {title:"Les piliers", content:`<h2>Les 4 Piliers de l'Efficacité</h2><h3>1. Clarté du message</h3><p>Le message doit être précis, sans ambiguïté et adapté au destinataire.</p><h3>2. Adaptation</h3><p>S'adapter au niveau de langage et au contexte de l'interlocuteur.</p><h3>3. Choix du canal</h3><p>Choisir le bon canal (oral, écrit, numérique) selon la situation.</p><h3>4. Écoute active</h3><p>Reformuler, questionner, et montrer de l'empathie.</p>`},
-  {title:"L'écoute active", content:`<h2>L'Écoute Active</h2><p>Technique d'écoute qui va au-delà de la simple réception du message.</p><h3>Techniques</h3><ul><li>La reformulation</li><li>Le questionnement</li><li>L'empathie</li><li>Le silence bienveillant</li></ul><h3>Objectif</h3><p>S'assurer que le message a bien été compris et montrer à l'interlocuteur qu'il est entendu.</p>`},
-  {title:"Conclusion", content:`<h2>À Retenir</h2><p>La communication professionnelle est une compétence essentielle qui s'apprend et se développe.</p><h3>Points clés</h3><ul><li>La communication est bidirectionnelle</li><li>L'adaptation est la clé du succès</li><li>L'écoute active est indispensable</li><li>Le non-verbal représente 55% du message</li></ul>`},
-];
-
-annotations = [
-  {color:'var(--amber)',text:'Définition à mémoriser',page:'Page 1'},
-  {color:'var(--sage)',text:'Les 4 piliers à retenir pour l\'éval',page:'Page 2'},
-  {color:'var(--terra)',text:'Question probable à l\'examen',page:'Page 3'},
-];
-
-function loadPdfFiles(){
-  const files = [
-    {name:'Cours RC Chap3.pdf',icon:'📄',color:'#FEE2E2'},
-    {name:'Exercices P3.docx',icon:'📝',color:'#DBEAFE'},
-    {name:'Flashcards IA.pdf',icon:'✦',color:'#F3EEFF'},
-    {name:'Évaluation P3.pdf',icon:'📊',color:'#FEF3C7'},
-  ];
-  document.getElementById('pdf-file-list').innerHTML = files.map((f,i)=>`
-    <div onclick="selectPdfFile(${i})" style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;cursor:pointer;margin-bottom:4px;transition:all .12s;${i===0?'background:var(--sage-p)':''}" onmouseover="this.style.background='var(--sand)'" onmouseout="this.style.background='${i===0?'var(--sage-p)':'transparent'}'">
-      <div style="width:32px;height:32px;border-radius:7px;background:${f.color};display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0">${f.icon}</div>
-      <div style="font-size:11.5px;font-weight:500;color:var(--ink)">${f.name}</div>
-    </div>`).join('');
-  renderPdfPage();
-  renderAnnotations();
+  setTimeout(function() { quizIdx++; showQuestion(); }, 1800);
 }
 
-window.selectPdfFile = function(i){
-  renderPdfPage();
-};
-
-function renderPdfPage(){
-  const page = pdfPages[pdfPage-1];
-  document.getElementById('pdf-content').innerHTML = `<div class="pdf-page">${page.content}</div>`;
-  document.getElementById('pdf-pg').textContent = pdfPage;
-  document.getElementById('pdf-total').textContent = pdfPages.length;
+function endQuiz() {
+  quizRunning = false;
+  document.getElementById('quiz-running').style.display = 'none';
+  document.getElementById('quiz-results').style.display = 'block';
+  var pct = Math.round(quizScore / quizQuestions.length * 100);
+  document.getElementById('q-score').textContent = quizScore + '/' + quizQuestions.length;
+  document.getElementById('q-sub').textContent = pct + '% de bonnes réponses · ' + (pct >= 70 ? 'Excellent !' : pct >= 50 ? 'Bien !' : 'À revoir…');
 }
 
-function renderAnnotations(){
-  document.getElementById('annotations-list').innerHTML = annotations.map(a=>`
-    <div class="annotation-item">
-      <div class="ann-color" style="background:${a.color}"></div>
-      <div><div class="ann-txt">${a.text}</div><div class="ann-pg">${a.page}</div></div>
-    </div>`).join('');
+function stopQuiz() {
+  clearInterval(quizTimer); quizRunning = false;
+  document.getElementById('quiz-running').style.display = 'none';
+  document.getElementById('quiz-setup').style.display = 'block';
 }
 
-window.pdfNav = function(dir){
-  pdfPage = Math.max(1,Math.min(pdfPages.length, pdfPage+dir));
-  renderPdfPage();
-};
+function resetQuiz() {
+  quizIdx = 0; quizScore = 0;
+  document.getElementById('quiz-results').style.display = 'none';
+  document.getElementById('quiz-setup').style.display = 'block';
+  document.getElementById('quiz-questions-preview').style.display = 'none';
+  quizQuestions = [];
+}
 
-// ════════════════════════════════════════
-// MODALS
-// ════════════════════════════════════════
-const MODALS = {
-  'new-mur':{
-    title:'Nouveau mur collaboratif',sub:'Crée un espace visuel pour organiser tes ressources',
-    body:`<div class="fg"><label class="fl">Nom du mur</label><input class="fi" id="m-name" placeholder="Ex: Ressources Relation Client"/></div>
-<div class="fg"><label class="fl">Thème / Matière</label><input class="fi" id="m-theme" placeholder="Ex: Commerce, Communication…"/></div>
-<div class="fg"><label class="fl">Emoji</label><input class="fi" id="m-emoji" placeholder="🗂" style="font-size:20px;text-align:center" maxlength="2"/></div>
-<div class="fg"><label class="fl">Classe</label><select class="fs" id="m-class"><option>Terminale Pro MCV</option><option>Seconde Générale</option><option>Première Pro</option><option>Toutes les classes</option></select></div>
-<div class="fg"><label class="fl">Couleur</label><div class="color-selector">
-<div class="cs-dot sel" style="background:#5A8C6A" data-c="sage" onclick="selCs(this)"></div>
-<div class="cs-dot" style="background:#B8623A" data-c="terra" onclick="selCs(this)"></div>
-<div class="cs-dot" style="background:#1A4F9C" data-c="blue" onclick="selCs(this)"></div>
-<div class="cs-dot" style="background:#5B2E9C" data-c="purple" onclick="selCs(this)"></div>
-<div class="cs-dot" style="background:#9C6B1E" data-c="amber" onclick="selCs(this)"></div>
-<div class="cs-dot" style="background:#9C1A5B" data-c="pink" onclick="selCs(this)"></div>
-</div></div>
-<div class="fg"><label class="fl">Visibilité</label><select class="fs" id="m-vis"><option value="privé">Privé</option><option value="public">Partagé avec la classe</option></select></div>`,
-    action: async()=>{
-      const name=document.getElementById('m-name').value.trim();
-      if(!name){toast('Donne un nom au mur.','error');return;}
-      const color=document.querySelector('.cs-dot.sel')?.dataset.c||'sage';
-      const emoji=document.getElementById('m-emoji').value||'🗂';
-      const classe=document.getElementById('m-class').value;
-      const theme=document.getElementById('m-theme').value;
-      const visibility=document.getElementById('m-vis').value;
-      const defaultCols=[{title:'À faire',cards:[]},{title:'En cours',cards:[]},{title:'Terminé',cards:[]}];
-      await db.collection('murs').add({
-        uid:currentUser.uid,name,color,emoji,classe,theme,visibility,
-        columns:defaultCols,createdAt:firebase.firestore.FieldValue.serverTimestamp()
-      });
-      toast('Mur créé !','success');
-      closeModal();
-      loadMurs();
+// ────────────────────────────────────────────────────────────
+// ═══ FICHES ÉLÈVES ═══
+// ────────────────────────────────────────────────────────────
+function loadEleves() {
+  db.collection('classes').where('uid', '==', currentUser.uid).get()
+  .then(function(classSnap) {
+    if (classSnap.empty) {
+      document.getElementById('eleves-list').innerHTML = '<div class="empty"><div class="empty-ic">👥</div><div class="empty-txt">Aucune classe. Crée-en une depuis le dashboard.</div></div>';
+      return;
     }
-  },
-  'share-mur':{
-    title:'Partager ce mur',sub:'Rends ce mur visible à tes élèves',
-    body:`<div class="fg"><label class="fl">Visibilité</label><select class="fs" id="sh-vis">
-<option value="privé">🔒 Privé — seulement moi</option>
-<option value="public">👁 Public — tous mes élèves</option>
-<option value="classe">🏫 Ma classe uniquement</option>
-</select></div>
-<div class="fg"><label class="fl">Lien de partage (lecture seule)</label>
-<div style="display:flex;gap:6px">
-<input class="fi" id="sh-link" value="https://pedagogia.app/mur/ABC123" readonly style="font-size:11px">
-<button class="btn btn-g btn-sm" onclick="navigator.clipboard.writeText(document.getElementById('sh-link').value);toast('Lien copié !','success')">📋</button>
-</div></div>`,
-    action: async () => {
-      const vis = document.getElementById('sh-vis').value;
-      if(currentMurId) {
-        await db.collection('murs').doc(currentMurId).set( {visibility: vis}, {merge:true});
-        toast('Visibilité mise à jour : '+vis, 'success');
+    var classIds = classSnap.docs.map(function(d) { return d.id; });
+    return db.collection('classMembers').where('classId', 'in', classIds).get()
+    .then(function(memberSnap) {
+      if (memberSnap.empty) {
+        document.getElementById('eleves-list').innerHTML = '<div class="empty"><div class="empty-ic">👥</div><div class="empty-txt">Aucun élève inscrit encore.</div></div>';
+        return;
       }
-      closeModal();
-    }
-  },
-  'new-annonce-class':{
-    title:'Annonce ciblée',sub:'Envoie une annonce à une classe spécifique',
-    body:`<div class="fg"><label class="fl">Classe</label><select class="fs" id="anc-class">
-<option>Terminale Pro MCV</option><option>Seconde Générale</option><option>Première Pro</option>
-</select></div>
-<div class="fg"><label class="fl">Message</label><textarea class="fta" id="anc-msg" placeholder="Ton annonce…" rows="4"></textarea></div>
-<div class="fg"><label class="fl">Type</label><select class="fs" id="anc-type">
-<option value="info">ℹ Info</option><option value="urgent">⚠ Urgent</option>
-<option value="devoir">📋 Devoir</option><option value="cours">📚 Cours</option>
-</select></div>`,
-    action: async () => {
-      const msg = document.getElementById('anc-msg').value.trim();
-      const classe = document.getElementById('anc-class').value;
-      const type = document.getElementById('anc-type').value;
-      if(!msg){toast('Écris un message.','error');return;}
-      await db.collection('annonces').add({
-        uid:currentUser.uid, content:msg, type, classe,
-        authorName: document.getElementById('s-nm').textContent,
-        likes:0, comments:0, pinned:false, createdAt:firebase.firestore.FieldValue.serverTimestamp()
+      var classMap = {};
+      classSnap.docs.forEach(function(d) { classMap[d.id] = d.data().name; });
+      var promises = memberSnap.docs.map(function(d) {
+        return db.collection('users').doc(d.data().studentId).get()
+        .then(function(u) { return { member: d.data(), user: u.exists ? u.data() : null }; });
       });
-      toast('Annonce envoyée à '+classe+' !','success');
-      closeModal();
-      loadAnnonces();
-    }
-  },
-  'new-carte':{
-    title:'Nouvelle carte',sub:'Ajoute une carte à ta colonne',
-    body:`<div class="fg"><label class="fl">Type de carte</label><select class="fs" id="c-type"><option value="texte">📝 Texte</option><option value="lien">🔗 Lien</option><option value="video">▶ Vidéo YouTube</option><option value="pdf">📄 PDF / Ressource</option></select></div>
-<div class="fg"><label class="fl">Titre</label><input class="fi" id="c-title" placeholder="Titre de la carte"/></div>
-<div class="fg"><label class="fl">Contenu</label><textarea class="fta" id="c-content" placeholder="Texte, description…"></textarea></div>
-<div class="fg"><label class="fl">URL (pour lien ou vidéo)</label><input class="fi" id="c-url" placeholder="https://…"/></div>
-<div class="fg"><label class="fl">Couleur de la carte</label><div class="color-selector">
-<div class="cs-dot" style="background:transparent;border:2px solid var(--ink-10)" data-c="" onclick="selCsCard(this)"></div>
-<div class="cs-dot sel" style="background:#5A8C6A" data-c="#5A8C6A" onclick="selCsCard(this)"></div>
-<div class="cs-dot" style="background:#B8623A" data-c="#B8623A" onclick="selCsCard(this)"></div>
-<div class="cs-dot" style="background:#1A4F9C" data-c="#1A4F9C" onclick="selCsCard(this)"></div>
-<div class="cs-dot" style="background:#5B2E9C" data-c="#5B2E9C" onclick="selCsCard(this)"></div>
-<div class="cs-dot" style="background:#9C6B1E" data-c="#9C6B1E" onclick="selCsCard(this)"></div>
-</div></div>`,
-    action: (params)=>{
-      const type=document.getElementById('c-type').value;
-      const title=document.getElementById('c-title').value.trim();
-      const content=document.getElementById('c-content').value.trim();
-      const url=document.getElementById('c-url').value.trim();
-      const color=document.querySelector('.cs-dot.sel[data-c]')?.dataset.c||'';
-      if(!title&&!content){toast('Ajoute un titre ou du contenu.','error');return;}
-      if(!currentMurData) return;
-      const ci = params?.ci??0;
-      if(!currentMurData.columns[ci].cards) currentMurData.columns[ci].cards=[];
-      currentMurData.columns[ci].cards.push({type,title,content,url,color});
-      renderMurColumns(currentMurData.columns);
-      toast('Carte ajoutée !','success');
-      closeModal();
-    }
-  },
-  'annotate':{
-    title:'Annoter ce document',sub:'Ajoute une note sur la page courante',
-    body:`<div class="fg"><label class="fl">Annotation</label><textarea class="fta" id="ann-text" placeholder="Ta note sur ce passage…"></textarea></div>
-<div class="fg"><label class="fl">Couleur</label><div class="color-selector">
-<div class="cs-dot sel" style="background:var(--amber)" data-c="var(--amber)" onclick="selCs(this)"></div>
-<div class="cs-dot" style="background:var(--sage)" data-c="var(--sage)" onclick="selCs(this)"></div>
-<div class="cs-dot" style="background:var(--terra)" data-c="var(--terra)" onclick="selCs(this)"></div>
-<div class="cs-dot" style="background:var(--blue)" data-c="var(--blue)" onclick="selCs(this)"></div>
-</div></div>`,
-    action:()=>{
-      const txt=document.getElementById('ann-text').value.trim();
-      if(!txt){toast('Écris une annotation.','error');return;}
-      const color=document.querySelector('.cs-dot.sel')?.dataset.c||'var(--amber)';
-      annotations.unshift({color,text:txt,page:'Page '+pdfPage});
-      renderAnnotations();
-      toast('Annotation ajoutée !','success');
-      closeModal();
-    }
-  }
-};
-
-// ── MODALS MANQUANTES ────────────────────────────────────
-// Injecter dans l'objet MODALS
-const EXTRA_MODALS = {
-  'share-mur': {
-    title: 'Partager ce mur',
-    sub: 'Rends ce mur visible à tes élèves',
-    body: `<div class="fg"><label class="fl">Visibilité</label>
-<select class="fs" id="sm-vis">
-  <option value="public">✓ Partagé avec mes élèves</option>
-  <option value="privé">🔒 Privé</option>
-</select></div>
-<div class="fg"><label class="fl">Classe concernée</label>
-<select class="fs" id="sm-classe">
-  <option>Terminale Pro MCV</option>
-  <option>Seconde Générale</option>
-  <option>Première Pro</option>
-  <option>Toutes mes classes</option>
-</select></div>
-<div style="background:var(--sage-p);border-radius:9px;padding:12px 14px;margin-top:4px;font-size:12px;color:var(--sage)">
-  ✓ Les élèves pourront consulter et commenter ce mur depuis leur espace.
-</div>`,
-    action: async () => {
-      const vis = document.getElementById('sm-vis').value;
-      const classe = document.getElementById('sm-classe').value;
-      if(currentMurId) {
-        const { setDoc, doc } = await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
-        await db.collection('murs').doc(currentMurId).set( { visibility: vis, classe }, { merge: true });
-      }
-      toast(vis === 'public' ? '✓ Mur partagé avec les élèves !' : '🔒 Mur mis en privé', 'success');
-      closeModal();
-      loadMurs();
-    }
-  },
-  'new-annonce-class': {
-    title: 'Annonce ciblée',
-    sub: 'Envoie une annonce à une classe spécifique',
-    body: `<div class="fg"><label class="fl">Classe</label>
-<select class="fs" id="ac-classe">
-  <option>Terminale Pro MCV</option>
-  <option>Seconde Générale</option>
-  <option>Première Pro</option>
-</select></div>
-<div class="fg"><label class="fl">Type</label>
-<select class="fs" id="ac-type">
-  <option value="info">ℹ Info</option>
-  <option value="urgent">⚠ Urgent</option>
-  <option value="devoir">📋 Devoir</option>
-  <option value="cours">📚 Cours</option>
-</select></div>
-<div class="fg"><label class="fl">Message</label>
-<textarea class="fta" id="ac-content" placeholder="Ton annonce…" rows="4"></textarea></div>`,
-    action: async () => {
-      const content2 = document.getElementById('ac-content').value.trim();
-      const classe = document.getElementById('ac-classe').value;
-      const type = document.getElementById('ac-type').value;
-      if(!content2) { toast('Écris un message.','error'); return; }
-      const snap2 = (await db.collection('users').doc(currentUser.uid).get());
-      const authorName = snap2.exists ? snap2.data().name : 'Enseignant';
-      await db.collection('annonces').add({
-        uid: currentUser.uid, content: content2, type, authorName,
-        classe, likes: 0, comments: 0, pinned: false,
-        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      return Promise.all(promises).then(function(results) {
+        // Regrouper par classe
+        var byClass = {};
+        results.forEach(function(r) {
+          if (!r.user) return;
+          var cid = r.member.classId;
+          if (!byClass[cid]) byClass[cid] = [];
+          byClass[cid].push(r);
+        });
+        var html = '';
+        Object.keys(byClass).forEach(function(cid) {
+          var members = byClass[cid];
+          html += '<div style="margin-bottom:20px"><div style="font-size:13px;font-weight:700;font-family:\'Lora\',serif;margin-bottom:10px">' + (classMap[cid] || 'Classe') + ' — ' + members.length + ' élève(s)</div>';
+          html += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px">';
+          members.forEach(function(r) {
+            var u = r.user;
+            var init = (u.name || '?').split(' ').map(function(n){ return n[0]; }).join('').toUpperCase().slice(0,2);
+            html += '<div class="card" style="padding:14px;display:flex;align-items:center;gap:11px">' +
+              '<div style="width:38px;height:38px;border-radius:50%;background:var(--sage-l);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;flex-shrink:0">' + init + '</div>' +
+              '<div><div style="font-size:12.5px;font-weight:600">' + u.name + '</div><div style="font-size:10.5px;color:var(--ink-30)">' + u.email + '</div></div>' +
+            '</div>';
+          });
+          html += '</div></div>';
+        });
+        document.getElementById('eleves-list').innerHTML = html;
       });
-      toast('Annonce envoyée à '+classe+' !', 'success');
-      closeModal();
-    }
-  }
-};
+    });
+  }).catch(function(e) {
+    document.getElementById('eleves-list').innerHTML = '<div class="empty"><div class="empty-ic">👥</div><div class="empty-txt">Démo : aucun élève disponible.</div></div>';
+  });
+}
 
-let modalParams = null;
-window.openModal = function(type,params=null){
-  const d=MODALS[type] || EXTRA_MODALS[type]; if(!d) return;
-  modalParams=params;
-  document.getElementById('modal-body').innerHTML=`
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px">
-      <div style="font-family:'Lora',serif;font-size:17px;font-weight:700">${d.title}</div>
-      <button style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--ink-30)" onclick="closeModal()">✕</button>
-    </div>
-    <div style="font-size:11.5px;color:var(--ink-60);margin-top:3px;margin-bottom:18px">${d.sub}</div>
-    ${d.body}
-    <div class="mf">
-      <button class="btn btn-g" onclick="closeModal()">Annuler</button>
-      <button class="btn btn-p" onclick="window._modalAction(window._modalParams)">Créer</button>
-    </div>`;
-  window._modalAction = d.action;
-  window._modalParams = params;
-  document.getElementById('ov').classList.add('open');
-};
-
-window.closeModal = function(e){
-  if(!e||e.target===document.getElementById('ov'))
-    document.getElementById('ov').classList.remove('open');
-};
-window.selCs = function(el){ document.querySelectorAll('.cs-dot').forEach(d=>d.classList.remove('sel')); el.classList.add('sel'); };
-window.selCsCard = window.selCs;
-
-
-
+// ── HELPERS ───────────────────────────────────────────────
+function timeAgo(date) {
+  if (!date) return '—';
+  var d = date.toDate ? date.toDate() : new Date(date);
+  var s = Math.floor((Date.now() - d.getTime()) / 1000);
+  if (s < 60) return 'À l\'instant';
+  if (s < 3600) return 'Il y a ' + Math.floor(s/60) + ' min';
+  if (s < 86400) return 'Il y a ' + Math.floor(s/3600) + 'h';
+  return 'Il y a ' + Math.floor(s/86400) + 'j';
+}
 </script>
 </body>
 </html>

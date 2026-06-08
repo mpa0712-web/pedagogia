@@ -4,154 +4,147 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Pédagogia — Connexion</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;0,700;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,600;0,700;1,500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+<!-- Firebase Compat SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+
 <style>
-:root {
-  --sage: #3D6B4F;
-  --sage-l: #5A8C6A;
-  --sage-p: #EAF2ED;
-  --terra: #B8623A;
-  --terra-p: #FBF0EA;
-  --ink: #1A1714;
-  --ink-60: #5C574F;
-  --ink-30: #A09990;
-  --ink-10: #F0EBE3;
-  --sand: #FAF6F0;
-  --white: #FFFFFF;
-  --amber: #9C6B1E;
-  --amber-p: #FDF5E6;
-}
 *{box-sizing:border-box;margin:0;padding:0}
-html,body{height:100%;font-family:'DM Sans',sans-serif}
-body{background:var(--ink);display:flex;align-items:center;justify-content:center;min-height:100vh;position:relative;overflow:hidden}
-body::before{
-  content:'';position:absolute;inset:0;
-  background:radial-gradient(ellipse 80% 60% at 20% 80%, rgba(61,107,79,.35) 0%, transparent 60%),
-             radial-gradient(ellipse 60% 50% at 80% 20%, rgba(184,98,58,.2) 0%, transparent 55%);
+:root{
+  --sage:#3D6B4F;--sage-l:#5A8C6A;--sage-p:#EAF2ED;
+  --ink:#1A1714;--ink-60:#5C574F;--ink-30:#A09990;--ink-10:#F0EBE3;
+  --sand:#FAF6F0;--white:#fff;--terra:#B8623A;--terra-p:#FBF0EA;
+  --r:12px;--sh:0 1px 3px rgba(26,23,20,.08);--sh-md:0 4px 16px rgba(26,23,20,.12);
 }
-.bg-grid{position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.03) 1px,transparent 1px);background-size:48px 48px;pointer-events:none}
-.auth-card{
-  background:rgba(255,255,255,.04);
-  backdrop-filter:blur(20px);
-  border:1px solid rgba(255,255,255,.1);
-  border-radius:24px;
-  padding:48px 44px;
-  width:420px;
-  position:relative;
-  z-index:1;
+html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--sand);color:var(--ink)}
+
+.page{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;
+  background:var(--sand);
+  background-image:
+    radial-gradient(ellipse at 20% 50%, rgba(61,107,79,.06) 0%, transparent 60%),
+    radial-gradient(ellipse at 80% 20%, rgba(184,98,58,.04) 0%, transparent 50%);
 }
-.brand{text-align:center;margin-bottom:36px}
-.brand-name{font-family:'Lora',serif;font-size:28px;font-weight:700;color:#fff;letter-spacing:-.5px}
-.brand-tag{font-size:11px;color:rgba(255,255,255,.35);letter-spacing:2px;text-transform:uppercase;margin-top:3px}
-.tabs{display:flex;gap:0;background:rgba(255,255,255,.06);border-radius:10px;padding:3px;margin-bottom:28px}
-.tab{flex:1;padding:8px;text-align:center;font-size:12px;font-weight:500;border-radius:8px;cursor:pointer;color:rgba(255,255,255,.45);transition:all .2s}
-.tab.active{background:rgba(255,255,255,.12);color:#fff}
-.form-group{margin-bottom:16px}
-.form-label{display:block;font-size:11px;font-weight:600;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
-.form-input{
-  width:100%;padding:11px 14px;
-  background:rgba(255,255,255,.07);
-  border:1px solid rgba(255,255,255,.12);
-  border-radius:10px;
-  font-size:13.5px;color:#fff;font-family:'DM Sans',sans-serif;
-  outline:none;transition:border .15s;
-}
-.form-input::placeholder{color:rgba(255,255,255,.25)}
-.form-input:focus{border-color:rgba(90,140,106,.7);background:rgba(255,255,255,.1)}
-.form-select{
-  width:100%;padding:11px 14px;
-  background:rgba(255,255,255,.07);
-  border:1px solid rgba(255,255,255,.12);
-  border-radius:10px;
-  font-size:13.5px;color:#fff;font-family:'DM Sans',sans-serif;
-  outline:none;cursor:pointer;
-  -webkit-appearance:none;
-}
-.form-select option{background:#1A1714;color:#fff}
-.btn-main{
-  width:100%;padding:12px;
-  background:var(--sage-l);
-  border:none;border-radius:10px;
-  font-size:14px;font-weight:600;color:#fff;
-  cursor:pointer;transition:all .15s;font-family:'DM Sans',sans-serif;
-  margin-top:4px;
-}
-.btn-main:hover{background:var(--sage)}
-.btn-main:active{transform:scale(.98)}
-.auth-error{background:rgba(184,98,58,.15);border:1px solid rgba(184,98,58,.3);border-radius:8px;padding:10px 12px;font-size:12px;color:#E8956D;margin-bottom:14px;display:none}
-.forgot{text-align:center;margin-top:14px}
-.forgot a{font-size:12px;color:rgba(255,255,255,.35);text-decoration:none;cursor:pointer}
-.forgot a:hover{color:rgba(255,255,255,.6)}
-.loading-spinner{width:18px;height:18px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;display:inline-block;margin-right:8px;vertical-align:middle}
-@keyframes spin{to{transform:rotate(360deg)}}
-.panel{display:none}
-.panel.active{display:block}
+
+.card{background:var(--white);border-radius:20px;padding:40px;width:100%;max-width:420px;
+  box-shadow:0 8px 40px rgba(26,23,20,.10);border:1px solid var(--ink-10);}
+
+.logo{text-align:center;margin-bottom:32px}
+.logo-icon{width:48px;height:48px;background:var(--sage-l);border-radius:14px;
+  display:inline-flex;align-items:center;justify-content:center;font-size:22px;margin-bottom:10px}
+.logo-name{font-family:'Lora',serif;font-size:26px;font-weight:700;color:var(--ink);line-height:1}
+.logo-tag{font-size:11px;color:var(--ink-30);letter-spacing:1.5px;text-transform:uppercase;margin-top:4px}
+
+.tabs{display:flex;background:var(--sand);border-radius:10px;padding:3px;margin-bottom:28px}
+.tab{flex:1;padding:8px;border:none;background:transparent;border-radius:8px;font-size:12.5px;
+  font-weight:600;cursor:pointer;color:var(--ink-30);font-family:'DM Sans',sans-serif;transition:all .15s}
+.tab.active{background:var(--white);color:var(--ink);box-shadow:var(--sh)}
+
+.panel{display:none}.panel.active{display:block}
+
+.fg{margin-bottom:14px}
+label{display:block;font-size:10.5px;font-weight:700;color:var(--ink-60);
+  text-transform:uppercase;letter-spacing:.4px;margin-bottom:5px}
+input,select{width:100%;padding:10px 13px;border-radius:9px;border:1.5px solid var(--ink-10);
+  font-size:13px;color:var(--ink);background:var(--sand);outline:none;
+  font-family:'DM Sans',sans-serif;transition:border .15s}
+input:focus,select:focus{border-color:var(--sage-l);background:var(--white)}
+
+.btn{width:100%;padding:11px;border:none;border-radius:9px;font-size:13.5px;font-weight:600;
+  cursor:pointer;font-family:'DM Sans',sans-serif;transition:all .15s;margin-top:6px}
+.btn-p{background:var(--sage-l);color:#fff}
+.btn-p:hover{background:var(--sage)}
+.btn-p:disabled{opacity:.6;cursor:not-allowed}
+
+.err{background:var(--terra-p);color:var(--terra);border:1px solid rgba(184,98,58,.2);
+  border-radius:8px;padding:9px 12px;font-size:12px;margin-bottom:14px;display:none}
+.err.show{display:block}
+
+.divider{display:flex;align-items:center;gap:10px;margin:16px 0;color:var(--ink-30);font-size:11px}
+.divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--ink-10)}
+
+.role-pick{display:flex;gap:8px;margin-bottom:14px}
+.role-btn{flex:1;padding:10px;border:1.5px solid var(--ink-10);border-radius:9px;
+  background:transparent;font-size:12px;font-weight:600;cursor:pointer;
+  font-family:'DM Sans',sans-serif;transition:all .15s;text-align:center;color:var(--ink-60)}
+.role-btn.sel{border-color:var(--sage-l);background:var(--sage-p);color:var(--sage)}
+.role-btn .ri{display:block;font-size:20px;margin-bottom:4px}
+
+.forgot{font-size:11.5px;color:var(--ink-30);text-align:center;margin-top:12px;cursor:pointer}
+.forgot:hover{color:var(--sage)}
+
+.spin{width:14px;height:14px;border:2px solid rgba(255,255,255,.4);
+  border-top-color:#fff;border-radius:50%;animation:rot .6s linear infinite;
+  display:inline-block;vertical-align:middle;margin-right:6px}
+@keyframes rot{to{transform:rotate(360deg)}}
 </style>
-  <!-- Firebase SDK (compat) -->
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
 </head>
 <body>
-<div class="bg-grid"></div>
-<div class="auth-card">
-  <div class="brand">
-    <div class="brand-name">Pédagogia</div>
-    <div class="brand-tag">Plateforme pédagogique</div>
-  </div>
+<div class="page">
+  <div class="card">
+    <div class="logo">
+      <div class="logo-icon">🎓</div>
+      <div class="logo-name">Pédagogia</div>
+      <div class="logo-tag">Plateforme pédagogique</div>
+    </div>
 
-  <div class="tabs">
-    <div class="tab active" onclick="switchTab('login')">Connexion</div>
-    <div class="tab" onclick="switchTab('register')">Inscription</div>
-  </div>
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('login')">Se connecter</button>
+      <button class="tab" onclick="switchTab('register')">Créer un compte</button>
+    </div>
 
-  <div id="auth-error" class="auth-error"></div>
+    <div id="err" class="err"></div>
 
-  <!-- LOGIN -->
-  <div id="panel-login" class="panel active">
-    <div class="form-group">
-      <label class="form-label">Adresse e-mail</label>
-      <input type="email" id="login-email" class="form-input" placeholder="vous@etablissement.fr">
+    <!-- CONNEXION -->
+    <div id="panel-login" class="panel active">
+      <div class="fg">
+        <label>Email</label>
+        <input type="email" id="l-email" placeholder="prof@ecole.fr" autocomplete="email">
+      </div>
+      <div class="fg">
+        <label>Mot de passe</label>
+        <input type="password" id="l-pwd" placeholder="••••••••" autocomplete="current-password"
+          onkeydown="if(event.key==='Enter') login()">
+      </div>
+      <button class="btn btn-p" id="btn-login" onclick="login()">Se connecter</button>
+      <div class="forgot" onclick="resetPwd()">Mot de passe oublié ?</div>
     </div>
-    <div class="form-group">
-      <label class="form-label">Mot de passe</label>
-      <input type="password" id="login-pwd" class="form-input" placeholder="••••••••">
-    </div>
-    <button class="btn-main" onclick="login()" id="btn-login">Se connecter</button>
-    <div class="forgot"><a onclick="resetPwd()">Mot de passe oublié ?</a></div>
-  </div>
 
-  <!-- REGISTER -->
-  <div id="panel-register" class="panel">
-    <div class="form-group">
-      <label class="form-label">Prénom et nom</label>
-      <input type="text" id="reg-name" class="form-input" placeholder="Marie Laurent">
+    <!-- INSCRIPTION -->
+    <div id="panel-register" class="panel">
+      <div class="fg">
+        <label>Prénom et Nom</label>
+        <input type="text" id="r-name" placeholder="Marie Laurent">
+      </div>
+      <div class="fg">
+        <label>Email</label>
+        <input type="email" id="r-email" placeholder="marie@ecole.fr">
+      </div>
+      <div class="fg">
+        <label>Mot de passe</label>
+        <input type="password" id="r-pwd" placeholder="Minimum 6 caractères">
+      </div>
+      <div class="fg">
+        <label>Je suis</label>
+        <div class="role-pick">
+          <button class="role-btn sel" id="role-teacher" onclick="setRole('teacher')">
+            <span class="ri">👩‍🏫</span>Enseignant(e)
+          </button>
+          <button class="role-btn" id="role-student" onclick="setRole('student')">
+            <span class="ri">🎒</span>Élève
+          </button>
+        </div>
+      </div>
+      <button class="btn btn-p" id="btn-register" onclick="register()">Créer mon compte</button>
     </div>
-    <div class="form-group">
-      <label class="form-label">Adresse e-mail</label>
-      <input type="email" id="reg-email" class="form-input" placeholder="vous@etablissement.fr">
-    </div>
-    <div class="form-group">
-      <label class="form-label">Mot de passe</label>
-      <input type="password" id="reg-pwd" class="form-input" placeholder="Minimum 6 caractères">
-    </div>
-    <div class="form-group">
-      <label class="form-label">Je suis</label>
-      <select id="reg-role" class="form-select">
-        <option value="teacher">Enseignant(e)</option>
-        <option value="student">Élève</option>
-      </select>
-    </div>
-    <button class="btn-main" onclick="register()" id="btn-register">Créer mon compte</button>
   </div>
 </div>
+
 <script>
-
-
-// ─── REMPLACE AVEC TA CONFIG FIREBASE ─────────────────────
-const firebaseConfig = {
+// ── CONFIG FIREBASE ──────────────────────────────────────
+var firebaseConfig = {
   apiKey: "AIzaSyBYOQopUVm5vcjUur74ErhvehWC-UNiaz0",
   authDomain: "pedagogia-18dda.firebaseapp.com",
   projectId: "pedagogia-18dda",
@@ -159,104 +152,133 @@ const firebaseConfig = {
   messagingSenderId: "465869483173",
   appId: "1:465869483173:web:5874b245342c020127b14c"
 };
-// ──────────────────────────────────────────────────────────
+firebase.initializeApp(firebaseConfig);
+function logout() { auth.signOut().then(function() { window.location.href = 'index.html'; }); }
+var auth = firebase.auth();
+var db   = firebase.firestore();
 
-const app = firebase.initializeApp(firebaseConfig);
-const auth = firebase.auth();
-const db = firebase.firestore();
+// ── ÉTAT ─────────────────────────────────────────────────
+var selectedRole = 'teacher';
 
-// Si déjà connecté → rediriger
-auth.onAuthStateChanged( async (user) => {
-  if (user) {
-    const snap = (await db.collection('users').doc(user.uid).get()));
+// ── REDIRECTION SI DÉJÀ CONNECTÉ ─────────────────────────
+auth.onAuthStateChanged(function(user) {
+  if (!user) return;
+  db.collection('users').doc(user.uid).get().then(function(snap) {
     if (snap.exists) {
-      const role = snap.data().role;
-      window.location.href = role === 'student' ? 'eleve.html' : 'dashboard.html';
+      window.location.href = snap.data().role === 'student' ? 'eleve.html' : 'dashboard.html';
     }
-  }
-});
-
-function showError(msg) {
-  const el = document.getElementById('auth-error');
-  el.textContent = msg; el.style.display = 'block';
-}
-function hideError() { document.getElementById('auth-error').style.display = 'none'; }
-function setLoading(btnId, loading) {
-  const btn = document.getElementById(btnId);
-  btn.innerHTML = loading ? '<span class="loading-spinner"></span>Chargement…' : btn.dataset.label;
-}
-
-window.switchTab = function(tab) {
-  document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active', (i===0&&tab==='login')||(i===1&&tab==='register')));
-  document.getElementById('panel-login').classList.toggle('active', tab==='login');
-  document.getElementById('panel-register').classList.toggle('active', tab==='register');
-  hideError();
-};
-
-// Assigner les labels après chargement DOM
-document.addEventListener('DOMContentLoaded', () => {
-  if(document.getElementById('btn-login'))
-    document.getElementById('btn-login').dataset.label = 'Se connecter';
-  if(document.getElementById('btn-register'))
-    document.getElementById('btn-register').dataset.label = 'Créer mon compte';
-  window.logout = function() { window.location.href='index.html'; };
-document.getElementById('login-pwd').addEventListener('keydown', e => {
-    if(e.key === 'Enter') window.login();
   });
 });
 
-window.login = async function() {
-  hideError();
-  const email = document.getElementById('login-email').value.trim();
-  const pwd = document.getElementById('login-pwd').value;
-  if (!email || !pwd) return showError('Remplis tous les champs.');
+// ── HELPERS ───────────────────────────────────────────────
+function showErr(msg) {
+  var el = document.getElementById('err');
+  el.textContent = msg;
+  el.classList.add('show');
+}
+function hideErr() {
+  document.getElementById('err').classList.remove('show');
+}
+function setLoading(id, on) {
+  var btn = document.getElementById(id);
+  btn.disabled = on;
+  btn.innerHTML = on ? '<span class="spin"></span>Chargement…' : btn.dataset.label;
+}
+
+// ── NAVIGATION ONGLETS ────────────────────────────────────
+function switchTab(tab) {
+  hideErr();
+  document.querySelectorAll('.tab').forEach(function(t, i) {
+    t.classList.toggle('active', (i === 0 && tab === 'login') || (i === 1 && tab === 'register'));
+  });
+  document.getElementById('panel-login').classList.toggle('active', tab === 'login');
+  document.getElementById('panel-register').classList.toggle('active', tab === 'register');
+}
+
+// ── RÔLE ─────────────────────────────────────────────────
+function setRole(role) {
+  selectedRole = role;
+  document.getElementById('role-teacher').classList.toggle('sel', role === 'teacher');
+  document.getElementById('role-student').classList.toggle('sel', role === 'student');
+}
+
+// ── CONNEXION ────────────────────────────────────────────
+function login() {
+  hideErr();
+  var email = document.getElementById('l-email').value.trim();
+  var pwd   = document.getElementById('l-pwd').value;
+  if (!email || !pwd) { showErr('Remplis tous les champs.'); return; }
+  document.getElementById('btn-login').dataset.label = 'Se connecter';
   setLoading('btn-login', true);
-  try {
-    const cred = await auth.signInWithEmailAndPassword( email, pwd);
-    const snap = (await db.collection('users').doc(cred.user.uid).get()));
-    const role = snap.exists ? snap.data().role : 'teacher';
-    window.location.href = role === 'student' ? 'eleve.html' : 'dashboard.html';
-  } catch(e) {
-    showError('E-mail ou mot de passe incorrect.');
-    setLoading('btn-login', false);
-  }
-};
-
-window.register = async function() {
-  hideError();
-  const name = document.getElementById('reg-name').value.trim();
-  const email = document.getElementById('reg-email').value.trim();
-  const pwd = document.getElementById('reg-pwd').value;
-  const role = document.getElementById('reg-role').value;
-  if (!name||!email||!pwd) return showError('Remplis tous les champs.');
-  if (pwd.length < 6) return showError('Le mot de passe doit faire au moins 6 caractères.');
-  setLoading('btn-register', true);
-  try {
-    const cred = await auth.createUserWithEmailAndPassword( email, pwd);
-    await setDoc(db.collection('users').doc(cred.user.uid), {
-      uid: cred.user.uid, name, email, role,
-      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+  auth.signInWithEmailAndPassword(email, pwd)
+    .then(function(cred) {
+      return db.collection('users').doc(cred.user.uid).get();
+    })
+    .then(function(snap) {
+      if (snap.exists) {
+        window.location.href = snap.data().role === 'student' ? 'eleve.html' : 'dashboard.html';
+      } else {
+        window.location.href = 'dashboard.html';
+      }
+    })
+    .catch(function(e) {
+      setLoading('btn-login', false);
+      var msgs = {
+        'auth/user-not-found':    'Aucun compte avec cet email.',
+        'auth/wrong-password':    'Mot de passe incorrect.',
+        'auth/invalid-email':     'Email invalide.',
+        'auth/too-many-requests': 'Trop de tentatives. Réessaie dans quelques minutes.',
+        'auth/invalid-credential':'Email ou mot de passe incorrect.'
+      };
+      showErr(msgs[e.code] || 'Erreur : ' + e.message);
     });
-    window.location.href = role === 'student' ? 'eleve.html' : 'dashboard.html';
-  } catch(e) {
-    showError('Erreur : ' + (e.code === 'auth/email-already-in-use' ? 'Cet e-mail est déjà utilisé.' : e.message));
-    setLoading('btn-register', false);
-  }
-};
+}
 
-window.resetPwd = async function() {
-  const email = document.getElementById('login-email').value.trim();
-  if (!email) return showError('Entre ton e-mail pour réinitialiser ton mot de passe.');
-  try {
-    await auth.sendPasswordResetEmail( email);
-    document.getElementById('auth-error').style.background = 'rgba(61,107,79,.15)';
-    document.getElementById('auth-error').style.borderColor = 'rgba(61,107,79,.3)';
-    document.getElementById('auth-error').style.color = '#5A8C6A';
-    showError('E-mail de réinitialisation envoyé !');
-  } catch(e) { showError('E-mail introuvable.'); }
-};
+// ── INSCRIPTION ───────────────────────────────────────────
+function register() {
+  hideErr();
+  var name  = document.getElementById('r-name').value.trim();
+  var email = document.getElementById('r-email').value.trim();
+  var pwd   = document.getElementById('r-pwd').value;
+  if (!name || !email || !pwd) { showErr('Remplis tous les champs.'); return; }
+  if (pwd.length < 6) { showErr('Mot de passe : 6 caractères minimum.'); return; }
+  document.getElementById('btn-register').dataset.label = 'Créer mon compte';
+  setLoading('btn-register', true);
+  auth.createUserWithEmailAndPassword(email, pwd)
+    .then(function(cred) {
+      return db.collection('users').doc(cred.user.uid).set({
+        name: name,
+        email: email,
+        role: selectedRole,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+    })
+    .then(function() {
+      window.location.href = selectedRole === 'student' ? 'eleve.html' : 'dashboard.html';
+    })
+    .catch(function(e) {
+      setLoading('btn-register', false);
+      var msgs = {
+        'auth/email-already-in-use': 'Cet email est déjà utilisé.',
+        'auth/invalid-email':        'Email invalide.',
+        'auth/weak-password':        'Mot de passe trop faible.'
+      };
+      showErr(msgs[e.code] || 'Erreur : ' + e.message);
+    });
+}
 
+// ── MOT DE PASSE OUBLIÉ ───────────────────────────────────
+function resetPwd() {
+  var email = document.getElementById('l-email').value.trim();
+  if (!email) { showErr('Entre ton email d\'abord.'); return; }
+  auth.sendPasswordResetEmail(email)
+    .then(function() { hideErr(); alert('Email de réinitialisation envoyé !'); })
+    .catch(function(e) { showErr('Erreur : ' + e.message); });
+}
 
+// Labels initiaux
+document.getElementById('btn-login').dataset.label    = 'Se connecter';
+document.getElementById('btn-register').dataset.label = 'Créer mon compte';
 </script>
 </body>
 </html>

@@ -4,371 +4,266 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Pédagogia — Espace Élève</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;0,700;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Lora:wght@600;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
 <style>
+*{box-sizing:border-box;margin:0;padding:0}
 :root{
   --sage:#3D6B4F;--sage-l:#5A8C6A;--sage-p:#EAF2ED;
   --terra:#B8623A;--terra-p:#FBF0EA;
   --ink:#1A1714;--ink-60:#5C574F;--ink-30:#A09990;--ink-10:#F0EBE3;
   --sand:#FAF6F0;--white:#fff;
-  --amber:#9C6B1E;--amber-p:#FDF5E6;
   --blue:#1A4F9C;--blue-p:#EBF2FF;
+  --amber:#9C6B1E;--amber-p:#FDF5E6;
   --purple:#5B2E9C;--purple-p:#F3EEFF;
-  --r:12px;--r-sm:8px;
-  --sh:0 1px 3px rgba(26,23,20,.07);--sh-md:0 4px 16px rgba(26,23,20,.10);
+  --r:12px;--sh:0 1px 3px rgba(26,23,20,.07);--sh-md:0 4px 16px rgba(26,23,20,.10);
 }
-*{box-sizing:border-box;margin:0;padding:0}
-html,body{min-height:100%;font-family:'DM Sans',sans-serif;background:var(--sand);color:var(--ink)}
-/* LAYOUT */
-.app{display:flex;min-height:100vh}
-/* ═══ SIDEBAR GLOBALE ═══ */
-.sidebar{width:220px;flex-shrink:0;background:var(--ink);display:flex;flex-direction:column;overflow:hidden}
-.s-logo{padding:14px 16px 12px;border-bottom:1px solid rgba(255,255,255,.07);display:flex;align-items:center;gap:10px}
-.s-logo-icon{width:32px;height:32px;border-radius:8px;background:var(--sage-l);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
-.s-logo-text .wm{font-family:'Lora',serif;font-size:16px;font-weight:700;color:#fff;line-height:1}
-.s-logo-text .tg{font-size:8.5px;color:rgba(255,255,255,.3);letter-spacing:1px;text-transform:uppercase;margin-top:2px}
-.s-user{padding:8px 12px;display:flex;align-items:center;gap:9px;border-bottom:1px solid rgba(255,255,255,.05);cursor:pointer;transition:background .12s}
-.s-user:hover{background:rgba(255,255,255,.05)}
-.av{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;flex-shrink:0}
-.u-nm{font-size:11.5px;font-weight:500;color:#fff;line-height:1}
-.u-rl{font-size:9px;color:rgba(255,255,255,.3);margin-top:2px}
-.s-nav{flex:1;overflow-y:auto;padding:8px 0}
+html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--sand);color:var(--ink)}
+.app{display:flex;height:100vh;overflow:hidden}
 
-/* NAV PRINCIPALE — grandes sections */
-.nav-main-item{display:flex;align-items:center;gap:0;margin:2px 8px;border-radius:9px;overflow:hidden;cursor:pointer;transition:all .12s}
-.nav-main-item:hover{background:rgba(255,255,255,.06)}
-.nav-main-item.active{background:rgba(255,255,255,.1)}
-.nav-main-btn{display:flex;align-items:center;gap:9px;padding:8px 10px;flex:1;min-width:0}
-.nav-main-icon{font-size:15px;width:20px;text-align:center;flex-shrink:0}
-.nav-main-label{font-size:12px;font-weight:600;color:rgba(255,255,255,.7);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.nav-main-item.active .nav-main-label{color:#fff}
-.nav-main-chevron{padding:8px 8px 8px 0;font-size:10px;color:rgba(255,255,255,.3);transition:transform .2s;flex-shrink:0}
-.nav-main-item.open .nav-main-chevron{transform:rotate(90deg)}
-.nav-main-badge{background:var(--terra);color:#fff;font-size:8px;padding:1px 5px;border-radius:6px;font-weight:700;margin-left:auto;margin-right:4px}
-
-/* NAV SOUS-ITEMS */
-.nav-sub{display:none;padding:2px 0 4px}
-.nav-main-item.open .nav-sub{display:block}
-.nav-sub-item{display:flex;align-items:center;gap:8px;padding:5px 10px 5px 38px;font-size:11px;color:rgba(255,255,255,.45);cursor:pointer;border-radius:7px;margin:1px 8px;transition:all .12s}
-.nav-sub-item:hover{background:rgba(255,255,255,.07);color:rgba(255,255,255,.85)}
-.nav-sub-item.active{color:rgba(255,255,255,.9);background:rgba(255,255,255,.08)}
-.nav-sub-icon{font-size:12px;width:16px;text-align:center;flex-shrink:0}
-
-/* NAV PILL — couleur par section */
-.nav-main-item[data-page="dashboard"] .nav-main-icon{color:#7BAF8E}
-.nav-main-item[data-page="enseigner"] .nav-main-icon{color:#6B9FD4}
-.nav-main-item[data-page="maclasse"] .nav-main-icon{color:#D48C6B}
-.nav-main-item[data-page="communication"] .nav-main-icon{color:#9B7FD4}
-.nav-main-item[data-page="suivi"] .nav-main-icon{color:#D4B86B}
-
-/* SÉPARATEUR */
-.nav-sep{height:1px;background:rgba(255,255,255,.05);margin:6px 12px}
-
-/* COMPTE EN BAS */
-.s-bottom{padding:10px;border-top:1px solid rgba(255,255,255,.07)}
-.s-bottom-btn{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:8px;font-size:11px;color:rgba(255,255,255,.4);cursor:pointer;transition:all .12s;width:100%}
-.s-bottom-btn:hover{background:rgba(255,255,255,.07);color:rgba(255,255,255,.7)}
-.main{flex:1;margin-left:220px;display:flex;flex-direction:column}
-.topbar{height:54px;flex-shrink:0;background:var(--white);border-bottom:1px solid var(--ink-10);display:flex;align-items:center;padding:0 20px;gap:10px;z-index:5}
-.content{padding:22px;flex:1}
 /* SIDEBAR */
-.s-logo{padding:18px 18px 14px;border-bottom:1px solid rgba(255,255,255,.07)}
-.s-logo .wm{font-family:'Lora',serif;font-size:18px;font-weight:700;color:#fff}
-.s-logo .tg{font-size:9px;color:rgba(255,255,255,.3);letter-spacing:1.5px;text-transform:uppercase;margin-top:2px}
-.s-user{padding:10px 14px;display:flex;align-items:center;gap:9px;border-bottom:1px solid rgba(255,255,255,.05)}
-.av{width:30px;height:30px;border-radius:50%;background:var(--blue);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;flex-shrink:0}
-.u-nm{font-size:11.5px;font-weight:500;color:#fff}.u-rl{font-size:9.5px;color:rgba(255,255,255,.3);margin-top:1px}
-.s-nav{flex:1;padding:10px 0;overflow-y:auto}
-.nav-lbl{font-size:8px;color:rgba(255,255,255,.2);text-transform:uppercase;letter-spacing:1.5px;padding:6px 18px 3px}
-.nav-item{display:flex;align-items:center;gap:9px;padding:6px 16px;font-size:11px;color:rgba(255,255,255,.5);cursor:pointer;transition:all .12s;margin:1px 8px;border-radius:8px}
+.sidebar{width:210px;flex-shrink:0;background:var(--ink);display:flex;flex-direction:column}
+.s-logo{padding:16px;border-bottom:1px solid rgba(255,255,255,.07);display:flex;align-items:center;gap:10px}
+.s-logo-ic{width:32px;height:32px;border-radius:9px;background:var(--sage-l);display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
+.s-logo-wm{font-family:'Lora',serif;font-size:16px;font-weight:700;color:#fff}
+.s-logo-tg{font-size:9px;color:rgba(255,255,255,.3);text-transform:uppercase;letter-spacing:1px}
+.s-user{padding:10px 14px;border-bottom:1px solid rgba(255,255,255,.05);display:flex;align-items:center;gap:9px}
+.s-av{width:30px;height:30px;border-radius:50%;background:var(--sage-l);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;flex-shrink:0}
+.s-nm{font-size:11.5px;font-weight:500;color:#fff}
+.s-rl{font-size:9px;color:rgba(255,255,255,.3);margin-top:1px}
+.s-nav{flex:1;overflow-y:auto;padding:8px 0}
+.nav-item{display:flex;align-items:center;gap:9px;padding:8px 14px;font-size:12px;color:rgba(255,255,255,.5);cursor:pointer;border-radius:9px;margin:2px 6px;transition:all .1s;position:relative}
 .nav-item:hover{background:rgba(255,255,255,.07);color:rgba(255,255,255,.85)}
-.nav-item.active{background:var(--blue);color:#fff}
-/* TOPBAR */
-.pt{font-size:15px;font-weight:600}
-.tb-r{margin-left:auto;display:flex;align-items:center;gap:7px}
-/* GENERIC */
-.screen{display:none;animation:fi .2s ease}
-.screen.active{display:block}
-@keyframes fi{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
-.card{background:var(--white);border-radius:var(--r);box-shadow:var(--sh);border:1px solid var(--ink-10);overflow:hidden}
-.card-hd{padding:14px 18px 11px;border-bottom:1px solid var(--ink-10);display:flex;align-items:center;justify-content:space-between}
-.card-title{font-size:13.5px;font-weight:600}
-.badge{display:inline-flex;align-items:center;padding:2px 7px;border-radius:8px;font-size:9.5px;font-weight:700}
-.bg{background:var(--sage-p);color:var(--sage)}.bt{background:var(--terra-p);color:var(--terra)}.ba{background:var(--amber-p);color:var(--amber)}.bb{background:var(--blue-p);color:var(--blue)}
-.tag{background:var(--ink-10);color:var(--ink-60);font-size:9.5px;padding:2px 7px;border-radius:7px}
-.btn{display:inline-flex;align-items:center;gap:5px;padding:6px 13px;border-radius:7px;font-size:11.5px;font-weight:600;cursor:pointer;border:none;transition:all .12s;font-family:'DM Sans',sans-serif;white-space:nowrap}
-.btn-p{background:var(--blue);color:#fff}.btn-p:hover{background:var(--blue-p);color:var(--blue)}
-.btn-g{background:transparent;color:var(--ink-60);border:1px solid var(--ink-10)}.btn-g:hover{background:var(--ink-10)}
-.btn-sm{padding:4px 10px;font-size:10.5px}
-/* HERO */
-.hero{background:linear-gradient(135deg,var(--ink) 0%,#0A1C3A 70%,#0A1C10 100%);border-radius:16px;padding:22px 26px;margin-bottom:18px;position:relative;overflow:hidden}
-.hero::before{content:'';position:absolute;right:-10px;top:-10px;width:160px;height:160px;background:radial-gradient(circle,rgba(26,79,156,.35) 0%,transparent 70%);pointer-events:none}
-.hg{font-family:'Lora',serif;font-size:20px;color:#fff;font-weight:700;margin-bottom:3px}
-.hs{font-size:11.5px;color:rgba(255,255,255,.4)}
-.hchips{display:flex;gap:7px;flex-wrap:wrap;margin-top:13px}
-.chip{background:rgba(255,255,255,.08);color:rgba(255,255,255,.75);border:1px solid rgba(255,255,255,.12);padding:5px 11px;border-radius:14px;font-size:10.5px;cursor:pointer;transition:all .12s}
-/* RESOURCES GRID */
-.rc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-bottom:20px}
-.rc{background:var(--white);border:1px solid var(--ink-10);border-radius:var(--r);overflow:hidden;cursor:pointer;transition:all .15s;box-shadow:var(--sh)}
-.rc:hover{box-shadow:var(--sh-md);transform:translateY(-2px)}
-.rc-cover{height:76px;display:flex;align-items:center;justify-content:center;font-size:30px}
-.rc-body{padding:9px 11px}
-.rc-title{font-size:12px;font-weight:700}
-.rc-meta{font-size:10px;color:var(--ink-30);margin-top:2px}
-/* DEVOIR CARD */
-.devoir-card{background:var(--white);border:1px solid var(--ink-10);border-radius:var(--r);padding:16px;margin-bottom:10px;box-shadow:var(--sh)}
-.devoir-card.urgent{border-left:3px solid var(--terra)}
-.devoir-card.done{border-left:3px solid var(--sage-l)}
-.dv-title{font-size:13px;font-weight:600;margin-bottom:3px}
-.dv-meta{font-size:10.5px;color:var(--ink-30);margin-bottom:10px}
-.dv-actions{display:flex;gap:7px;flex-wrap:wrap}
-/* UPLOAD AREA */
-.upload-area{border:2px dashed var(--ink-10);border-radius:var(--r);padding:24px;text-align:center;cursor:pointer;transition:all .15s;margin-top:10px}
-.upload-area:hover,.upload-area.dragover{border-color:var(--blue);background:var(--blue-p)}
-.upload-area .ua-ic{font-size:28px;margin-bottom:8px}
-.upload-area p{font-size:12px;color:var(--ink-60)}
-/* FILE LIST */
-.frow{background:var(--white);border:1px solid var(--ink-10);border-radius:var(--r-sm);padding:10px 13px;display:flex;align-items:center;gap:11px;margin-bottom:7px}
-.fic{width:33px;height:33px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
-.fpdf{background:#FEE2E2}.fdoc{background:#DBEAFE}.fppt{background:#FEF3C7}.fimg{background:#F0FDF4}
-.ffn{font-size:12px;font-weight:600}.ffm{font-size:10px;color:var(--ink-30);margin-top:1px}
-/* RESULT */
-.result-box{background:var(--sage-p);border:1px solid rgba(61,107,79,.2);border-radius:var(--r);padding:14px;margin-top:12px}
-.rb-ttl{font-size:11px;font-weight:700;color:var(--sage);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
-.rb-score{font-family:'Lora',serif;font-size:32px;font-weight:700;color:var(--sage)}
-.rb-comment{font-size:12.5px;color:var(--ink-60);line-height:1.7;margin-top:8px;font-style:italic}
+.nav-item.active{background:var(--sage-l);color:#fff}
+.nav-badge{position:absolute;right:12px;background:var(--terra);color:#fff;font-size:8px;font-weight:700;padding:1px 5px;border-radius:6px}
+.s-bottom{padding:10px 8px;border-top:1px solid rgba(255,255,255,.06)}
+.s-logout{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;font-size:11px;color:rgba(255,255,255,.4);cursor:pointer;transition:all .1s;width:100%;border:none;background:transparent;font-family:'DM Sans',sans-serif}
+.s-logout:hover{background:rgba(255,255,255,.06);color:rgba(255,255,255,.7)}
+
+/* MAIN */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.topbar{height:52px;flex-shrink:0;background:var(--white);border-bottom:1px solid var(--ink-10);display:flex;align-items:center;padding:0 18px;gap:10px}
+.topbar-title{font-size:15px;font-weight:600;font-family:'Lora',serif}
+.content{flex:1;overflow-y:auto;padding:20px}
+.screen{display:none;animation:fi .2s ease}.screen.active{display:block}
+@keyframes fi{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:5px;padding:7px 13px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;border:none;font-family:'DM Sans',sans-serif;transition:all .12s;white-space:nowrap}
+.btn-p{background:var(--sage-l);color:#fff}.btn-p:hover{background:var(--sage)}
+.btn-g{background:transparent;color:var(--ink-60);border:1.5px solid var(--ink-10)}.btn-g:hover{background:var(--ink-10)}
+.btn-sm{padding:4px 9px;font-size:10.5px}
+
+/* CARDS */
+.card{background:var(--white);border-radius:var(--r);box-shadow:var(--sh);border:1px solid var(--ink-10)}
+.card-hd{padding:13px 16px;border-bottom:1px solid var(--ink-10);display:flex;align-items:center;justify-content:space-between}
+.card-title{font-size:13px;font-weight:600}
+.empty{padding:32px;text-align:center;color:var(--ink-30)}
+.empty-ic{font-size:32px;margin-bottom:8px}.empty-txt{font-size:12.5px;line-height:1.6}
+.badge{padding:2px 7px;border-radius:7px;font-size:9.5px;font-weight:700}
+.bg{background:var(--sage-p);color:var(--sage)}.bt{background:var(--terra-p);color:var(--terra)}
+.ba{background:var(--amber-p);color:var(--amber)}.bb{background:var(--blue-p);color:var(--blue)}
+.tag{background:var(--ink-10);color:var(--ink-60);font-size:9.5px;padding:2px 7px;border-radius:6px}
+
+/* ACCUEIL */
+.welcome{background:linear-gradient(135deg,var(--sage) 0%,var(--sage-l) 100%);border-radius:var(--r);padding:20px;margin-bottom:16px;color:#fff;position:relative;overflow:hidden}
+.welcome::after{content:'🎒';position:absolute;right:-5px;bottom:-10px;font-size:80px;opacity:.1}
+.wc-greeting{font-size:12px;opacity:.7;margin-bottom:4px}
+.wc-name{font-family:'Lora',serif;font-size:22px;font-weight:700;margin-bottom:12px}
+.wc-chips{display:flex;gap:6px;flex-wrap:wrap}
+.wc-chip{padding:5px 12px;background:rgba(255,255,255,.15);border-radius:20px;font-size:11.5px;cursor:pointer;transition:background .1s;border:none;font-family:'DM Sans',sans-serif;color:#fff}
+.wc-chip:hover{background:rgba(255,255,255,.25)}
+
+.stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
+.stat-card{background:var(--white);border:1px solid var(--ink-10);border-radius:var(--r);padding:14px;text-align:center;box-shadow:var(--sh)}
+.sc-val{font-size:28px;font-weight:700;font-family:'Lora',serif;margin-bottom:4px}
+.sc-label{font-size:10px;color:var(--ink-30);text-transform:uppercase;letter-spacing:.5px}
+
+/* DEVOIRS */
+.devoir-card{background:var(--white);border:1px solid var(--ink-10);border-radius:var(--r);padding:16px;margin-bottom:10px;box-shadow:var(--sh);transition:all .12s}
+.devoir-card:hover{box-shadow:var(--sh-md)}
+.dc-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px;gap:10px}
+.dc-title{font-size:14px;font-weight:700}
+.dc-classe{font-size:11px;color:var(--ink-30);margin-top:2px}
+.dc-due{font-size:11px;font-weight:600;text-align:right;flex-shrink:0}
+.dc-desc{font-size:12.5px;color:var(--ink-60);line-height:1.6;margin-bottom:12px}
+.dc-footer{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+
+/* RENDU */
+.rendu-form{background:var(--sand);border-radius:9px;padding:14px;margin-top:10px;display:none}
+.rendu-form.open{display:block}
+.rendu-textarea{width:100%;padding:9px 11px;border-radius:8px;border:1.5px solid var(--ink-10);font-size:12.5px;background:var(--white);outline:none;font-family:'DM Sans',sans-serif;resize:vertical;min-height:80px;transition:border .15s;margin-bottom:10px}
+.rendu-textarea:focus{border-color:var(--sage-l)}
+.file-pick-zone{border:2px dashed var(--ink-10);border-radius:8px;padding:14px;text-align:center;cursor:pointer;transition:all .12s;margin-bottom:10px}
+.file-pick-zone:hover{border-color:var(--sage-l);background:var(--sage-p)}
+.file-pick-zone .fp-ic{font-size:22px;margin-bottom:4px}
+.file-pick-zone .fp-txt{font-size:12px;color:var(--ink-60)}
+.rendu-progress{height:4px;background:var(--ink-10);border-radius:2px;overflow:hidden;margin-bottom:8px;display:none}
+.rp-bar{height:100%;background:var(--sage-l);border-radius:2px;width:0;transition:width .3s}
+
+/* RÉSULTATS */
+.result-card{background:var(--white);border:1px solid var(--ink-10);border-radius:var(--r);padding:16px;margin-bottom:10px;box-shadow:var(--sh)}
+.rc-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.rc-title{font-size:14px;font-weight:700}
+.rc-score{font-size:28px;font-weight:700;font-family:'Lora',serif;color:var(--sage)}
+.rc-comment{background:var(--sage-p);border-radius:8px;padding:10px 13px;font-size:12.5px;color:var(--sage);line-height:1.6}
+
+/* RESSOURCES */
+.resource-item{background:var(--white);border:1px solid var(--ink-10);border-radius:9px;padding:11px 14px;display:flex;align-items:center;gap:11px;margin-bottom:7px;transition:all .1s;box-shadow:var(--sh);cursor:pointer}
+.resource-item:hover{box-shadow:var(--sh-md)}
+.ri-ic{font-size:22px;flex-shrink:0}
+.ri-name{font-size:12.5px;font-weight:500;flex:1}
+.ri-meta{font-size:10.5px;color:var(--ink-30)}
+
+/* MA CLASSE */
+.class-join{background:var(--white);border:1px solid var(--ink-10);border-radius:var(--r);padding:20px;margin-bottom:16px;text-align:center;box-shadow:var(--sh)}
+.join-title{font-size:15px;font-weight:700;margin-bottom:4px}
+.join-sub{font-size:12px;color:var(--ink-30);margin-bottom:14px}
+.code-input-wrap{display:flex;gap:8px;justify-content:center;margin-bottom:12px}
+.code-input{padding:10px 14px;border-radius:9px;border:2px solid var(--ink-10);font-size:20px;font-weight:700;letter-spacing:4px;text-align:center;text-transform:uppercase;outline:none;width:180px;font-family:'Lora',serif;color:var(--ink);background:var(--sand);transition:border .15s}
+.code-input:focus{border-color:var(--sage-l)}
+.enrolled-classes{display:flex;flex-direction:column;gap:8px}
+.class-item{background:var(--white);border:1px solid var(--ink-10);border-radius:9px;padding:13px 15px;display:flex;align-items:center;gap:11px;box-shadow:var(--sh)}
+.ci-ic{width:38px;height:38px;border-radius:9px;background:var(--sage-p);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.ci-name{font-size:13px;font-weight:700}
+.ci-meta{font-size:11px;color:var(--ink-30);margin-top:2px}
+
 /* MODAL */
-.ov{display:none;position:fixed;inset:0;background:rgba(26,23,20,.5);z-index:200;align-items:center;justify-content:center;backdrop-filter:blur(3px)}
-.ov.open{display:flex}
-.modal{background:var(--white);border-radius:16px;width:460px;max-height:85vh;overflow-y:auto;padding:22px;box-shadow:0 8px 32px rgba(26,23,20,.13)}
-.modal-title{font-family:'Lora',serif;font-size:17px;font-weight:700}.modal-sub{font-size:11.5px;color:var(--ink-60);margin-top:3px;margin-bottom:18px}
-.mc{float:right;background:none;border:none;font-size:20px;cursor:pointer;color:var(--ink-30)}
-.fg2{margin-bottom:12px}
-.fl{font-size:10.5px;font-weight:700;color:var(--ink-60);margin-bottom:4px;display:block;text-transform:uppercase;letter-spacing:.3px}
-.fi,.fta{width:100%;padding:8px 11px;border-radius:7px;border:1px solid var(--ink-10);font-size:12.5px;color:var(--ink);background:var(--sand);outline:none;font-family:'DM Sans',sans-serif}
-.fta{min-height:80px;resize:vertical}
-.mf{display:flex;justify-content:flex-end;gap:7px;margin-top:18px;padding-top:14px;border-top:1px solid var(--ink-10)}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(26,23,20,.5);z-index:200;align-items:center;justify-content:center;backdrop-filter:blur(3px)}
+.modal-overlay.open{display:flex}
+.modal{background:var(--white);border-radius:16px;width:480px;max-height:88vh;overflow-y:auto;padding:22px;box-shadow:0 20px 60px rgba(26,23,20,.2)}
+.modal-title{font-family:'Lora',serif;font-size:17px;font-weight:700;margin-bottom:3px}
+.modal-sub{font-size:11.5px;color:var(--ink-60);margin-bottom:18px}
+.modal-close{float:right;background:none;border:none;font-size:20px;cursor:pointer;color:var(--ink-30)}
+.modal-footer{display:flex;justify-content:flex-end;gap:7px;margin-top:18px;padding-top:14px;border-top:1px solid var(--ink-10)}
+
 /* TOAST */
-.toast{position:fixed;bottom:24px;right:24px;background:var(--ink);color:#fff;padding:12px 18px;border-radius:10px;font-size:12.5px;font-weight:500;z-index:999;transform:translateY(80px);opacity:0;transition:all .3s;pointer-events:none}
+.toast{position:fixed;bottom:22px;right:22px;background:var(--ink);color:#fff;padding:11px 16px;border-radius:10px;font-size:12.5px;font-weight:500;z-index:999;transform:translateY(60px);opacity:0;transition:all .3s;pointer-events:none;max-width:300px}
 .toast.show{transform:translateY(0);opacity:1}
 .toast.success{background:var(--sage-l)}.toast.error{background:var(--terra)}
-.empty{padding:30px 20px;text-align:center;color:var(--ink-30)}
-.empty-ic{font-size:32px;margin-bottom:8px}.empty-txt{font-size:12.5px}
-.spin{width:16px;height:16px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:rot .7s linear infinite;display:inline-block;vertical-align:middle;margin-right:5px}
+.spin{width:14px;height:14px;border:2px solid rgba(255,255,255,.35);border-top-color:#fff;border-radius:50%;animation:rot .6s linear infinite;display:inline-block;vertical-align:middle;margin-right:5px}
 @keyframes rot{to{transform:rotate(360deg)}}
 </style>
-  <!-- Firebase SDK (compat) -->
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
 </head>
 <body>
-
-<script>
-// ═══ NAVIGATION GLOBALE — disponible immédiatement ═══
-function navTo(url, screen, section) {
-  var currentPage = window.location.pathname.split('/').pop() || 'dashboard.html';
-  if (!url || url === currentPage) {
-    if (screen && typeof window.nav === 'function') {
-      window.nav(screen);
-    } else if (screen) {
-      // nav pas encore chargé — attendre
-      document.addEventListener('DOMContentLoaded', function() {
-        if (typeof window.nav === 'function') window.nav(screen);
-      });
-    }
-    setActiveNav(section, screen);
-  } else {
-    if (screen) sessionStorage.setItem('targetScreen', screen);
-    if (section) sessionStorage.setItem('targetSection', section);
-    window.location.href = url;
-  }
-}
-
-function toggleNav(id) {
-  var el = document.getElementById(id);
-  if (!el) return;
-  var isOpen = el.classList.contains('open');
-  document.querySelectorAll('.nav-main-item').forEach(function(n) { n.classList.remove('open'); });
-  if (!isOpen) el.classList.add('open');
-}
-
-function setActiveNav(section, screen) {
-  document.querySelectorAll('.nav-main-item').forEach(function(n) { n.classList.remove('active'); });
-  document.querySelectorAll('.nav-sub-item').forEach(function(n) { n.classList.remove('active'); });
-  if (section) {
-    var mainEl = document.querySelector('[data-page="' + section + '"]');
-    if (mainEl) { mainEl.classList.add('active'); mainEl.classList.add('open'); }
-  }
-}
-
-window.navTo = navTo;
-window.toggleNav = toggleNav;
-window.setActiveNav = setActiveNav;
-
-// Logout disponible immédiatement
-function logout() {
-  if (typeof firebase !== "undefined" && firebase.auth) {
-    firebase.auth().signOut().then(function() { window.location.href = "index.html"; });
-  } else { window.location.href = "index.html"; }
-}
-window.logout = logout;
-// nav() alias - sera remplacé par la vraie fonction plus tard
-if (!window.nav) {
-  window.nav = function(id) {
-    // Attendre que la vraie nav soit chargée
-    var t = setInterval(function() {
-      if (window._navReady) {
-        clearInterval(t);
-        window.nav(id);
-      }
-    }, 50);
-  };
-}
-</script>
-
 <div class="app">
-<!-- SIDEBAR PÉDAGOGIA ÉLÈVE -->
-  <nav class="sidebar" id="main-sidebar">
-    <div class="s-logo">
-      <div class="s-logo-icon" style="background:var(--blue)">🎓</div>
-      <div class="s-logo-text">
-        <div class="wm">Pédagogia</div>
-        <div class="tg">Espace Élève</div>
-      </div>
+
+<!-- SIDEBAR -->
+<nav class="sidebar">
+  <div class="s-logo">
+    <div class="s-logo-ic">🎓</div>
+    <div><div class="s-logo-wm">Pédagogia</div><div class="s-logo-tg">Espace élève</div></div>
+  </div>
+  <div class="s-user">
+    <div class="s-av" id="s-av">?</div>
+    <div><div class="s-nm" id="s-nm">Chargement…</div><div class="s-rl">Élève</div></div>
+  </div>
+  <div class="s-nav">
+    <div class="nav-item active" id="nav-accueil" onclick="showScreen('accueil')">⌂ Accueil</div>
+    <div class="nav-item" id="nav-devoirs" onclick="showScreen('devoirs')">
+      📋 Mes devoirs
+      <span class="nav-badge" id="badge-devoirs" style="display:none">0</span>
     </div>
-    <div class="s-user">
-      <div class="av" id="s-av" style="background:var(--blue)">EL</div>
-      <div>
-        <div class="u-nm" id="s-nm">Chargement…</div>
-        <div class="u-rl">Élève</div>
-      </div>
-    </div>
-    <div class="s-nav" id="s-nav">
+    <div class="nav-item" id="nav-resultats" onclick="showScreen('resultats')">📊 Mes résultats</div>
+    <div class="nav-item" id="nav-ressources" onclick="showScreen('ressources')">📁 Ressources</div>
+    <div class="nav-item" id="nav-maclasse" onclick="showScreen('maclasse')">👥 Ma classe</div>
+  </div>
+  <div class="s-bottom">
+    <button class="s-logout" onclick="logout()">↩ Déconnexion</button>
+  </div>
+</nav>
 
-      <!-- Accueil -->
-      <div class="nav-main-item active" data-page="home" onclick="goTo('home')">
-        <div class="nav-main-btn">
-          <span class="nav-main-icon" style="color:#6B9FD4">⌂</span>
-          <span class="nav-main-label">Accueil</span>
-        </div>
-      </div>
-
-      <!-- Mes cours -->
-      <div class="nav-main-item" data-page="resources" onclick="goTo('resources')">
-        <div class="nav-main-btn">
-          <span class="nav-main-icon" style="color:#7BAF8E">📚</span>
-          <span class="nav-main-label">Mes cours</span>
-        </div>
-      </div>
-
-      <!-- Mes devoirs -->
-      <div class="nav-main-item" data-page="devoirs" onclick="goTo('devoirs')">
-        <div class="nav-main-btn">
-          <span class="nav-main-icon" style="color:#D48C6B">📋</span>
-          <span class="nav-main-label">Mes devoirs</span>
-          <span class="nav-main-badge" id="badge-devoirs">0</span>
-        </div>
-      </div>
-
-      <!-- Mes résultats -->
-      <div class="nav-main-item" data-page="resultats" onclick="goTo('resultats')">
-        <div class="nav-main-btn">
-          <span class="nav-main-icon" style="color:#9B7FD4">📊</span>
-          <span class="nav-main-label">Mes résultats</span>
-        </div>
-      </div>
-
-      <!-- Ma classe -->
-      <div class="nav-main-item" data-page="maclasse" onclick="goTo('maclasse')">
-        <div class="nav-main-btn">
-          <span class="nav-main-icon" style="color:#D4B86B">🏫</span>
-          <span class="nav-main-label">Ma classe</span>
-        </div>
-      </div>
-
-    </div>
-
-    <div class="s-bottom">
-      <div class="s-bottom-btn" onclick="logout()">
-        <span>↩</span> Déconnexion
-      </div>
-    </div>
-  </nav>
-
-<div class="main" style="margin-left:220px">
+<!-- MAIN -->
+<div class="main">
   <div class="topbar">
-    <div class="pt" id="pt">Accueil</div>
-    <div class="tb-r"></div>
+    <div class="topbar-title" id="page-title">Accueil</div>
   </div>
   <div class="content">
 
-    <!-- HOME -->
-    <div class="screen active" id="screen-home">
-      <div class="hero">
-        <div class="hg" id="h-greet">Bonjour 👋</div>
-        <div class="hs" id="h-date"></div>
-        <div class="hchips">
-          <div class="chip" onclick="goTo('devoirs')">📋 Voir mes devoirs</div>
-          <div class="chip" onclick="goTo('resources')">📚 Mes cours</div>
-          <div class="chip" onclick="goTo('resultats')">📊 Mes résultats</div>
+    <!-- ═ ACCUEIL ═ -->
+    <div id="screen-accueil" class="screen active">
+      <div class="welcome">
+        <div class="wc-greeting" id="wc-greeting">Bonjour 👋</div>
+        <div class="wc-name" id="wc-name">Chargement…</div>
+        <div class="wc-chips">
+          <button class="wc-chip" onclick="showScreen('devoirs')">📋 Mes devoirs</button>
+          <button class="wc-chip" onclick="showScreen('ressources')">📁 Ressources</button>
+          <button class="wc-chip" onclick="showScreen('resultats')">📊 Mes résultats</button>
+          <button class="wc-chip" onclick="showScreen('maclasse')">👥 Ma classe</button>
         </div>
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
-        <div class="card">
-          <div class="card-hd"><span class="card-title">Devoirs à rendre</span><span style="font-size:10.5px;color:var(--blue);cursor:pointer" onclick="goTo('devoirs')">Voir tous →</span></div>
-          <div id="home-devoirs-list"></div>
+
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="sc-val" id="stat-todo" style="color:var(--terra)">—</div>
+          <div class="sc-label">Devoirs à rendre</div>
         </div>
-        <div class="card">
-          <div class="card-hd"><span class="card-title">Derniers résultats</span></div>
-          <div id="home-results-list"></div>
+        <div class="stat-card">
+          <div class="sc-val" id="stat-avg" style="color:var(--sage)">—</div>
+          <div class="sc-label">Moyenne</div>
+        </div>
+        <div class="stat-card">
+          <div class="sc-val" id="stat-res" style="color:var(--blue)">—</div>
+          <div class="sc-label">Ressources dispo</div>
         </div>
       </div>
-    </div>
 
-    <!-- RESOURCES (partagées par les enseignants) -->
-    <div class="screen" id="screen-resources">
-      <div style="font-size:13.5px;font-weight:600;margin-bottom:14px">Ressources partagées avec moi</div>
-      <div class="rc-grid" id="shared-resources"></div>
-      <div style="font-size:13.5px;font-weight:600;margin-bottom:10px;margin-top:4px">Fichiers accessibles</div>
-      <div id="shared-files"></div>
-    </div>
-
-    <!-- DEVOIRS -->
-    <div class="screen" id="screen-devoirs">
-      <div id="devoirs-list"></div>
-    </div>
-
-    <!-- RÉSULTATS -->
-    <div class="screen" id="screen-resultats">
-      <div class="card" style="padding:20px">
-        <div style="font-size:15px;font-weight:600;margin-bottom:16px;font-family:'Lora',serif">Mes résultats et corrections</div>
-        <div id="results-list"></div>
+      <div class="card">
+        <div class="card-hd"><span class="card-title">📋 Devoirs en attente</span><button class="btn btn-p btn-sm" onclick="showScreen('devoirs')">Voir tout</button></div>
+        <div id="home-devoirs">
+          <div class="empty"><div class="empty-ic">📭</div><div class="empty-txt">Aucun devoir en attente !</div></div>
+        </div>
       </div>
     </div>
 
-    <!-- MA CLASSE -->
-    <div class="screen" id="screen-maclasse">
-      <div class="card" style="padding:22px;margin-bottom:16px">
-        <div style="font-size:15px;font-weight:700;font-family:'Lora',serif;margin-bottom:4px">Rejoindre une classe</div>
-        <div style="font-size:12px;color:var(--ink-30);margin-bottom:16px">Entre le code donné par ton enseignant pour rejoindre sa classe</div>
-        <div style="display:flex;gap:10px;align-items:flex-end">
-          <div style="flex:1">
-            <label class="fl">Code de la classe</label>
-            <input class="fi" id="class-code-input" placeholder="Ex: ABC123" maxlength="6" style="text-transform:uppercase;font-size:18px;font-weight:700;letter-spacing:3px;text-align:center">
-          </div>
-          <button class="btn btn-p" onclick="joinClass()" style="height:38px">Rejoindre</button>
+    <!-- ═ DEVOIRS ═ -->
+    <div id="screen-devoirs" class="screen">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+        <div style="font-size:15px;font-weight:700;font-family:'Lora',serif">Mes devoirs</div>
+        <div style="display:flex;gap:6px">
+          <button class="btn btn-g btn-sm" id="f-all" onclick="filterDevoirs('all')">Tous</button>
+          <button class="btn btn-g btn-sm" id="f-todo" onclick="filterDevoirs('todo')">À rendre</button>
+          <button class="btn btn-g btn-sm" id="f-done" onclick="filterDevoirs('done')">Rendus</button>
         </div>
-        <div id="join-msg" style="margin-top:10px;display:none"></div>
       </div>
+      <div id="devoirs-list">
+        <div class="empty"><div class="empty-ic">📋</div><div class="empty-txt">Chargement…</div></div>
+      </div>
+    </div>
 
-      <div class="card" style="padding:22px">
-        <div style="font-size:14px;font-weight:700;margin-bottom:14px">Mes classes inscrites</div>
-        <div id="my-classes-list">
-          <div class="empty"><div class="empty-ic">🏫</div><div class="empty-txt">Tu n'es inscrit dans aucune classe.<br>Entre un code pour rejoindre ta classe !</div></div>
+    <!-- ═ RÉSULTATS ═ -->
+    <div id="screen-resultats" class="screen">
+      <div style="font-size:15px;font-weight:700;font-family:'Lora',serif;margin-bottom:14px">📊 Mes résultats</div>
+      <div id="resultats-list">
+        <div class="empty"><div class="empty-ic">📊</div><div class="empty-txt">Chargement…</div></div>
+      </div>
+    </div>
+
+    <!-- ═ RESSOURCES ═ -->
+    <div id="screen-ressources" class="screen">
+      <div style="font-size:15px;font-weight:700;font-family:'Lora',serif;margin-bottom:14px">📁 Ressources partagées</div>
+      <div id="ressources-list">
+        <div class="empty"><div class="empty-ic">📁</div><div class="empty-txt">Chargement…</div></div>
+      </div>
+    </div>
+
+    <!-- ═ MA CLASSE ═ -->
+    <div id="screen-maclasse" class="screen">
+      <div class="class-join">
+        <div class="join-title">Rejoindre une classe</div>
+        <div class="join-sub">Entre le code donné par ton enseignant(e)</div>
+        <div class="code-input-wrap">
+          <input class="code-input" id="class-code" maxlength="6" placeholder="ABC123"
+            onkeydown="if(event.key==='Enter')joinClass()">
         </div>
+        <button class="btn btn-p" onclick="joinClass()">Rejoindre</button>
+      </div>
+      <div style="font-size:13px;font-weight:700;margin-bottom:10px">Mes classes</div>
+      <div id="enrolled-list" class="enrolled-classes">
+        <div class="empty"><div class="empty-ic">👥</div><div class="empty-txt">Tu n'es inscrit dans aucune classe.</div></div>
       </div>
     </div>
 
@@ -376,16 +271,16 @@ if (!window.nav) {
 </div>
 </div>
 
-<!-- MODAL RENDU -->
-<div class="ov" id="ov" onclick="closeModal(event)">
-  <div class="modal" id="modal-body"></div>
+<div class="modal-overlay" id="modal-overlay" onclick="if(event.target===this)closeModal()">
+  <div class="modal" id="modal-content"></div>
 </div>
-
 <div class="toast" id="toast"></div>
-<script>
 
-// ─── CONFIG FIREBASE — REMPLACE ICI ───────────────────────
-const firebaseConfig = {
+<script>
+// ════════════════════════════════════════════════════════════
+// PÉDAGOGIA — Espace Élève — Firebase Compat
+// ════════════════════════════════════════════════════════════
+var firebaseConfig = {
   apiKey: "AIzaSyBYOQopUVm5vcjUur74ErhvehWC-UNiaz0",
   authDomain: "pedagogia-18dda.firebaseapp.com",
   projectId: "pedagogia-18dda",
@@ -393,414 +288,476 @@ const firebaseConfig = {
   messagingSenderId: "465869483173",
   appId: "1:465869483173:web:5874b245342c020127b14c"
 };
-// ──────────────────────────────────────────────────────────
+var TS = firebase.firestore.FieldValue.serverTimestamp;
+firebase.initializeApp(firebaseConfig);
+var auth    = firebase.auth();
+var db      = firebase.firestore();
+var storage = firebase.storage();
 
-const app = firebase.initializeApp(firebaseConfig);
-const auth = firebase.auth();
-const db = firebase.firestore();
-const storage = firebase.storage();
-let currentUser = null;
-let currentAssignId = null;
+var currentUser   = null;
+var allDevoirs    = [];
+var devoirFilter  = 'all';
+var mySubmissions = {}; // assignId → submission data
 
-auth.onAuthStateChanged( async (user) => {
-  if (!user) { window.location.href='index.html'; return; }
+// ── AUTH ──────────────────────────────────────────────────
+auth.onAuthStateChanged(function(user) {
+  if (!user) { window.location.href = 'index.html'; return; }
   currentUser = user;
-  const snap = (await db.collection('users').doc(user.uid).get());
-  if (snap.exists) {
-    const d = snap.data();
-    if (d.role === 'teacher') { window.location.href='dashboard.html'; return; }
-    const initials = d.name.split(' ').map(n=>n[0]).join('').toUpperCase().slice(0,2);
-    document.getElementById('s-av').textContent = initials;
-    document.getElementById('s-nm').textContent = d.name;
-    document.getElementById('h-greet').textContent = `Bonjour, ${d.name.split(' ')[0]} 👋`;
-  }
-  const now = new Date();
-  const days=['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'];
-  const months=['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
-  document.getElementById('h-date').textContent = `${days[now.getDay()]} ${now.getDate()} ${months[now.getMonth()]} ${now.getFullYear()}`;
 
-  loadSharedResources();
+  db.collection('users').doc(user.uid).get().then(function(snap) {
+    if (snap.exists) {
+      var d    = snap.data();
+      var init = d.name.split(' ').map(function(n){ return n[0]; }).join('').toUpperCase().slice(0,2);
+      document.getElementById('s-av').textContent  = init;
+      document.getElementById('s-nm').textContent  = d.name;
+      var h     = new Date().getHours();
+      var greet = h < 12 ? 'Bonjour' : h < 18 ? 'Bon après-midi' : 'Bonsoir';
+      document.getElementById('wc-greeting').textContent = greet + ' 👋';
+      document.getElementById('wc-name').textContent     = d.name;
+    }
+  });
+
   loadDevoirs();
-  loadResults();
-  loadHomeData();
-  loadMyClasses();
-  loadDevoirsBadge();
-  loadDevoirsBadge();
+  loadRessources();
+  loadClasses();
 });
 
-window.logout = async () => { await auth.signOut(); window.location.href='index.html'; };
+function logout() {
+  auth.signOut().then(function() { window.location.href = 'index.html'; });
+}
 
-const TITLES = {home:'Accueil',resources:'Mes cours',devoirs:'Mes devoirs',resultats:'Mes résultats',maclasse:'Ma classe'};
-function goTo(id) {
-  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
-  const sc = document.getElementById('screen-'+id);
-  if(sc) sc.classList.add('active');
-  const pt = document.getElementById('pt');
-  if(pt) pt.textContent = TITLES[id]||id;
-  // Mettre à jour sidebar
-  document.querySelectorAll('.nav-main-item').forEach(n=>{
-    n.classList.toggle('active', n.dataset.page===id);
+// ── NAV ───────────────────────────────────────────────────
+function showScreen(name) {
+  document.querySelectorAll('.screen').forEach(function(s) { s.classList.remove('active'); });
+  document.getElementById('screen-' + name).classList.add('active');
+  var titles = { accueil:'Accueil', devoirs:'Mes devoirs', resultats:'Mes résultats', ressources:'Ressources', maclasse:'Ma classe' };
+  document.getElementById('page-title').textContent = titles[name] || name;
+  document.querySelectorAll('.nav-item').forEach(function(n) { n.classList.remove('active'); });
+  var el = document.getElementById('nav-' + name);
+  if (el) el.classList.add('active');
+}
+
+function toast(msg, type) {
+  var t = document.getElementById('toast');
+  t.textContent = msg; t.className = 'toast ' + (type || ''); t.classList.add('show');
+  setTimeout(function() { t.classList.remove('show'); }, 3200);
+}
+function openModal(html) {
+  document.getElementById('modal-content').innerHTML = html;
+  document.getElementById('modal-overlay').classList.add('open');
+}
+function closeModal() { document.getElementById('modal-overlay').classList.remove('open'); }
+
+function timeAgo(ts) {
+  if (!ts) return '—';
+  var d = ts.toDate ? ts.toDate() : new Date(ts);
+  var s = Math.floor((Date.now() - d.getTime()) / 1000);
+  if (s < 60) return 'À l\'instant';
+  if (s < 3600) return 'Il y a ' + Math.floor(s/60) + ' min';
+  if (s < 86400) return 'Il y a ' + Math.floor(s/3600) + 'h';
+  return d.toLocaleDateString('fr-FR');
+}
+function fmtDate(ts) {
+  if (!ts) return '—';
+  var d = ts.toDate ? ts.toDate() : new Date(ts);
+  return d.toLocaleDateString('fr-FR', { day:'2-digit', month:'2-digit', year:'numeric' });
+}
+function fmtSize(bytes) {
+  if (!bytes) return '';
+  if (bytes < 1048576) return Math.round(bytes/1024) + ' Ko';
+  return (bytes/1048576).toFixed(1) + ' Mo';
+}
+function getFileIcon(mime) {
+  if (!mime) return '📄';
+  if (mime.includes('pdf')) return '📕';
+  if (mime.includes('word') || mime.includes('document')) return '📝';
+  if (mime.startsWith('image/')) return '🖼️';
+  if (mime.startsWith('video/')) return '🎬';
+  return '📄';
+}
+
+// ────────────────────────────────────────────────────────────
+// ═══ DEVOIRS ═══
+// ────────────────────────────────────────────────────────────
+function loadDevoirs() {
+  // Charger les devoirs publiés
+  db.collection('assignments').where('isPublished', '==', true).orderBy('createdAt', 'desc').get()
+  .then(function(snap) {
+    allDevoirs = snap.docs.map(function(d) { return { id: d.id, data: d.data() }; });
+
+    // Charger les rendus de cet élève
+    return db.collection('submissions').where('uid', '==', currentUser.uid).get();
+  })
+  .then(function(subSnap) {
+    mySubmissions = {};
+    subSnap.docs.forEach(function(d) {
+      mySubmissions[d.data().assignmentId] = { id: d.id, data: d.data() };
+    });
+
+    // Stats
+    var todo = allDevoirs.filter(function(a) { return !mySubmissions[a.id]; }).length;
+    var subs = Object.values(mySubmissions);
+    var graded = subs.filter(function(s) { return s.data.score != null; });
+    var avg  = graded.length
+      ? Math.round(graded.reduce(function(acc, s) { return acc + s.data.score; }, 0) / graded.length * 10) / 10
+      : null;
+
+    document.getElementById('stat-todo').textContent  = todo;
+    document.getElementById('stat-avg').textContent   = avg != null ? avg + '/20' : '—';
+
+    var badge = document.getElementById('badge-devoirs');
+    if (todo > 0) { badge.textContent = todo; badge.style.display = 'inline'; }
+    else           badge.style.display = 'none';
+
+    renderDevoirs();
+    renderHomeDevoirs();
+    loadResultats();
+  })
+  .catch(function(e) {
+    document.getElementById('devoirs-list').innerHTML = '<div class="empty"><div class="empty-ic">📋</div><div class="empty-txt">Erreur de chargement : ' + e.message + '</div></div>';
   });
 }
-window.goTo = goTo;
 
-function toast(msg,type=''){
-  const t=document.getElementById('toast');
-  t.textContent=msg;t.className='toast '+(type);
-  t.classList.add('show');
-  setTimeout(()=>t.classList.remove('show'),3200);
+function filterDevoirs(f) {
+  devoirFilter = f;
+  document.querySelectorAll('[id^="f-"]').forEach(function(b) { b.style.background=''; b.style.color=''; });
+  var btn = document.getElementById('f-' + f);
+  if (btn) { btn.style.background = 'var(--ink)'; btn.style.color = '#fff'; }
+  renderDevoirs();
 }
 
-// ── RESSOURCES PARTAGÉES ──────────────────────────────────
-// On charge tous les fichiers public + les dossiers publics
-async function loadSharedResources() {
-  // Charger les classes de l'élève pour filtrer les ressources
-  let classeNames = [];
-  try {
-    const memberSnap = (await query(db.collection('classMembers'), where('studentId','==',currentUser.uid)));
-    classeNames = memberSnap.docs.map(d => d.data().className);
-  } catch(e) {}
+function renderDevoirs() {
+  var now   = new Date();
+  var items = allDevoirs.filter(function(a) {
+    var submitted = !!mySubmissions[a.id];
+    if (devoirFilter === 'todo') return !submitted;
+    if (devoirFilter === 'done') return submitted;
+    return true;
+  });
 
-  const foldersSnap = (await query(db.collection('folders'),where('visibility','==','public')));
-  const filesSnap = (await query(db.collection('files'),where('visibility','==','public')));
-
-  const grid = document.getElementById('shared-resources');
-  const colors = {sage:'#EAF2ED',terra:'#FBF0EA',amber:'#FDF5E6',blue:'#EBF2FF',purple:'#F3EEFF',pink:'#FDE8F0'};
-  if (foldersSnap.empty) {
-    grid.innerHTML = '<div class="empty" style="grid-column:1/-1"><div class="empty-ic">📁</div><div class="empty-txt">Aucune ressource partagée pour le moment.</div></div>';
-  } else {
-    grid.innerHTML = foldersSnap.docs.map(d=>{
-      const fd=d.data();
-      const bg = colors[fd.color]||'#F0EBE3';
-      return `<div class="rc"><div class="rc-cover" style="background:${bg}">📁</div><div class="rc-body"><div class="rc-title">${fd.name}</div><div class="rc-meta">Partagé par l'enseignant</div></div></div>`;
-    }).join('');
-  }
-
-  const flist = document.getElementById('shared-files');
-  if (!filesSnap.empty) {
-    const typeMap={'application/pdf':['📄','fpdf'],'application/vnd.openxmlformats-officedocument.wordprocessingml.document':['📝','fdoc'],'application/vnd.openxmlformats-officedocument.presentationml.presentation':['📊','fppt']};
-    flist.innerHTML = filesSnap.docs.map(d=>{
-      const fd=d.data();
-      const [ic,cls]=typeMap[fd.mime]||['📄','fpdf'];
-      return `<div class="frow">
-        <div class="fic ${cls}">${ic}</div>
-        <div><div class="ffn">${fd.name}</div><div class="ffm">${fd.size?(fd.size/1024/1024).toFixed(1)+'Mo':''}</div></div>
-        <a href="${fd.url}" target="_blank" class="btn btn-g btn-sm" style="margin-left:auto">↓ Télécharger</a>
-      </div>`;
-    }).join('');
-  } else {
-    flist.innerHTML = '<div class="empty"><div class="empty-txt">Aucun fichier partagé.</div></div>';
-  }
-}
-
-// ── DEVOIRS ───────────────────────────────────────────────
-async function loadDevoirs() {
-  // Charge tous les devoirs publiés (tous enseignants)
-  const snap = (await db.collection('assignments').where('isPublished', '==', true).orderBy('createdAt', 'desc').get());
-  const list = document.getElementById('devoirs-list');
-  if (snap.empty) {
-    list.innerHTML = '<div class="empty"><div class="empty-ic">📋</div><div class="empty-txt">Aucun devoir pour le moment.</div></div>';
+  var el = document.getElementById('devoirs-list');
+  if (!items.length) {
+    el.innerHTML = '<div class="empty"><div class="empty-ic">✅</div><div class="empty-txt">' +
+      (devoirFilter === 'todo' ? 'Tous tes devoirs sont rendus !' : 'Aucun devoir.') +
+      '</div></div>';
     return;
   }
-  const now = new Date();
-  list.innerHTML = snap.docs.map(d=>{
-    const fd=d.data();
-    const due=fd.dueDate?.toDate();
-    const isUrgent = due && (due.getTime()-now.getTime())<86400000*3 && due>now;
-    const isPast = due && due<now;
-    return `<div class="devoir-card ${isUrgent?'urgent':''}" id="dc-${d.id}">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start">
-        <div><div class="dv-title">${fd.title}</div><div class="dv-meta">${fd.classe||'Toutes les classes'} · ${due?'Échéance : '+due.toLocaleDateString('fr-FR'):'Sans date limite'}</div></div>
-        <span class="badge ${isPast?'bt':isUrgent?'ba':'bb'}">${isPast?'Passé':isUrgent?'Urgent':'Actif'}</span>
-      </div>
-      ${fd.description?`<p style="font-size:12px;color:var(--ink-60);margin-bottom:10px;line-height:1.6">${fd.description}</p>`:''}
-      <div class="dv-actions">
-        <button class="btn btn-p btn-sm" onclick="openRendu('${d.id}','${fd.title?.replace(/'/g,"\\'")||''}')">📤 Rendre mon devoir</button>
-        <button class="btn btn-g btn-sm" onclick="checkRendu('${d.id}')">📊 Mon statut</button>
-      </div>
-      <div id="status-${d.id}" style="display:none;margin-top:10px"></div>
-    </div>`;
+
+  el.innerHTML = items.map(function(a) {
+    var fd         = a.data;
+    var sub        = mySubmissions[a.id];
+    var due        = fd.dueDate ? (fd.dueDate.toDate ? fd.dueDate.toDate() : new Date(fd.dueDate)) : null;
+    var isLate     = due && due < now && !sub;
+    var isUrgent   = due && !isLate && !sub && (due - now) < 86400000 * 2;
+    var dueColor   = isLate ? 'var(--terra)' : isUrgent ? 'var(--amber)' : 'var(--ink-30)';
+
+    var statusBadge = sub
+      ? (sub.data.score != null
+          ? '<span class="badge bg">✓ Noté : ' + sub.data.score + '/20</span>'
+          : '<span class="badge ba">✓ Rendu</span>')
+      : isLate
+        ? '<span class="badge bt">⚠ En retard</span>'
+        : isUrgent
+          ? '<span class="badge" style="background:var(--amber-p);color:var(--amber)">⚡ Urgent</span>'
+          : '<span class="badge bb">À rendre</span>';
+
+    return '<div class="devoir-card">' +
+      '<div class="dc-top">' +
+        '<div><div class="dc-title">' + (fd.title || '—') + '</div><div class="dc-classe">' + (fd.classe || '') + '</div></div>' +
+        '<div><div class="dc-due" style="color:' + dueColor + '">' + (due ? fmtDate(fd.dueDate) : 'Sans échéance') + '</div>' + statusBadge + '</div>' +
+      '</div>' +
+      (fd.description ? '<div class="dc-desc">' + fd.description + '</div>' : '') +
+      '<div class="dc-footer">' +
+        (!sub ? '<button class="btn btn-p btn-sm" onclick="toggleRendu(\'' + a.id + '\')">📤 Rendre</button>' : '') +
+        (sub && sub.data.score != null ? '<button class="btn btn-g btn-sm" onclick="voirCorrection(\'' + a.id + '\')">📊 Voir correction</button>' : '') +
+      '</div>' +
+      '<div class="rendu-form" id="rendu-' + a.id + '">' +
+        '<div style="font-size:12px;font-weight:700;margin-bottom:8px;color:var(--ink-60)">Ton rendu</div>' +
+        '<textarea class="rendu-textarea" id="rt-' + a.id + '" placeholder="Écris ta réponse ici…"></textarea>' +
+        '<div class="file-pick-zone" onclick="document.getElementById(\'rf-' + a.id + '\').click()">' +
+          '<div class="fp-ic">📎</div>' +
+          '<div class="fp-txt">Joindre un fichier (optionnel)</div>' +
+        '</div>' +
+        '<input type="file" id="rf-' + a.id + '" style="display:none" onchange="previewFile(this,\'' + a.id + '\')">' +
+        '<div id="rf-name-' + a.id + '" style="font-size:11px;color:var(--sage);margin-bottom:8px;display:none"></div>' +
+        '<div class="rendu-progress" id="rp-' + a.id + '"><div class="rp-bar" id="rpb-' + a.id + '"></div></div>' +
+        '<div style="display:flex;gap:7px">' +
+          '<button class="btn btn-p" id="submit-btn-' + a.id + '" onclick="submitRendu(\'' + a.id + '\')">✓ Envoyer le rendu</button>' +
+          '<button class="btn btn-g" onclick="toggleRendu(\'' + a.id + '\')">Annuler</button>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
   }).join('');
 }
 
-window.checkRendu = async function(assignId) {
-  const statusEl = document.getElementById('status-'+assignId);
-  try {
-    const snap = (await query(db.collection('submissions'),where('assignmentId','==',assignId),where('uid','==',currentUser.uid)));
+function renderHomeDevoirs() {
+  var pending = allDevoirs.filter(function(a) { return !mySubmissions[a.id]; }).slice(0, 3);
+  var el = document.getElementById('home-devoirs');
+  if (!pending.length) {
+    el.innerHTML = '<div class="empty"><div class="empty-ic">✅</div><div class="empty-txt">Aucun devoir en attente !</div></div>';
+    return;
+  }
+  el.innerHTML = pending.map(function(a) {
+    var fd  = a.data;
+    var due = fd.dueDate ? fmtDate(fd.dueDate) : 'Sans échéance';
+    return '<div style="display:flex;align-items:center;padding:10px 14px;border-bottom:1px solid rgba(26,23,20,.04);gap:10px">' +
+      '<div style="font-size:20px">📋</div>' +
+      '<div style="flex:1"><div style="font-size:12.5px;font-weight:600">' + fd.title + '</div>' +
+      '<div style="font-size:10.5px;color:var(--ink-30)">' + (fd.classe || '') + ' · ' + due + '</div></div>' +
+      '<button class="btn btn-p btn-sm" onclick="showScreen(\'devoirs\')">Rendre</button>' +
+    '</div>';
+  }).join('');
+}
+
+function toggleRendu(id) {
+  var form = document.getElementById('rendu-' + id);
+  if (!form) return;
+  form.classList.toggle('open');
+}
+
+function previewFile(input, id) {
+  var nameEl = document.getElementById('rf-name-' + id);
+  if (input.files && input.files[0] && nameEl) {
+    nameEl.textContent = '📎 ' + input.files[0].name;
+    nameEl.style.display = 'block';
+  }
+}
+
+function submitRendu(assignId) {
+  var text   = document.getElementById('rt-' + assignId).value.trim();
+  var fileIn = document.getElementById('rf-' + assignId);
+  var file   = fileIn && fileIn.files ? fileIn.files[0] : null;
+  if (!text && !file) { toast('Écris ta réponse ou joins un fichier.', 'error'); return; }
+
+  var btn = document.getElementById('submit-btn-' + assignId);
+  btn.innerHTML = '<span class="spin"></span>Envoi…'; btn.disabled = true;
+
+  var data = {
+    uid:          currentUser.uid,
+    assignmentId: assignId,
+    textResponse: text,
+    status:       'submitted',
+    submittedAt:  TS()
+  };
+
+  var upload = Promise.resolve(null);
+  if (file) {
+    var path    = currentUser.uid + '/submissions/' + Date.now() + '_' + file.name;
+    var ref     = storage.ref(path);
+    var prog    = document.getElementById('rp-' + assignId);
+    var bar     = document.getElementById('rpb-' + assignId);
+    if (prog) prog.style.display = 'block';
+
+    upload = ref.put(file).then(function(snap) {
+      if (bar) bar.style.width = '100%';
+      return snap.ref.getDownloadURL();
+    }).then(function(url) {
+      data.fileUrl  = url;
+      data.fileName = file.name;
+      return null;
+    });
+  }
+
+  upload.then(function() {
+    return db.collection('submissions').add(data);
+  }).then(function(ref) {
+    mySubmissions[assignId] = { id: ref.id, data: data };
+    toast('Devoir rendu avec succès ! 🎉', 'success');
+    btn.innerHTML = '✓ Envoyé'; btn.disabled = false;
+    document.getElementById('rendu-' + assignId).classList.remove('open');
+
+    // Mettre à jour les stats
+    var todo = allDevoirs.filter(function(a) { return !mySubmissions[a.id]; }).length;
+    document.getElementById('stat-todo').textContent = todo;
+    var badge = document.getElementById('badge-devoirs');
+    if (todo > 0) { badge.textContent = todo; badge.style.display = 'inline'; }
+    else           badge.style.display = 'none';
+
+    renderDevoirs();
+    renderHomeDevoirs();
+    loadResultats();
+  }).catch(function(e) {
+    toast('Erreur : ' + e.message, 'error');
+    btn.innerHTML = '✓ Envoyer le rendu'; btn.disabled = false;
+  });
+}
+
+function voirCorrection(assignId) {
+  var sub = mySubmissions[assignId];
+  if (!sub) return;
+  var fd  = sub.data;
+  var a   = allDevoirs.find(function(x) { return x.id === assignId; });
+  var title = a ? a.data.title : 'Devoir';
+
+  openModal(
+    '<button class="modal-close" onclick="closeModal()">✕</button>' +
+    '<div class="modal-title">📊 ' + title + '</div>' +
+    '<div style="text-align:center;padding:14px 0">' +
+      '<div style="font-size:36px;font-weight:700;font-family:\'Lora\',serif;color:' +
+        (fd.score >= 14 ? 'var(--sage)' : fd.score >= 10 ? 'var(--amber)' : 'var(--terra)') + '">' +
+        fd.score + '/20</div>' +
+      '<div style="font-size:12px;color:var(--ink-30);margin-top:4px">' +
+        (fd.score >= 14 ? '🌟 Excellent !' : fd.score >= 10 ? '👍 Bien !' : '💪 À travailler') +
+      '</div>' +
+    '</div>' +
+    (fd.teacherComment ? '<div class="rc-comment" style="background:var(--sage-p);border-radius:9px;padding:12px 14px;font-size:12.5px;color:var(--sage);line-height:1.6;margin-bottom:12px"><div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Correction de l\'enseignant</div>' + fd.teacherComment + '</div>' : '') +
+    '<div class="modal-footer"><button class="btn btn-g" onclick="closeModal()">Fermer</button></div>'
+  );
+}
+
+// ────────────────────────────────────────────────────────────
+// ═══ RÉSULTATS ═══
+// ────────────────────────────────────────────────────────────
+function loadResultats() {
+  var graded = Object.values(mySubmissions).filter(function(s) { return s.data.score != null; });
+  var el     = document.getElementById('resultats-list');
+
+  if (!graded.length) {
+    el.innerHTML = '<div class="empty"><div class="empty-ic">📊</div><div class="empty-txt">Aucun résultat encore. Rends tes devoirs !</div></div>';
+    return;
+  }
+
+  // Moyenne
+  var avg = Math.round(graded.reduce(function(acc, s) { return acc + s.data.score; }, 0) / graded.length * 10) / 10;
+  document.getElementById('stat-avg').textContent = avg + '/20';
+
+  // Récupérer les titres des devoirs
+  var promises = graded.map(function(s) {
+    var a = allDevoirs.find(function(x) { return x.id === s.data.assignmentId; });
+    return Promise.resolve(a ? a.data.title : 'Devoir');
+  });
+
+  Promise.all(promises).then(function(titles) {
+    el.innerHTML = '<div style="background:var(--sage-p);border-radius:var(--r);padding:14px 16px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between">' +
+      '<div><div style="font-size:11px;color:var(--sage);text-transform:uppercase;letter-spacing:.5px;font-weight:700">Moyenne générale</div>' +
+      '<div style="font-size:28px;font-weight:700;font-family:\'Lora\',serif;color:var(--sage)">' + avg + '/20</div></div>' +
+      '<div style="font-size:32px">📊</div>' +
+    '</div>' +
+    graded.map(function(s, i) {
+      var fd    = s.data;
+      var score = fd.score;
+      var col   = score >= 14 ? 'var(--sage)' : score >= 10 ? 'var(--amber)' : 'var(--terra)';
+      var pct   = Math.round(score / 20 * 100);
+      return '<div class="result-card">' +
+        '<div class="rc-top">' +
+          '<div><div class="rc-title">' + titles[i] + '</div>' +
+            '<div style="font-size:11px;color:var(--ink-30);margin-top:2px">' + timeAgo(fd.gradedAt) + '</div>' +
+          '</div>' +
+          '<div style="font-size:28px;font-weight:700;font-family:\'Lora\',serif;color:' + col + '">' + score + '<span style="font-size:14px">/20</span></div>' +
+        '</div>' +
+        '<div style="height:6px;background:var(--ink-10);border-radius:3px;overflow:hidden;margin-bottom:10px">' +
+          '<div style="height:100%;background:' + col + ';border-radius:3px;width:' + pct + '%;transition:width .6s"></div>' +
+        '</div>' +
+        (fd.teacherComment ? '<div class="rc-comment">' + fd.teacherComment.slice(0, 200) + (fd.teacherComment.length > 200 ? '…' : '') + '</div>' : '') +
+      '</div>';
+    }).join('');
+  });
+}
+
+// ────────────────────────────────────────────────────────────
+// ═══ RESSOURCES ═══
+// ────────────────────────────────────────────────────────────
+function loadRessources() {
+  db.collection('files').where('visibility', '==', 'public').orderBy('createdAt', 'desc').get()
+  .then(function(snap) {
+    var el = document.getElementById('ressources-list');
+    document.getElementById('stat-res').textContent = snap.size;
+
     if (snap.empty) {
-      statusEl.innerHTML = `<div style="background:var(--amber-p);border:1px solid rgba(156,107,30,.2);border-radius:8px;padding:10px 12px;font-size:12px;color:var(--amber)">
-        ⏳ Tu n'as pas encore rendu ce devoir.
-      </div>`;
-    } else {
-      const sub = snap.docs[0].data();
-      const date = sub.submittedAt?.toDate?.();
-      const dateStr = date ? date.toLocaleDateString('fr-FR')+' à '+date.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}) : '—';
-      const isGraded = sub.score != null;
-      statusEl.innerHTML = `<div style="background:${isGraded?'var(--sage-p)':'var(--blue-p)'};border:1px solid ${isGraded?'rgba(61,107,79,.2)':'rgba(26,79,156,.2)'};border-radius:8px;padding:12px 14px">
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:${isGraded?'10px':'0'}">
-          <span style="font-size:13px">${isGraded?'✅':'📤'}</span>
-          <span style="font-size:12px;font-weight:600;color:${isGraded?'var(--sage)':'var(--blue)'}">${isGraded?'Corrigé':'Rendu le '+dateStr}</span>
-        </div>
-        ${isGraded ? `
-          <div style="font-family:'Lora',serif;font-size:28px;font-weight:700;color:var(--sage);margin-bottom:6px">
-            ${sub.score}<span style="font-size:14px;color:var(--ink-30)">/${sub.maxScore||20}</span>
-          </div>
-          ${sub.teacherComment ? `
-            <div style="background:var(--white);border-radius:7px;padding:10px 12px;margin-top:6px">
-              <div style="font-size:9.5px;font-weight:700;color:var(--ink-30);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Commentaire de l'enseignant</div>
-              <div style="font-size:12.5px;color:var(--ink-60);line-height:1.7;font-style:italic">"${sub.teacherComment}"</div>
-            </div>` : '<div style="font-size:11px;color:var(--sage)">Aucun commentaire ajouté.</div>'}
-          ${sub.audioFeedbackUrl ? `<a href="${sub.audioFeedbackUrl}" target="_blank" class="btn btn-g btn-sm" style="margin-top:8px">🎧 Écouter le feedback audio</a>` : ''}
-        ` : `<div style="font-size:11px;color:var(--blue)">En attente de correction par l'enseignant.</div>`}
-      </div>`;
+      el.innerHTML = '<div class="empty"><div class="empty-ic">📁</div><div class="empty-txt">Aucune ressource partagée pour l\'instant.</div></div>';
+      return;
     }
-  } catch(e) {
-    statusEl.innerHTML = `<div style="font-size:11px;color:var(--ink-30);padding:8px">Impossible de charger le statut.</div>`;
-  }
-  statusEl.style.display = statusEl.style.display==='none'?'block':'none';
-};
 
-window.openRendu = function(assignId, assignTitle) {
-  currentAssignId = assignId;
-  document.getElementById('modal-body').innerHTML = `
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px">
-      <div style="font-family:'Lora',serif;font-size:17px;font-weight:700">Rendre mon devoir</div>
-      <button style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--ink-30)" onclick="closeModal()">✕</button>
-    </div>
-    <div style="font-size:11.5px;color:var(--ink-60);margin-top:3px;margin-bottom:18px">${assignTitle}</div>
-    <div class="fg2"><label class="fl">Ma réponse (texte)</label><textarea class="fta" id="sub-text" placeholder="Tapez votre réponse ici…" rows="5"></textarea></div>
-    <div class="fg2"><label class="fl">Ou joindre un fichier</label>
-      <div class="upload-area" onclick="document.getElementById('sub-file').click()" id="sub-upload">
-        <div class="ua-ic">📎</div>
-        <p>Cliquez pour joindre un fichier (PDF, DOCX, image…)</p>
-        <input type="file" id="sub-file" style="display:none" onchange="previewSubFile(event)">
-      </div>
-    </div>
-    <div id="sub-file-preview" style="margin-bottom:12px"></div>
-    <div class="mf">
-      <button class="btn btn-g" onclick="closeModal()">Annuler</button>
-      <button class="btn btn-p" id="btn-submit" onclick="submitDevoir()">✓ Envoyer mon devoir</button>
-    </div>`;
-  document.getElementById('ov').classList.add('open');
-};
-
-window.previewSubFile = function(e) {
-  const file = e.target.files[0];
-  if(!file) return;
-  document.getElementById('sub-file-preview').innerHTML = `<div class="frow"><div class="fic fpdf">📎</div><div><div class="ffn">${file.name}</div><div class="ffm">${(file.size/1024/1024).toFixed(1)}Mo</div></div></div>`;
-};
-
-window.submitDevoir = async function() {
-  const text = document.getElementById('sub-text').value.trim();
-  const fileInput = document.getElementById('sub-file');
-  const file = fileInput.files[0];
-  if(!text && !file) { toast('Ajoute une réponse ou un fichier.','error'); return; }
-  const btn = document.getElementById('btn-submit');
-  btn.innerHTML = '<span class="spin"></span>Envoi…';btn.disabled=true;
-  try {
-    let fileUrl = null, storagePath = null;
-    if(file){
-      storagePath = 'submissions/'+currentUser.uid+'/'+Date.now()+'_'+file.name;
-      const storageRef = storage.ref(storagePath);
-      await storageRef.put(file);
-      fileUrl = await storageRef.getDownloadURL();
-    }
-    await db.collection('submissions').add({
-      uid:currentUser.uid,
-      assignmentId:currentAssignId,
-      textResponse:text||null,
-      fileUrl:fileUrl||null,
-      storagePath:storagePath||null,
-      status:'submitted',
-      submittedAt:firebase.firestore.FieldValue.serverTimestamp(),
-      createdAt:firebase.firestore.FieldValue.serverTimestamp()
-    });
-    // Notification pour l'enseignant
-    await db.collection('notifications').add({
-      userId:'teacher_broadcast',
-      title:'Nouveau rendu',
-      body:'Un élève a rendu son devoir',
-      type:'submission',
-      isRead:false,
-      createdAt:firebase.firestore.FieldValue.serverTimestamp()
-    });
-    document.getElementById('modal-body').innerHTML = `
-      <div style="text-align:center;padding:28px 20px">
-        <div style="font-size:52px;margin-bottom:14px">✅</div>
-        <div style="font-family:'Lora',serif;font-size:20px;font-weight:700;margin-bottom:8px">Devoir envoyé !</div>
-        <div style="font-size:13px;color:var(--ink-60);margin-bottom:22px;line-height:1.7">
-          Ton devoir a bien été reçu.<br>Tu seras notifié(e) une fois qu'il aura été corrigé.
-        </div>
-        <button class="btn btn-p" onclick="closeModal();loadDevoirs();loadResults()" style="width:100%;justify-content:center">
-          ← Retour à mes devoirs
-        </button>
-      </div>`;
-    // Rafraîchir la liste
-    loadDevoirs();
-    loadResults();
-    // Feedback visuel sur la carte du devoir
-    const dc = document.getElementById('dc-'+currentAssignId);
-    if(dc) {
-      dc.style.borderLeftColor = 'var(--sage)';
-      dc.querySelector('.dv-actions').innerHTML = '<span class="badge bg" style="font-size:12px;padding:5px 10px">✓ Devoir rendu !</span>';
-    }
-  } catch(e){ toast('Erreur: '+e.message,'error'); btn.innerHTML='✓ Envoyer';btn.disabled=false; }
-};
-
-// ── RÉSULTATS ─────────────────────────────────────────────
-async function loadResults() {
-  const snap = (await db.collection('submissions').where('uid', '==', currentUser.uid).orderBy('submittedAt', 'desc').get());
-  const el = document.getElementById('results-list');
-  if(snap.empty){
-    el.innerHTML='<div class="empty"><div class="empty-ic">📊</div><div class="empty-txt">Pas encore de résultats.</div></div>';
-    return;
-  }
-  el.innerHTML = snap.docs.map(d=>{
-    const fd=d.data();
-    const date=fd.submittedAt?.toDate();
-    const scored=fd.score!=null;
-    return `<div style="display:flex;align-items:center;gap:14px;padding:12px 0;border-bottom:1px solid var(--ink-10)">
-      <div style="flex:1">
-        <div style="font-size:12.5px;font-weight:600">Devoir du ${date?date.toLocaleDateString('fr-FR'):'—'}</div>
-        ${fd.teacherComment?`<div style="font-size:11.5px;color:var(--ink-60);margin-top:4px;font-style:italic">"${fd.teacherComment}"</div>`:''}
-      </div>
-      ${scored
-        ?`<div style="text-align:right"><div style="font-family:'Lora',serif;font-size:22px;font-weight:700;color:var(--sage)">${fd.score}<span style="font-size:13px;color:var(--ink-30)">/${fd.maxScore||20}</span></div></div>`
-        :`<span class="badge ba">En attente de correction</span>`}
-    </div>`;
-  }).join('');
-}
-
-async function loadHomeData() {
-  // Devoirs urgents
-  const aSnap = (await query(db.collection('assignments'),where('isPublished','==',true)));
-  const hd = document.getElementById('home-devoirs-list');
-  const now = new Date();
-  const upcoming = aSnap.docs.filter(d=>{
-    const due=d.data().dueDate?.toDate();
-    return due && due>now;
-  }).slice(0,3);
-  if(!upcoming.length){
-    hd.innerHTML='<div class="empty"><div class="empty-txt">Aucun devoir à venir.</div></div>';
-  } else {
-    hd.innerHTML = upcoming.map(d=>{
-      const fd=d.data();
-      const due=fd.dueDate?.toDate();
-      return `<div style="display:flex;align-items:center;gap:10px;padding:10px 16px;cursor:pointer;transition:background .1s" onclick="goTo('devoirs')" onmouseover="this.style.background='var(--sand)'" onmouseout="this.style.background=''">
-        <div style="width:36px;height:36px;border-radius:8px;background:var(--blue-p);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0">📋</div>
-        <div><div style="font-size:12.5px;font-weight:600">${fd.title}</div><div style="font-size:10.5px;color:var(--ink-30);margin-top:1px">${due?'Avant le '+due.toLocaleDateString('fr-FR'):''}</div></div>
-      </div>`;
+    el.innerHTML = snap.docs.map(function(d) {
+      var fd   = d.data();
+      var icon = getFileIcon(fd.mime);
+      return '<div class="resource-item" onclick="if(\'' + (fd.url || '') + '\')window.open(\'' + (fd.url || '#') + '\',\'_blank\')">' +
+        '<div class="ri-ic">' + icon + '</div>' +
+        '<div style="flex:1;min-width:0">' +
+          '<div class="ri-name">' + (fd.name || '—') + '</div>' +
+          '<div class="ri-meta">' + fmtSize(fd.sizeBytes) + (fd.sizeBytes ? ' · ' : '') + timeAgo(fd.createdAt) + '</div>' +
+        '</div>' +
+        (fd.url ? '<a href="' + fd.url + '" target="_blank" class="btn btn-p btn-sm" onclick="event.stopPropagation()">↓</a>' : '') +
+      '</div>';
     }).join('');
-  }
-
-  // Résultats récents
-  const rSnap = (await query(db.collection('submissions'),where('uid','==',currentUser.uid)));
-  const hr = document.getElementById('home-results-list');
-  const graded = rSnap.docs.filter(d=>d.data().score!=null).slice(0,3);
-  if(!graded.length){
-    hr.innerHTML='<div class="empty"><div class="empty-txt">Pas encore de résultats corrigés.</div></div>';
-  } else {
-    hr.innerHTML = graded.map(d=>{
-      const fd=d.data();
-      return `<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 16px;border-bottom:1px solid var(--ink-10)">
-        <div style="font-size:12px;color:var(--ink-60)">Devoir rendu</div>
-        <div style="font-family:'Lora',serif;font-size:18px;font-weight:700;color:var(--sage)">${fd.score}<span style="font-size:11px;color:var(--ink-30)">/${fd.maxScore||20}</span></div>
-      </div>`;
-    }).join('');
-  }
-}
-
-// ── MA CLASSE ─────────────────────────────────────────────
-window.joinClass = async function(){
-  const code = document.getElementById('class-code-input').value.trim().toUpperCase();
-  const msgEl = document.getElementById('join-msg');
-  if(!code || code.length < 4){
-    msgEl.style.display='block';
-    msgEl.innerHTML='<div style="background:var(--terra-p);color:var(--terra);padding:8px 12px;border-radius:7px;font-size:12px">Entre un code valide.</div>';
-    return;
-  }
-
-  // Chercher la classe avec ce code
-  const snap = (await query(db.collection('classes'),where('code','==',code)));
-  if(snap.empty){
-    msgEl.style.display='block';
-    msgEl.innerHTML='<div style="background:var(--terra-p);color:var(--terra);padding:8px 12px;border-radius:7px;font-size:12px">❌ Code introuvable. Vérifie avec ton enseignant.</div>';
-    return;
-  }
-
-  const classDoc = snap.docs[0];
-  const classData = classDoc.data();
-
-  // Vérifier si déjà inscrit
-  const already = (await query(db.collection('classMembers'),
-    where('classId','==',classDoc.id),
-    where('studentId','==',currentUser.uid)
-  ));
-  if(!already.empty){
-    msgEl.style.display='block';
-    msgEl.innerHTML='<div style="background:var(--amber-p);color:var(--amber);padding:8px 12px;border-radius:7px;font-size:12px">⚠ Tu es déjà inscrit dans cette classe.</div>';
-    return;
-  }
-
-  // Inscrire l'élève
-  await db.collection('classMembers').add({
-    classId: classDoc.id,
-    studentId: currentUser.uid,
-    teacherId: classData.uid,
-    className: classData.name,
-    joinedAt: firebase.firestore.FieldValue.serverTimestamp()
+  }).catch(function() {
+    document.getElementById('stat-res').textContent = '0';
+    document.getElementById('ressources-list').innerHTML = '<div class="empty"><div class="empty-ic">📁</div><div class="empty-txt">Aucune ressource disponible.</div></div>';
   });
-
-  msgEl.style.display='block';
-  msgEl.innerHTML=`<div style="background:var(--sage-p);color:var(--sage);padding:8px 12px;border-radius:7px;font-size:12px">✓ Tu as rejoint la classe <strong>${classData.name}</strong> !</div>`;
-  document.getElementById('class-code-input').value='';
-  loadMyClasses();
-};
-
-async function loadMyClasses(){
-  const snap = (await query(db.collection('classMembers'),where('studentId','==',currentUser.uid)));
-  const el = document.getElementById('my-classes-list');
-  if(!el) return;
-
-  if(snap.empty){
-    el.innerHTML='<div class="empty"><div class="empty-ic">🏫</div><div class="empty-txt">Tu n&#39;es inscrit dans aucune classe.<br>Entre un code pour rejoindre ta classe !</div></div>';
-    return;
-  }
-
-  el.innerHTML = snap.docs.map(d=>{
-    const fd=d.data();
-    return `<div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--ink-10)">
-      <div style="display:flex;align-items:center;gap:12px">
-        <div style="width:40px;height:40px;border-radius:10px;background:var(--sage-p);display:flex;align-items:center;justify-content:center;font-size:18px">🏫</div>
-        <div>
-          <div style="font-size:13px;font-weight:700">${fd.className||'Classe'}</div>
-          <div style="font-size:10.5px;color:var(--ink-30);margin-top:2px">Inscrit(e) le ${fd.joinedAt?.toDate().toLocaleDateString('fr-FR')||'—'}</div>
-        </div>
-      </div>
-      <span class="badge bg">Inscrit(e)</span>
-    </div>`;
-  }).join('');
 }
 
-// ── BADGE DEVOIRS ─────────────────────────────────────────
-async function loadDevoirsBadge() {
-  try {
-    const snap = await getDocs(query(
-      db.collection('assignments'),
-      where('isPublished','==',true)
-    ));
-    const badge = document.getElementById('badge-devoirs');
-    if(badge) {
-      badge.textContent = snap.size;
-      badge.style.display = snap.size > 0 ? 'inline' : 'none';
+// ────────────────────────────────────────────────────────────
+// ═══ MA CLASSE ═══
+// ────────────────────────────────────────────────────────────
+function loadClasses() {
+  db.collection('classMembers').where('studentId', '==', currentUser.uid).get()
+  .then(function(snap) {
+    var el = document.getElementById('enrolled-list');
+    if (snap.empty) {
+      el.innerHTML = '<div class="empty"><div class="empty-ic">👥</div><div class="empty-txt">Tu n\'es inscrit dans aucune classe.<br>Entre le code donné par ton enseignant(e).</div></div>';
+      return;
     }
-  } catch(e) {}
+
+    var classIds = snap.docs.map(function(d) { return d.data().classId; });
+    var promises = classIds.map(function(id) { return db.collection('classes').doc(id).get(); });
+
+    Promise.all(promises).then(function(classes) {
+      var emojis = ['🏫','📚','🎯','🌟','🔬','🎨'];
+      el.innerHTML = classes.map(function(c, i) {
+        if (!c.exists) return '';
+        var fd = c.data();
+        return '<div class="class-item">' +
+          '<div class="ci-ic">' + emojis[i % emojis.length] + '</div>' +
+          '<div style="flex:1">' +
+            '<div class="ci-name">' + fd.name + '</div>' +
+            '<div class="ci-meta">' + (fd.level || '') + (fd.subject ? ' · ' + fd.subject : '') + '</div>' +
+          '</div>' +
+          '<span style="font-size:10px;color:var(--sage-l);font-weight:600;background:var(--sage-p);padding:2px 7px;border-radius:6px">Inscrit</span>' +
+        '</div>';
+      }).filter(Boolean).join('');
+    });
+  }).catch(function() {
+    document.getElementById('enrolled-list').innerHTML = '<div class="empty"><div class="empty-ic">👥</div><div class="empty-txt">Impossible de charger les classes.</div></div>';
+  });
 }
 
-window.closeModal = function(e){
-  if(!e||e.target===document.getElementById('ov'))
-    document.getElementById('ov').classList.remove('open');
-};
+function joinClass() {
+  var code = document.getElementById('class-code').value.trim().toUpperCase();
+  if (code.length < 4) { toast('Entre un code valide (4-6 caractères).', 'error'); return; }
+
+  db.collection('classes').where('code', '==', code).get()
+  .then(function(snap) {
+    if (snap.empty) { toast('Code invalide. Vérifie avec ton enseignant(e).', 'error'); return; }
+
+    var classDoc = snap.docs[0];
+    var classId  = classDoc.id;
+
+    // Vérifier si déjà inscrit
+    return db.collection('classMembers')
+      .where('classId', '==', classId)
+      .where('studentId', '==', currentUser.uid)
+      .get()
+    .then(function(existing) {
+      if (!existing.empty) { toast('Tu es déjà inscrit dans cette classe !', 'error'); return; }
+
+      return db.collection('classMembers').add({
+        classId:   classId,
+        studentId: currentUser.uid,
+        className: classDoc.data().name,
+        joinedAt:  TS()
+      });
+    });
+  })
+  .then(function(ref) {
+    if (!ref) return;
+    document.getElementById('class-code').value = '';
+    toast('Tu as rejoint la classe ! 🎉', 'success');
+    loadClasses();
+  })
+  .catch(function(e) {
+    toast('Erreur : ' + e.message, 'error');
+  });
+}
 </script>
 </body>
 </html>
